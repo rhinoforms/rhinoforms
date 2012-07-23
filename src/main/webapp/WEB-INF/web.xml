@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE web-app PUBLIC
+        "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+        "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+
+	<display-name>Simple Forms</display-name>
+
+	<filter>
+		<filter-name>FormFilter</filter-name>
+		<filter-class>com.kaicube.simpleform.FormFilter</filter-class>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>FormFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+	<servlet>
+		<servlet-name>FormServlet</servlet-name>
+		<servlet-class>com.kaicube.simpleform.FormServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>FormServlet</servlet-name>
+		<url-pattern>/form</url-pattern>
+	</servlet-mapping>
+
+</web-app>

@@ -1,0 +1,1 @@
+mvn package && sudo cp target/*.war /var/lib/tomcat6/webapps/simpleform.war && echo && tail -n0 -f /var/log/tomcat6/simpleform.log /var/log/tomcat6/catalina.out

@@ -1,0 +1,3 @@
+sudo cp src/main/webapp/*.* /tw/simpleform/
+sudo cp -r src/main/webapp/js /tw/simpleform/
+sudo chown -R tomcat6:tomcat6 /tw/simpleform
