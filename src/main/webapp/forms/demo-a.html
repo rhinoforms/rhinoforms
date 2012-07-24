@@ -1,7 +1,7 @@
-<script type='text/javascript' simpleform="true">
-	var sf = new SimpleForm();
+<script type='text/javascript' rhinoforms="true">
+	var rf = new Rhinoforms();
 </script>
-<form action="form" onSubmit="return sf.validateForm(this);" method="post" simpleform="true">
+<form action="form" onSubmit="return rf.validateForm(this);" method="post" rhinoforms="true">
 	Name:<br/>
 	<input type="text" name="name" validation="required"/><br/>
 	<br/>
@@ -20,6 +20,6 @@
 	Favourite meat:<br/>
 	<input type="text" name="favMeat" validationFunction="{ if(fields.veggie.value == false) { this.validate('required'); } }"/><br/>
 	<br/>
-	<a onclick="sf.validateForm($('form')[0])">val</a><br/>
+	<a onclick="rf.validateForm($('form')[0])">val</a><br/>
 	<button type="submit" >Submit</button>
 </form>		

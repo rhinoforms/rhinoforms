@@ -6,11 +6,11 @@
 
 <web-app>
 
-	<display-name>Simple Forms</display-name>
+	<display-name>Rhinoforms</display-name>
 
 	<filter>
 		<filter-name>FormFilter</filter-name>
-		<filter-class>com.kaicube.simpleform.FormFilter</filter-class>
+		<filter-class>com.rhinoforms.FormFilter</filter-class>
 	</filter>
 
 	<filter-mapping>
@@ -20,7 +20,7 @@
 
 	<servlet>
 		<servlet-name>FormServlet</servlet-name>
-		<servlet-class>com.kaicube.simpleform.FormServlet</servlet-class>
+		<servlet-class>com.rhinoforms.FormServlet</servlet-class>
 	</servlet>
 
 	<servlet-mapping>

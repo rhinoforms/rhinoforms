@@ -4,7 +4,7 @@
 	<appender name="file" class="org.apache.log4j.RollingFileAppender">
 		<param name="Threshold" value="INFO"/>
 		<param name="MaxFileSize" value="10MB"/>
-		<param name="File" value="/var/log/tomcat6/simpleform.log"/>
+		<param name="File" value="/var/log/tomcat6/rhinoforms.log"/>
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%-5p %d{dd MMM HH:mm:ss} %C#%M:%L thread:%t%n      [%m]%n"/>
 		</layout>
