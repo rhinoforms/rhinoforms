@@ -1,0 +1,18 @@
+#formHolder {
+	border: 1px solid grey;
+	width: 600px;
+}
+.rfField {
+	padding: 10px;
+}
+.rfFieldOver {
+	background: #e3f1db;
+}
+#fieldEditor {
+	margin-left: 500px;
+	position: absolute;
+	background: white;
+	padding: 10px;top: 10px;
+	display: none;
+	border: 1px solid black;
+}

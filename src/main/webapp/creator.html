@@ -1,0 +1,35 @@
+<html>
+	<head>
+		<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+		<script type='text/javascript' src='js/rhinoforms.js' ></script>
+		<script type='text/javascript' src='js/rhinoforms-creator.js' ></script>
+		<script type='text/javascript'>
+			var rf = new Rhinoforms();
+			var rfc = new RhinoformsCreator();
+			$(window).load(function() {
+				rfc.init($("#formHolder"));
+				rfc.newForm();
+				rfc.addInput();
+			})
+		</script>
+		<link rel="stylesheet" type="text/css" href="css/rhinoform.css" />
+		<link rel="stylesheet" type="text/css" href="css/rhinoform-creator.css" />
+	</head>
+	<body>
+		<h1>Rhinoform Creator</h1>
+		<div id="fieldEditor">
+			<form>
+				Label:<br/><input name="label" type="text"/><br/>
+				Name:<br/><input name="name" type="text"/><br/>
+				Validation:<br/><input name="validation" type="text"/><br/>
+			</form>
+		</div>
+		<div id="formHolder">
+		</div>
+		<div id="controls">
+			<button onclick="rfc.newForm()">New form</button><br/>
+			<button onclick="rfc.addInput()">Add field</button><br/>
+		</div>
+		
+	</body>
+</html>
