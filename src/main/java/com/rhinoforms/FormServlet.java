@@ -74,6 +74,8 @@ public class FormServlet extends HttpServlet {
 				}
 			}
 			xmlStringBuilder.append("</data>\n");
+			
+			response.setContentType("text/plain");
 			PrintWriter writer = response.getWriter();
 			writer.write(xmlStringBuilder.toString());
 		} else {

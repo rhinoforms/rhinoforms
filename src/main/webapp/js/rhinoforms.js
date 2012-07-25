@@ -24,8 +24,9 @@ function Rhinoforms() {
 			$.ajax({
 				url: "form",
 				data: $form.serialize(),
+				type: "POST",
 				success: function(data) {
-					$form.html(data);
+					$($form.parents()[0]).html($("<textarea>").attr("style", "width: 700px; height: 350px;").text(data));
 				}
 			});
 		} else {

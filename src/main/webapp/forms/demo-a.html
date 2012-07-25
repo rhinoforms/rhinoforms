@@ -1,26 +1,24 @@
 <script type='text/javascript' rhinoforms="true">
 	var rf = new Rhinoforms();
 </script>
-<form action="form" method="post" rhinoforms="true">
-	Name:<br/>
+<form rhinoforms="true">
+	<label for="name">Name:</label><br/>
 	<input type="text" name="name" validation="required"/><br/>
 	<br/>
-	NameB:<br/>
+	<label for="nameb">NameB:</label><br/>
 	<input type="text" name="nameb" validation="required"/><br/>
 	<br/>
-	Email:<br/>
+	<label for="email">Email:</label><br/>
 	<input type="text" name="email" validation="required email"/><br/>
 	<br/>
-	Date of Birth:<br/>
+	<label for="dob">Date of Birth:</label><br/>
 	<input type="text" name="dob"/><br/>
 	<br/>
-	Veggie:<br/>
+	<label for="veggie">Veggie:</label><br/>
 	<input type="checkbox" name="veggie"/><br/>
 	<br/>
-	Favourite meat:<br/>
+	<label for="favMeat">Favourite meat:</label><br/>
 	<input type="text" name="favMeat" validationFunction="{ if(fields.veggie.value == false) { this.validate('required'); } }"/><br/>
-	<br/>
-	<a onclick="rf.validateForm($('form')[0])">val</a><br/>
 	<br/>
 	<button type="submit" >Submit</button>
 </form>		
