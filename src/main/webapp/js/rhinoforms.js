@@ -8,7 +8,7 @@ function Rhinoforms() {
 			success: function(html) {
 				$container.html(html);
 				$("form", $container).submit(function() {
-					rf.onSubmit(this);
+					rf.onSubmit($(this));
 					return false;
 				});
 			},
@@ -19,8 +19,8 @@ function Rhinoforms() {
 		
 	}
 	
-	this.onSubmit = function(form) {
-		if (this.validateForm(form) == true) {
+	this.onSubmit = function($form) {
+		if (this.validateForm($form) == true) {
 			$.ajax({
 				url: "form",
 				data: $form.serialize(),
@@ -29,14 +29,13 @@ function Rhinoforms() {
 				}
 			});
 		} else {
-			alert("Not valid");
+			//alert("Not valid");
 		}
 	}
 	
-	this.validateForm = function(form) {
+	this.validateForm = function($form) {
 		var simpleForm = this;
 		var submit = true;
-		var $form = $(form);
 		
 		// Compile map of fields with their values and validation options
 		var fields = {};
@@ -78,6 +77,9 @@ function Rhinoforms() {
 		for (var a in errors) {
 			$("input[name='" + errors[a].name + "']", $form).addClass("invalid");
 		}
+		
+		// Focus first invalid field
+		$("input.invalid", $form).first().focus();
 		
 		// return true if no errors, otherwise false
 		return errors.length == 0;
