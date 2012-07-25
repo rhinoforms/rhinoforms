@@ -1,2 +1,6 @@
-Allows for many forms on a page.
+Load by ajax
 Validation functions
+
+Todo:
+Submit by ajax
+Allows for many forms on a page

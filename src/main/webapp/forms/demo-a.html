@@ -1,7 +1,7 @@
 <script type='text/javascript' rhinoforms="true">
 	var rf = new Rhinoforms();
 </script>
-<form action="form" onSubmit="return rf.validateForm(this);" method="post" rhinoforms="true">
+<form action="form" method="post" rhinoforms="true">
 	Name:<br/>
 	<input type="text" name="name" validation="required"/><br/>
 	<br/>
@@ -21,5 +21,6 @@
 	<input type="text" name="favMeat" validationFunction="{ if(fields.veggie.value == false) { this.validate('required'); } }"/><br/>
 	<br/>
 	<a onclick="rf.validateForm($('form')[0])">val</a><br/>
+	<br/>
 	<button type="submit" >Submit</button>
 </form>		
