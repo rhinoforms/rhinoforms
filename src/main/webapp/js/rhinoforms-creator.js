@@ -18,6 +18,9 @@ function RhinoformsCreator() {
 		$("[name='validation']", this.$fieldEditor).bind("input paste", function() {
 			$("input", rfc.$currentFieldDiv).attr("validation", $(this).val());
 		})
+		$("[name='validationFunction']", this.$fieldEditor).bind("input paste", function() {
+			$("input", rfc.$currentFieldDiv).attr("validationFunction", $(this).val());
+		})
 		
 		this.$fieldEditor.hover(function() { rfc.overFieldEditor($(this)); }, function() { rfc.outFieldEditor($(this)); });
 	}
@@ -57,6 +60,7 @@ function RhinoformsCreator() {
 		$("[name='label']", this.$fieldEditor).val($("label", this.$currentFieldDiv).text());
 		$("[name='name']", this.$fieldEditor).val($("input", this.$currentFieldDiv).attr("name"));
 		$("[name='validation']", this.$fieldEditor).val($("input", this.$currentFieldDiv).attr("validation"));
+		$("[name='validationFunction']", this.$fieldEditor).val($("input", this.$currentFieldDiv).attr("validationFunction"));
 		this.$fieldEditor.show().css("top", $fieldDiv[0].offsetTop);
 	}
 	
