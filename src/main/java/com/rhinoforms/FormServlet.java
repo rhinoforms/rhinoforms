@@ -11,13 +11,22 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 
 import org.apache.log4j.Logger;
 import org.htmlcleaner.XPatherException;
+import org.jdom.JDOMException;
+import org.jdom.xpath.XPath;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.Scriptable;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 import com.rhinoforms.serverside.InputPojo;
 
@@ -35,10 +44,12 @@ public class FormServlet extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String formFlowPath = request.getParameter(Constants.FLOW_PATH_PARAM);
+		String initData = request.getParameter(Constants.INIT_DATA_PARAM);
+		
 		Context jsContext = Context.enter();
 		try {
 			String realFormFlowPath = getServletContext().getRealPath(formFlowPath);
-			FormFlow newFormFlow = formFlowFactory.createFlow(realFormFlowPath, jsContext);
+			FormFlow newFormFlow = formFlowFactory.createFlow(realFormFlowPath, jsContext, initData);
 			SessionHelper.addFlow(newFormFlow, request.getSession());
 			String formUrl = newFormFlow.navigateToFirstForm();
 			loadForm(request, response, newFormFlow, formUrl);
@@ -56,6 +67,8 @@ public class FormServlet extends HttpServlet {
 		} catch (TransformerConfigurationException e) {
 			LOGGER.error(e, e);// TODO: error handling
 		} catch (XPatherException e) {
+			LOGGER.error(e, e);// TODO: error handling
+		} catch (XPathExpressionException e) {
 			LOGGER.error(e, e);// TODO: error handling
 		}
 	}

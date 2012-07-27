@@ -4,7 +4,10 @@ function Rhinoforms() {
 		var rf = this;
 		$.ajax({
 			url: "form",
-			data: { "rf.flowPath": flowPath },
+			data: {
+				"rf.flowPath": flowPath,
+				"rf.initData": "<customer><name>Kai</name></customer>"
+				},
 			success: function(html) {
 				rf.insertForm(html, $container);
 			},

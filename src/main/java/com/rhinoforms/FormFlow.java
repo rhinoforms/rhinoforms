@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.mozilla.javascript.Scriptable;
+import org.w3c.dom.Document;
 
 import com.rhinoforms.serverside.InputPojo;
 
@@ -17,11 +18,19 @@ public class FormFlow {
 	private Form currentForm;
 	private List<Form> currentFormList;
 	private Map<String, String> data;
+	private Document dataDocument;
+	private String documentBasePath;
 	
 	public FormFlow(Scriptable scope) {
 		this.id = (int) (Math.random() * 100000000f);
 		this.scope = scope;
 		this.data = new HashMap<String, String>();
+		this.formLists = new HashMap<String, List<Form>>();
+	}
+	
+	public FormFlow(Scriptable scope, Document dataDocument) {
+		this(scope);
+		this.dataDocument = dataDocument;
 	}
 	
 	public String navigateToFirstForm() {
@@ -63,6 +72,10 @@ public class FormFlow {
 		return currentForm.getPath();
 	}
 	
+	public void addFormList(String listName, List<Form> formList) {
+		this.formLists.put(listName, formList);
+	}
+	
 	public int getId() {
 		return id;
 	}
@@ -93,6 +106,22 @@ public class FormFlow {
 	
 	public void setData(Map<String, String> data) {
 		this.data = data;
+	}
+	
+	public Document getDataDocument() {
+		return dataDocument;
+	}
+	
+	public void setDataDocument(Document dataDocument) {
+		this.dataDocument = dataDocument;
+	}
+	
+	public String getDocumentBasePath() {
+		return documentBasePath;
+	}
+	
+	public void setDocumentBasePath(String documentBasePath) {
+		this.documentBasePath = documentBasePath;
 	}
 
 }

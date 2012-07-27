@@ -14,14 +14,22 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 
 import org.apache.log4j.Logger;
+import org.htmlcleaner.ContentNode;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.SimpleHtmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPatherException;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
 import com.rhinoforms.serverside.InputPojo;
 
@@ -33,6 +41,7 @@ public class FormResponseWrapper extends HttpServletResponseWrapper {
 	private PrintWriter printWriter;
 	private PrintWriterOutputStream printWriterOutputStream;
 	private int contentLength;
+	private static XPathFactory xPathFactory = XPathFactory.newInstance();
 
 	public FormResponseWrapper(HttpServletResponse response) {
 		super(response);
@@ -48,7 +57,7 @@ public class FormResponseWrapper extends HttpServletResponseWrapper {
 	}
 
 	public void parseResponseAndWrite(ServletContext servletContext, HttpServletRequest request, HttpServletResponse response, FormFlow formFlow)
-			throws IOException, XPatherException, TransformerConfigurationException {
+			throws IOException, XPatherException, TransformerConfigurationException, XPathExpressionException {
 
 		printWriterOutputStream.flush();
 		printWriterOutputStream.close();
@@ -65,6 +74,9 @@ public class FormResponseWrapper extends HttpServletResponseWrapper {
 			HtmlCleaner cleaner = new HtmlCleaner();
 			TagNode documentNode = cleaner.clean(stringBuilder.toString());
 
+			Document dataDocument = formFlow.getDataDocument();
+			String documentBasePath = formFlow.getDocumentBasePath();
+			
 			Object[] rfFormNodes = documentNode.evaluateXPath("//form[@" + Constants.RHINOFORM_FLAG + "='true']");
 			if (rfFormNodes.length > 0) {
 				LOGGER.info(rfFormNodes.length + " forms found.");
@@ -78,7 +90,17 @@ public class FormResponseWrapper extends HttpServletResponseWrapper {
 					String type = inputTagNode.getAttributeByName("type");
 					String validation = inputTagNode.getAttributeByName("validation");
 					String validationFunction = inputTagNode.getAttributeByName("validationFunction");
-	
+					XPath xPath = xPathFactory.newXPath();
+					String xPathString = documentBasePath + "/" + name.replaceAll("\\.", "/");
+					LOGGER.debug("field name:" + name + ", xPathString:" + xPathString);
+					XPathExpression xPathExpression = xPath.compile(xPathString);
+					NodeList nodeList = (NodeList) xPathExpression.evaluate(dataDocument, XPathConstants.NODESET);
+					if (nodeList != null && nodeList.getLength() == 1) {
+						String inputValue = nodeList.item(0).getTextContent();
+						System.out.println(inputTagNode.getClass());
+						inputTagNode.setAttribute("value", inputValue);
+					}
+					
 					inputPojos.add(new InputPojo(name, type, validation, validationFunction));
 	
 					LOGGER.debug("input " + name + " - validation:" + validation);
@@ -150,5 +172,5 @@ public class FormResponseWrapper extends HttpServletResponseWrapper {
 		}
 
 	}
-
+	
 }

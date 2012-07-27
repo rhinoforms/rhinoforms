@@ -2,7 +2,6 @@
 <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
 	<appender name="file" class="org.apache.log4j.RollingFileAppender">
-		<param name="Threshold" value="INFO"/>
 		<param name="MaxFileSize" value="10MB"/>
 		<param name="File" value="/var/log/tomcat6/rhinoforms.log"/>
 		<layout class="org.apache.log4j.PatternLayout">
@@ -15,8 +14,13 @@
 		<layout class="org.apache.log4j.PatternLayout"> 
 			<param name="ConversionPattern" value="%-5p %c{1} - %m%n"/> 
 		</layout> 
-	</appender> 	
+	</appender>
+    <logger name="com.rhinoforms" additivity="false">
+    	<priority value="debug" />
+        <appender-ref ref="file"/>
+    </logger>
 	<root>
+		<priority value="info" />
 		<appender-ref ref="file"/>
 	</root>
 </log4j:configuration>

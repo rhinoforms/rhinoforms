@@ -1,7 +1,9 @@
 function loadFlow(flowMap) {
 	
-	for (formListName in flowMap) {
-		var formArray = flowMap[formListName];
+	formFlow.setDocumentBasePath(flowMap.docBase);
+	var formLists = flowMap.formLists;
+	for (formListName in formLists) {
+		var formArray = formLists[formListName];
 		var formListJ = new java.util.ArrayList();
 		for (var formIndex in formArray) {
 			var form = formArray[formIndex];
@@ -18,7 +20,7 @@ function loadFlow(flowMap) {
 			var formJ = new com.rhinoforms.Form(form.id, form.url, actionsJ, formIndex);
 			formListJ.add(formJ);
 		}
-		formLists.put(formListName, formListJ);
+		formFlow.addFormList(formListName, formListJ);
 	}
 	
 }

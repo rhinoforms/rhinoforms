@@ -11,5 +11,6 @@ public interface Constants {
 	String RHINOFORM_FLAG = "rhinoforms";
 	
 	String FLOW_PATH_PARAM = "rf.flowPath";
+	String INIT_DATA_PARAM = "rf.initData";
 	
 }
