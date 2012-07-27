@@ -1,32 +1,53 @@
 function Rhinoforms() {
 	
-	this.loadForm = function(formPath, $container) {
+	this.loadFlow = function(flowPath, $container) {
 		var rf = this;
 		$.ajax({
-			url: formPath,
-			data: { rhinoforms: "true", random: Math.random() },
+			url: "form",
+			data: { "rf.flowPath": flowPath },
 			success: function(html) {
-				$container.html(html);
-				$("form", $container).submit(function() {
-					rf.onSubmit($(this));
-					return false;
-				});
+				rf.insertForm(html, $container);
 			},
 			failure: function() {
 				alert("Failed to load form");
 			}
 		})
-		
 	}
 	
-	this.onSubmit = function($form) {
+	this.insertForm = function(html, $container) {
+		$container.html(html);
+		$("form", $container).submit(function() {
+			return false;
+		})
+		$("form", $container).each(function() {
+			var $form = $(this);
+			$form.attr("action", "javascript: void(0)");
+			$("button[action]", $form).click(function() {
+				var action = $(this).attr("action");
+				rf.doAction(action, $form, $container);
+				return false;
+			});
+		});
+	}
+	
+	this.doAction = function(action, $form, $container) {
+		var rf = this;
 		if (this.validateForm($form) == true) {
-			$.ajax({
+			var jqXHR = $.ajax({
 				url: "form",
-				data: $form.serialize(),
+				data: $form.serialize() + "&rf.action=" + action,
 				type: "POST",
 				success: function(data) {
-					$($form.parents()[0]).html($("<textarea>").attr("style", "width: 700px; height: 350px;").text(data));
+					switch (jqXHR.getResponseHeader("rf.responseType")) {
+					case "data":
+						$($form.parents()[0]).html($("<textarea>").attr("style", "width: 700px; height: 350px;").text(data));
+						break;
+					default:
+						rf.insertForm(data, $container);
+					}
+				},
+				failure: function() {
+					alert("Failed to perform action.");
 				}
 			});
 		} else {
