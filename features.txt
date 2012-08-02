@@ -1,6 +1,10 @@
 Load by ajax
 Validation functions
-
-Todo:
 Submit by ajax
 Allows for many forms on a page
+Form flows
+Initial data xml doc with new flow request
+Bind field to underlying XML doc
+
+Todo:
+Allow repeating entities

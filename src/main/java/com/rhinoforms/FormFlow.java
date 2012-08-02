@@ -21,6 +21,10 @@ public class FormFlow {
 	private Document dataDocument;
 	private String documentBasePath;
 	
+	public static final String NEXT_ACTION = "next";
+	public static final String BACK_ACTION = "back";
+	public static final String FINISH_ACTION = "finish";
+	
 	public FormFlow(Scriptable scope) {
 		this.id = (int) (Math.random() * 100000000f);
 		this.scope = scope;
@@ -44,12 +48,16 @@ public class FormFlow {
 		if (actions.containsKey(action)) {
 			String actionTarget = actions.get(action);
 			if (actionTarget.isEmpty()) {
-				if (action.equals("next")) {
+				if (action.equals(NEXT_ACTION)) {
 					currentForm = currentFormList.get(currentForm.getIndexInList() + 1);
-				} else if (action.equals("back")) {
-					currentForm = currentFormList.get(currentForm.getIndexInList() - 1);
-				} else if (action.equals("finish")) {
-					return null;
+				} else {
+					if (action.equals(BACK_ACTION)) {
+						currentForm = currentFormList.get(currentForm.getIndexInList() - 1);
+					} else {
+						if (action.equals(FINISH_ACTION)) {
+							return null;
+						}
+					}
 				}
 			} else {
 				String actionTargetFormId;
@@ -69,6 +77,10 @@ public class FormFlow {
 		} else {
 			throw new NavigationError("Action not valid for the current form.");
 		}
+		return currentForm.getPath();
+	}
+	
+	public String getCurrentPath() {
 		return currentForm.getPath();
 	}
 	

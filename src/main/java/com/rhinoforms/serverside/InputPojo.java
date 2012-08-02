@@ -14,5 +14,10 @@ public class InputPojo {
 		this.validation = validation;
 		this.validationFunction = validationFunction;
 	}
+	
+	public InputPojo(String name, String value) {
+		this.name = name;
+		this.value = value;
+	}
 
 }

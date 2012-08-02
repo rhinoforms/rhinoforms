@@ -2,8 +2,10 @@ package com.rhinoforms;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -11,22 +13,17 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 
 import org.apache.log4j.Logger;
 import org.htmlcleaner.XPatherException;
-import org.jdom.JDOMException;
-import org.jdom.xpath.XPath;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 
 import com.rhinoforms.serverside.InputPojo;
 
@@ -35,17 +32,19 @@ public class FormServlet extends HttpServlet {
 
 	private static final Logger LOGGER = Logger.getLogger(FormServlet.class);
 	private FormFlowFactory formFlowFactory;
+	private DocumentManipulator documentManipulator;
 
 	@Override
 	public void init() throws ServletException {
 		this.formFlowFactory = new FormFlowFactory();
+		this.documentManipulator = new DocumentManipulator();
 	}
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String formFlowPath = request.getParameter(Constants.FLOW_PATH_PARAM);
 		String initData = request.getParameter(Constants.INIT_DATA_PARAM);
-		
+
 		Context jsContext = Context.enter();
 		try {
 			String realFormFlowPath = getServletContext().getRealPath(formFlowPath);
@@ -53,12 +52,15 @@ public class FormServlet extends HttpServlet {
 			SessionHelper.addFlow(newFormFlow, request.getSession());
 			String formUrl = newFormFlow.navigateToFirstForm();
 			loadForm(request, response, newFormFlow, formUrl);
+		} catch (FormFlowFactoryException e) {
+			throw new ServletException(e.getMessage(), e);
 		} finally {
 			Context.exit();
 		}
 	}
 
-	private void loadForm(HttpServletRequest request, HttpServletResponse response, FormFlow formFlow, String formUrl) throws ServletException, IOException {
+	private void loadForm(HttpServletRequest request, HttpServletResponse response, FormFlow formFlow, String formUrl)
+			throws ServletException, IOException {
 		RequestDispatcher requestDispatcher = getServletContext().getRequestDispatcher(formUrl);
 		FormResponseWrapper formResponseWrapper = new FormResponseWrapper(response);
 		requestDispatcher.forward(request, formResponseWrapper);
@@ -92,7 +94,6 @@ public class FormServlet extends HttpServlet {
 				} else {
 					inputPOJO.value = request.getParameter(inputPOJO.name);
 				}
-				data.put(inputPOJO.name, inputPOJO.value);
 			}
 
 			String jsPojoMap = inputPOJOListtoJS(inputPOJOs);
@@ -103,47 +104,71 @@ public class FormServlet extends HttpServlet {
 			commandStringBuilder.append(jsPojoMap);
 			commandStringBuilder.append(")");
 
+			Set<String> fieldsInError = new HashSet<String>();
 			Context jsContext = Context.enter();
 			try {
 				NativeArray errors = (NativeArray) jsContext.evaluateString(scope, commandStringBuilder.toString(), "<cmd>", 1, null);
 				for (int i = 0; i < errors.getLength(); i++) {
-					Object error = errors.get(i, scope);
-					LOGGER.info("Error - " + error);
+					ScriptableObject error = (ScriptableObject) errors.get(i, scope);
+					fieldsInError.add(error.get("name", scope).toString());
 				}
 			} finally {
 				Context.exit();
 			}
 
-			String nextUrl = null;
-			if (action != null) {
-				try {
-					nextUrl = formFlow.navigateFlow(action);
-				} catch (NavigationError e) {
-					throw new ServletException(e);
-				}
-			}
-
-			if (nextUrl != null) {
-				loadForm(request, response, formFlow, nextUrl);
-			} else {
-				// End of flow
-				// Build XML from submitted values
-				StringBuilder xmlStringBuilder = new StringBuilder();
-				xmlStringBuilder.append("<data>\n");
-				for (String fieldName : data.keySet()) {
-					String value = data.get(fieldName);
-					if (value != null) {
-						xmlStringBuilder.append("<").append(fieldName).append(">");
-						xmlStringBuilder.append(value);
-						xmlStringBuilder.append("</").append(fieldName).append(">\n");
+			if (!fieldsInError.isEmpty() && action.equals(FormFlow.BACK_ACTION)) {
+				HashSet<InputPojo> inputPOJOsToRemove = new HashSet<InputPojo>();
+				for (InputPojo inputPojo : inputPOJOs) {
+					if (fieldsInError.contains(inputPojo.name)) {
+						inputPOJOsToRemove.add(inputPojo);
 					}
 				}
-				xmlStringBuilder.append("</data>\n");
+				inputPOJOs.removeAll(inputPOJOsToRemove);
+				fieldsInError.clear();
+			}
 
-				response.setContentType("text/plain");
-				response.setHeader("rf.responseType", "data");
-				PrintWriter writer = response.getWriter();
-				writer.write(xmlStringBuilder.toString());
+			if (fieldsInError.isEmpty()) {
+
+				// Persist collected form data
+				String documentBasePath = formFlow.getDocumentBasePath();
+				Document dataDocument = formFlow.getDataDocument();
+				try {
+					documentManipulator.persistFormData(inputPOJOs, documentBasePath, dataDocument);
+				} catch (DocumentManipulatorException e) {
+					String message = "Failed to map field to xml document.";
+					LOGGER.error(message, e);
+					throw new ServletException(message, e);
+				}
+
+				// Find next form
+				String nextUrl = null;
+				if (action != null) {
+					try {
+						nextUrl = formFlow.navigateFlow(action);
+					} catch (NavigationError e) {
+						throw new ServletException(e);
+					}
+				}
+
+				if (nextUrl != null) {
+					loadForm(request, response, formFlow, nextUrl);
+				} else {
+					// End of flow
+					// Build XML from submitted values
+
+					response.setContentType("text/plain");
+					response.setHeader("rf.responseType", "data");
+					PrintWriter writer = response.getWriter();
+					try {
+						documentManipulator.documentToWriter(dataDocument, writer);
+					} catch (TransformerException e) {
+						String message = "Failed to output the underlaying xml data.";
+						LOGGER.error(message, e);
+						response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message);
+					}
+				}
+			} else {
+				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Validation error.");
 			}
 		} else {
 			response.sendError(HttpServletResponse.SC_FORBIDDEN, "Your session has expired.");

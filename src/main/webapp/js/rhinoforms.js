@@ -1,12 +1,12 @@
 function Rhinoforms() {
 	
-	this.loadFlow = function(flowPath, $container) {
+	this.loadFlow = function(flowPath, $container, initData) {
 		var rf = this;
 		$.ajax({
 			url: "form",
 			data: {
 				"rf.flowPath": flowPath,
-				"rf.initData": "<customer><name>Kai</name></customer>"
+				"rf.initData": initData
 				},
 			success: function(html) {
 				rf.insertForm(html, $container);
@@ -35,7 +35,7 @@ function Rhinoforms() {
 	
 	this.doAction = function(action, $form, $container) {
 		var rf = this;
-		if (this.validateForm($form) == true) {
+		if (action == "back" || this.validateForm($form) == true) {
 			var jqXHR = $.ajax({
 				url: "form",
 				data: $form.serialize() + "&rf.action=" + action,

@@ -14,14 +14,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 
 import org.apache.log4j.Logger;
-import org.htmlcleaner.ContentNode;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.SimpleHtmlSerializer;
 import org.htmlcleaner.TagNode;
@@ -36,12 +33,12 @@ import com.rhinoforms.serverside.InputPojo;
 public class FormResponseWrapper extends HttpServletResponseWrapper {
 
 	private static final Logger LOGGER = Logger.getLogger(FormResponseWrapper.class);
+	private static final FieldPathHelper fieldPathHelper = new FieldPathHelper();
 	
 	private CharArrayWriter charArrayWriter;
 	private PrintWriter printWriter;
 	private PrintWriterOutputStream printWriterOutputStream;
 	private int contentLength;
-	private static XPathFactory xPathFactory = XPathFactory.newInstance();
 
 	public FormResponseWrapper(HttpServletResponse response) {
 		super(response);
@@ -90,15 +87,13 @@ public class FormResponseWrapper extends HttpServletResponseWrapper {
 					String type = inputTagNode.getAttributeByName("type");
 					String validation = inputTagNode.getAttributeByName("validation");
 					String validationFunction = inputTagNode.getAttributeByName("validationFunction");
-					XPath xPath = xPathFactory.newXPath();
-					String xPathString = documentBasePath + "/" + name.replaceAll("\\.", "/");
-					LOGGER.debug("field name:" + name + ", xPathString:" + xPathString);
-					XPathExpression xPathExpression = xPath.compile(xPathString);
+					XPathExpression xPathExpression = fieldPathHelper.fieldToXPathExpression(documentBasePath, name);
 					NodeList nodeList = (NodeList) xPathExpression.evaluate(dataDocument, XPathConstants.NODESET);
 					if (nodeList != null && nodeList.getLength() == 1) {
 						String inputValue = nodeList.item(0).getTextContent();
-						System.out.println(inputTagNode.getClass());
 						inputTagNode.setAttribute("value", inputValue);
+					} else {
+						LOGGER.warn("Multiple nodes matched for documentBasePath: '" + documentBasePath + "', field name: '" + name + "'. No value will be pushed into the form and there will be submission problems.");
 					}
 					
 					inputPojos.add(new InputPojo(name, type, validation, validationFunction));

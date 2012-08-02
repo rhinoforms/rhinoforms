@@ -8,7 +8,6 @@ import java.io.InputStreamReader;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
@@ -17,37 +16,23 @@ import org.mozilla.javascript.ScriptableObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 public class FormFlowFactory {
 
 	private DocumentBuilderFactory documentBuilderFactory;
-	private XPathFactory xPathFactory;
 	
 	public FormFlowFactory() {
 		this.documentBuilderFactory = DocumentBuilderFactory.newInstance();
-		this.xPathFactory = XPathFactory.newInstance();
 	}
 
-	public FormFlow createFlow(String realFormFlowPath, Context jsContext) throws IOException {
-		return doCreateFlow(realFormFlowPath, jsContext, null);
-	}
-	
-	public FormFlow createFlow(String realFormFlowPath, Context jsContext, String dataDocumentString) throws IOException {
-		return doCreateFlow(realFormFlowPath, jsContext, dataDocumentString);
-	}
-	
-	private FormFlow doCreateFlow(String realFormFlowPath, Context jsContext, String dataDocumentString) throws IOException {
-		
+	public FormFlow createFlow(String realFormFlowPath, Context jsContext, String dataDocumentString) throws IOException, FormFlowFactoryException {
 		Document dataDocument = null;
 		if (dataDocumentString != null && !dataDocumentString.isEmpty()) {
 			try {
 				DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
 				dataDocument = documentBuilder.parse(new ByteArrayInputStream(dataDocumentString.getBytes()));
-			} catch (ParserConfigurationException e) {
-				e.printStackTrace(); // TODO: error handling
-			} catch (SAXException e) {
-				e.printStackTrace();
+			} catch (Exception e) {
+				throw new FormFlowFactoryException("Error parsing initial data document", e);
 			}
 		}
 		

@@ -20,13 +20,13 @@ public class FormFlowTest {
 	
 	@Test
 	public void testNavFirstForm() throws Exception {
-		FormFlow formFlow = formFlowFactory.createFlow("src/test/resources/test-flow1.js", jsContext);
+		FormFlow formFlow = formFlowFactory.createFlow("src/test/resources/test-flow1.js", jsContext, null);
 		Assert.assertEquals("one.html", formFlow.navigateToFirstForm());
 	}
 	
 	@Test
 	public void testNavNextBack() throws Exception {
-		FormFlow formFlow = formFlowFactory.createFlow("src/test/resources/test-flow1.js", jsContext);
+		FormFlow formFlow = formFlowFactory.createFlow("src/test/resources/test-flow1.js", jsContext, null);
 		Assert.assertEquals("one.html", formFlow.navigateToFirstForm());
 		Assert.assertEquals("two.html", formFlow.navigateFlow("next"));
 		Assert.assertEquals("one.html", formFlow.navigateFlow("back"));
@@ -41,7 +41,7 @@ public class FormFlowTest {
 	
 	@Test
 	public void testNavSideways() throws Exception {
-		FormFlow formFlow = formFlowFactory.createFlow("src/test/resources/test-flow1.js", jsContext);
+		FormFlow formFlow = formFlowFactory.createFlow("src/test/resources/test-flow1.js", jsContext, null);
 		Assert.assertEquals("one.html", formFlow.navigateToFirstForm());
 		Assert.assertEquals("two.html", formFlow.navigateFlow("next"));
 		Assert.assertEquals("addSomething.html", formFlow.navigateFlow("add"));
