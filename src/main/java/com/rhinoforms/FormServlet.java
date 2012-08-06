@@ -166,8 +166,8 @@ public class FormServlet extends HttpServlet {
 				String nextUrl = null;
 				if (action != null) {
 					try {
-						nextUrl = formFlow.navigateFlow(action, actionParams);
-					} catch (NavigationError e) {
+						nextUrl = formFlow.doAction(action, actionParams);
+					} catch (ActionError e) {
 						LOGGER.error(e, e);
 						throw new ServletException(e);
 					}

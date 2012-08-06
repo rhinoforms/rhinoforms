@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.xml.xpath.XPathExpressionException;
+
 import org.apache.log4j.Logger;
 import org.mozilla.javascript.Scriptable;
 import org.w3c.dom.Document;
@@ -21,14 +23,14 @@ public class FormFlow {
 	private Document dataDocument;
 	private String docBase;
 	private String flowDocBase;
-	
+
 	private DocumentHelper documentHelper;
 
 	public static final String NEXT_ACTION = "next";
 	public static final String BACK_ACTION = "back";
 	public static final String CANCEL_ACTION = "cancel";
 	public static final String FINISH_ACTION = "finish";
-	
+
 	private static final Logger LOGGER = Logger.getLogger(FormFlow.class);
 
 	public FormFlow(Scriptable scope) {
@@ -48,53 +50,66 @@ public class FormFlow {
 		return currentForm.getPath();
 	}
 
-	public String navigateFlow(String action, Map<String, String> actionParamsFromFontend) throws NavigationError {
-		Map<String, FlowAction> actions = currentForm.getActions();
-		if (actions.containsKey(action)) {
-			FlowAction flowAction = actions.get(action);
-			Map<String, String> filteredActionParams = filterActionParams(actionParamsFromFontend, flowAction.getParams());
-			String actionTarget = flowAction.getTarget();
-			if (actionTarget.isEmpty()) {
-				if (action.equals(NEXT_ACTION)) {
-					currentForm = currentFormList.get(currentForm.getIndexInList() + 1);
-				} else {
-					if (action.equals(BACK_ACTION)) {
-						currentForm = currentFormList.get(currentForm.getIndexInList() - 1);
-					} else {
-						if (action.equals(FINISH_ACTION)) {
-							return null;
-						}
-					}
-				}
+	public String doAction(String action, Map<String, String> paramsFromFontend) throws ActionError {
+		FlowAction flowAction = getAction(action);
+		Map<String, String> actionParams = filterActionParams(paramsFromFontend, flowAction.getParams());
+		String actionName = flowAction.getName();
+		String actionTarget = flowAction.getTarget();
+		if (actionTarget.isEmpty()) {
+			if (actionName.equals(NEXT_ACTION)) {
+				currentForm = currentFormList.get(currentForm.getIndexInList() + 1);
+			} else if (actionName.equals(BACK_ACTION)) {
+				currentForm = currentFormList.get(currentForm.getIndexInList() - 1);
 			} else {
-				String actionTargetFormId;
-				if (actionTarget.contains(".")) {
-					String[] actionTargetParts = actionTarget.split("\\.");
-					currentFormList = formLists.get(actionTargetParts[0]);
-					actionTargetFormId = actionTargetParts[1];
-				} else {
-					actionTargetFormId = actionTarget;
-				}
-				for (Form form : currentFormList) {
-					if (form.getId().equals(actionTargetFormId)) {
-						currentForm = form;
-					}
+				if (actionName.equals(FINISH_ACTION)) {
+					return null;
 				}
 			}
-			String currentFormDocBase = currentForm.getDocBase();
-			if (currentFormDocBase != null) {
-				try {
-					setDocBase(documentHelper.resolveXPathIndexesForAction(currentFormDocBase, filteredActionParams, dataDocument));
-				} catch (DocumentHelperException e) {
-					throw new NavigationError("Problem with docBase index alias.", e);
-				}
-			} else {
-				setDocBase(getFlowDocBase());
+		} else if (actionTarget.equals("_delete")) {
+			String xpath = actionParams.get("xpath");
+			try {
+				xpath = documentHelper.resolveXPathIndexesForAction(xpath, actionParams, dataDocument);
+				documentHelper.deleteNodes(xpath, dataDocument);
+			} catch (DocumentHelperException e) {
+				throw new ActionError("Problem building delete action.", e);
+			} catch (XPathExpressionException e) {
+				throw new ActionError("Problem deleting nodes.", e);
 			}
 		} else {
-			throw new NavigationError("Action not valid for the current form.");
+			String actionTargetFormId;
+			if (actionTarget.contains(".")) {
+				String[] actionTargetParts = actionTarget.split("\\.");
+				currentFormList = formLists.get(actionTargetParts[0]);
+				actionTargetFormId = actionTargetParts[1];
+			} else {
+				actionTargetFormId = actionTarget;
+			}
+			for (Form form : currentFormList) {
+				if (form.getId().equals(actionTargetFormId)) {
+					currentForm = form;
+				}
+			}
+		}
+		String currentFormDocBase = currentForm.getDocBase();
+		if (currentFormDocBase != null) {
+			try {
+				setDocBase(documentHelper.resolveXPathIndexesForAction(currentFormDocBase, actionParams, dataDocument));
+			} catch (DocumentHelperException e) {
+				throw new ActionError("Problem with docBase index alias.", e);
+			}
+		} else {
+			setDocBase(getFlowDocBase());
 		}
 		return currentForm.getPath();
+	}
+
+	public FlowAction getAction(String action) throws ActionError {
+		Map<String, FlowAction> actions = currentForm.getActions();
+		if (actions.containsKey(action)) {
+			return actions.get(action);
+		} else {
+			throw new ActionError("Action not valid for the current form.");
+		}
 	}
 
 	protected Map<String, String> filterActionParams(Map<String, String> paramsFromFontend, Map<String, String> paramsFromFlowAction) {
@@ -165,18 +180,18 @@ public class FormFlow {
 	public String getFlowDocBase() {
 		return flowDocBase;
 	}
-	
+
 	public void setFlowDocBase(String flowDocBase) {
 		this.flowDocBase = flowDocBase;
 		setDocBase(flowDocBase);
 	}
-	
+
 	public DocumentHelper getDocumentHelper() {
 		return documentHelper;
 	}
-	
+
 	public void setDocumentHelper(DocumentHelper documentHelper) {
 		this.documentHelper = documentHelper;
 	}
-	
+
 }

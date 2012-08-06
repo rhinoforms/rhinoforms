@@ -1,5 +1,9 @@
 function loadFlow(flowMap) {
 	
+	this.trim = function(string) {
+		return string.replace(/^\s\s*/, '').replace(/\s\s*$/, '')
+	}
+	
 	formFlow.setFlowDocBase(flowMap.docBase);
 	var formLists = flowMap.formLists;
 	for (formListName in formLists) {
@@ -26,7 +30,7 @@ function loadFlow(flowMap) {
 				for (var actionTargetParamsPartIndex in actionTargetParamsParts) {
 					var param = actionTargetParamsParts[actionTargetParamsPartIndex];
 					var paramParts = param.split("=");
-					flowActionJ.addParam(paramParts[0], paramParts[1]);
+					flowActionJ.addParam(this.trim(paramParts[0]), this.trim(paramParts[1]));
 				}
 				actionsJ.put(actionName, flowActionJ);
 			}

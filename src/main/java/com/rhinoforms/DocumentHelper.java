@@ -146,4 +146,13 @@ public class DocumentHelper {
 		transformer.transform(new DOMSource(document), new StreamResult(writer));
 	}
 
+	public void deleteNodes(String xpath, Document dataDocument) throws XPathExpressionException {
+		XPathExpression expression = newXPath(xpath);
+		NodeList nodesToDelete = (NodeList) expression.evaluate(dataDocument, XPathConstants.NODESET);
+		for (int i = 0; i < nodesToDelete.getLength(); i++) {
+			Node nodeToDelete = nodesToDelete.item(i);
+			nodeToDelete.getParentNode().removeChild(nodeToDelete);
+		}
+	}
+
 }

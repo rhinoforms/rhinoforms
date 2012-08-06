@@ -6,7 +6,11 @@
 	<div class="drivers">
 		<rf.forEach select="drivers/driver">
 			<div class="driver">
-				<span>{driver.driverName}<a href="#" action="editDriver?index={driver.index}">Edit</a></span>
+				<span>
+					{driver.driverName}
+					<a href="#" action="editDriver?index={driver.index}">Edit</a> 
+					<a href="#" action="deleteDriver?index={driver.index}">Delete</a>
+				</span>
 			</div>
 		</rf.forEach>
 	</div>
