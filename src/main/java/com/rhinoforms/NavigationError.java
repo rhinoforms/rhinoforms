@@ -6,5 +6,9 @@ public class NavigationError extends Exception {
 	public NavigationError(String message) {
 		super(message);
 	}
+
+	public NavigationError(String message, Throwable cause) {
+		super(message, cause);
+	}
 	
 }

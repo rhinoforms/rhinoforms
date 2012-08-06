@@ -25,7 +25,7 @@ function Rhinoforms() {
 		$("form", $container).each(function() {
 			var $form = $(this);
 			$form.attr("action", "javascript: void(0)");
-			$("button[action]", $form).click(function() {
+			$("[action]", $form).click(function() {
 				var action = $(this).attr("action");
 				rf.doAction(action, $form, $container);
 				return false;
@@ -35,7 +35,7 @@ function Rhinoforms() {
 	
 	this.doAction = function(action, $form, $container) {
 		var rf = this;
-		if (action == "back" || this.validateForm($form) == true) {
+		if (action == "back" || action == "cancel" || this.validateForm($form) == true) {
 			var jqXHR = $.ajax({
 				url: "form",
 				data: $form.serialize() + "&rf.action=" + action,
@@ -89,25 +89,28 @@ function Rhinoforms() {
 			$errorList.append($("<li>").attr("name", errors[a].name).html(errors[a].message));
 		}
 		
-		// Attach error list to dom
-		var prev = $form.prev();
-		if (prev.hasClass("rfError")) {
-			prev.html($errorList.html());
+		if (errors.length > 0) {
+			// Attach error list to dom
+			var prev = $form.prev();
+			if (prev.hasClass("rfError")) {
+				prev.html($errorList.html());
+			} else {
+				$form.before($errorList);
+			}
+			
+			// Add invalid class to inputs
+			$("input", $form).removeClass("invalid");
+			for (var a in errors) {
+				$("input[name='" + errors[a].name + "']", $form).addClass("invalid");
+			}
+			
+			// Focus first invalid field
+			$("input.invalid", $form).first().focus();
+			return false;
 		} else {
-			$form.before($errorList);
+			// return true if no errors, otherwise false
+			return true;
 		}
-		
-		// Add invalid class to inputs
-		$("input", $form).removeClass("invalid");
-		for (var a in errors) {
-			$("input[name='" + errors[a].name + "']", $form).addClass("invalid");
-		}
-		
-		// Focus first invalid field
-		$("input.invalid", $form).first().focus();
-		
-		// return true if no errors, otherwise false
-		return errors.length == 0;
 	}
 	
 	// Take a map of fields and validate each returning a list of any errors.

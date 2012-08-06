@@ -16,11 +16,11 @@
 		</layout> 
 	</appender>
     <logger name="com.rhinoforms" additivity="false">
-    	<priority value="debug" />
+    	<level value="debug" />
         <appender-ref ref="file"/>
     </logger>
 	<root>
-		<priority value="info" />
+		<level value="info" />
 		<appender-ref ref="file"/>
 	</root>
 </log4j:configuration>

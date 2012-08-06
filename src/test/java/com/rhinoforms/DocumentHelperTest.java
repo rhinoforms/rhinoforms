@@ -3,6 +3,7 @@ package com.rhinoforms;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -17,16 +18,16 @@ import org.xml.sax.SAXException;
 
 import com.rhinoforms.serverside.InputPojo;
 
-public class DocumentManipulatorTest {
+public class DocumentHelperTest {
 
-	private DocumentManipulator documentManipulator;
+	private DocumentHelper documentManipulator;
 	private Document dataDocument;
 	private String documentBasePath;
 	private ArrayList<InputPojo> inputPOJOs;
 
 	@Before
 	public void setup() throws Exception {
-		this.documentManipulator = new DocumentManipulator();
+		this.documentManipulator = new DocumentHelper();
 		this.documentBasePath = "/myData";
 		this.inputPOJOs = new ArrayList<InputPojo>();
 	}
@@ -120,6 +121,43 @@ public class DocumentManipulatorTest {
 		documentManipulator.persistFormData(inputPOJOs, "/myData/customers/customer[2]", dataDocument);
 		
 		Assert.assertEquals("<myData><customers><customer><name>Kai</name></customer><customer><name>Dan</name></customer></customers></myData>", documentManipulator.documentToString(dataDocument));
+	}
+	
+	@Test
+	public void testResolveXpathIndexesForAction_oneNumbered() throws Exception {
+		String initialDoc = "<myData><customers><customer><name>Kai</name></customer><customer><name>Sam</name></customer></customers></myData>";
+		setDoc(initialDoc);
+		HashMap<String, String> actionParams = new HashMap<String, String>();
+		actionParams.put("indexA", "2");
+		
+		String resolvedXPath = documentManipulator.resolveXPathIndexesForAction("/myData/customers/customer[indexA]", actionParams, dataDocument);
+		
+		Assert.assertEquals("/myData/customers/customer[2]", resolvedXPath);
+	}
+	
+	@Test
+	public void testResolveXpathIndexesForAction_twoNumbered() throws Exception {
+		String initialDoc = "<myData><customers><customer><name>Kai</name></customer><customer><name>Sam</name></customer></customers></myData>";
+		setDoc(initialDoc);
+		HashMap<String, String> actionParams = new HashMap<String, String>();
+		actionParams.put("indexA", "1");
+		actionParams.put("indexB", "2");
+		
+		String resolvedXPath = documentManipulator.resolveXPathIndexesForAction("/myData/customers/customer[indexA]/address[indexB]", actionParams, dataDocument);
+		
+		Assert.assertEquals("/myData/customers/customer[1]/address[2]", resolvedXPath);
+	}
+	
+	@Test
+	public void testResolveXpathIndexesForAction_oneNamed() throws Exception {
+		String initialDoc = "<myData><customers><customer><name>Kai</name></customer><customer><name>Sam</name></customer></customers></myData>";
+		setDoc(initialDoc);
+		HashMap<String, String> actionParams = new HashMap<String, String>();
+		actionParams.put("index", "next");
+		
+		String resolvedXPath = documentManipulator.resolveXPathIndexesForAction("/myData/customers/customer[index]", actionParams, dataDocument);
+		
+		Assert.assertEquals("/myData/customers/customer[3]", resolvedXPath);
 	}
 	
 	private void setDoc(String dataDocumentString) throws ParserConfigurationException, SAXException, IOException {

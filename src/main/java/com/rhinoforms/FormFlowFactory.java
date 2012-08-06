@@ -20,9 +20,11 @@ import org.w3c.dom.NodeList;
 public class FormFlowFactory {
 
 	private DocumentBuilderFactory documentBuilderFactory;
+	private DocumentHelper documentHelper;
 	
 	public FormFlowFactory() {
 		this.documentBuilderFactory = DocumentBuilderFactory.newInstance();
+		this.documentHelper = new DocumentHelper();
 	}
 
 	public FormFlow createFlow(String realFormFlowPath, Context jsContext, String dataDocumentString) throws IOException, FormFlowFactoryException {
@@ -43,6 +45,8 @@ public class FormFlowFactory {
 		} else {
 			formFlow = new FormFlow(scope, dataDocument);
 		}
+		formFlow.setDocumentHelper(documentHelper);
+		
 		Object wrappedFormFlow = Context.javaToJS(formFlow, scope);
 		ScriptableObject.putProperty(scope, "formFlow", wrappedFormFlow);
 		String scriptPath = "/flow-loader.js";
@@ -59,7 +63,12 @@ public class FormFlowFactory {
 		
 		String newFlowJsExpresion = stringBuilder.toString();
 		jsContext.evaluateString(scope, newFlowJsExpresion, realFormFlowPath, 1, null);
-		return formFlow;
+		
+		if (formFlow.getFlowDocBase() == null) {
+			throw new FormFlowFactoryException("Please specify a form-flow docBase.");
+		} else {
+			return formFlow;
+		}
 	}
 	
 	// Hack method

@@ -1,0 +1,17 @@
+<script type='text/javascript' rhinoforms="true">
+	var rf = new Rhinoforms();
+</script>
+<form rhinoforms="true">
+	<button action="back">Back</button>
+	<div class="fishes">
+		<rf.forEach select="fishes/fish">
+			<div>
+				<div>
+					<span index="{fish.index}">{fish.name}</span>
+				</div>
+			</div>
+		</rf.forEach>
+	</div>
+	<button action="addFish">Add Fish</button>
+	<button action="next">Next</button>
+</form>

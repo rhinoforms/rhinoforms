@@ -2,8 +2,16 @@
 	var rf = new Rhinoforms();
 </script>
 <form rhinoforms="true">
-	Drivers. Static.
-	<button action="back">Back</button>
+	Drivers
+	<div class="drivers">
+		<rf.forEach select="drivers/driver">
+			<div class="driver">
+				<span>{driver.driverName}<a href="#" action="editDriver?index={driver.index}">Edit</a></span>
+			</div>
+		</rf.forEach>
+	</div>
 	<button action="addDriver">Add Driver</button>
+	<br/>
+	<button action="back">Back</button>
 	<button action="next">Next</button>
 </form>		

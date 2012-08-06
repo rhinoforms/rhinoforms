@@ -6,10 +6,11 @@ public class Form {
 
 	private String id;
 	private String path;
-	private Map<String, String> actions;
+	private Map<String, FlowAction> actions;
+	private String docBase;
 	private int indexInList;
-	
-	public Form(String id, String path, Map<String, String> actions, int indexInList) {
+
+	public Form(String id, String path, Map<String, FlowAction> actions, int indexInList) {
 		super();
 		this.id = id;
 		this.path = path;
@@ -33,20 +34,28 @@ public class Form {
 		this.path = path;
 	}
 
-	public Map<String, String> getActions() {
+	public Map<String, FlowAction> getActions() {
 		return actions;
 	}
 
-	public void setActions(Map<String, String> actions) {
+	public void setActions(Map<String, FlowAction> actions) {
 		this.actions = actions;
 	}
-	
+
 	public int getIndexInList() {
 		return indexInList;
 	}
-	
+
 	public void setIndexInList(int indexInList) {
 		this.indexInList = indexInList;
+	}
+
+	public String getDocBase() {
+		return docBase;
+	}
+
+	public void setDocBase(String docBase) {
+		this.docBase = docBase;
 	}
 
 }

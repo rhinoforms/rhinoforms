@@ -25,21 +25,37 @@ public class FormFlowFactoryTest {
 	@Test
 	public void testCreateFlow() throws Exception {
 		FormFlow formFlow = formFlowFactory.createFlow("src/test/resources/test-flow1.js", jsContext, null);
-		Assert.assertEquals("myData", formFlow.getDocumentBasePath());
+		Assert.assertEquals("/myData", formFlow.getDocBase());
 		Map<String, List<Form>> formLists = formFlow.getFormLists();
 		Assert.assertEquals(2, formLists.keySet().size());
 		List<Form> list = formLists.get("main");
-		Assert.assertEquals(3, list.size());
+		Assert.assertEquals(4, list.size());
 		Iterator<Form> iterator = list.iterator();
-		Form next = iterator.next();
-		Assert.assertEquals("one", next.getId());
-		Assert.assertEquals(0, next.getIndexInList());
-		next = iterator.next();
-		Assert.assertEquals("two", next.getId());
-		Assert.assertEquals(1, next.getIndexInList());
-		next = iterator.next();
-		Assert.assertEquals("three", next.getId());
-		Assert.assertEquals(2, next.getIndexInList());
+		Form nextForm = iterator.next();
+		Assert.assertEquals("one", nextForm.getId());
+		Assert.assertEquals(0, nextForm.getIndexInList());
+		nextForm = iterator.next();
+		Assert.assertEquals("two", nextForm.getId());
+		Assert.assertEquals(1, nextForm.getIndexInList());
+		nextForm = iterator.next();
+		Assert.assertEquals("three", nextForm.getId());
+		Map<String, FlowAction> actions = nextForm.getActions();
+		Assert.assertEquals(4, actions.size());
+		FlowAction flowAction = actions.get("add");
+		Map<String, String> params = flowAction.getParams();
+		Assert.assertEquals(1, params.size());
+		Assert.assertEquals("next", params.get("index"));
+		
+		Assert.assertEquals(2, nextForm.getIndexInList());
+		nextForm = iterator.next();
+		Assert.assertEquals("four", nextForm.getId());
+		Assert.assertEquals(3, nextForm.getIndexInList());
+		
+		List<Form> anotherList = formLists.get("anotherList");
+		Assert.assertEquals(2, anotherList.size());
+		Form form = anotherList.get(1);
+		Assert.assertEquals("editFish", form.getId());
+		Assert.assertEquals("/myData/fishes/fish[index]", form.getDocBase());
 	}
 	
 	@After
