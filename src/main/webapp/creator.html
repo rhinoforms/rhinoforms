@@ -7,13 +7,17 @@
 			var rf = new Rhinoforms();
 			var rfc = new RhinoformsCreator();
 			$(window).load(function() {
-				rfc.init($("#formHolder"));
+				rfc.init($("#formContainer"));
 				rfc.newForm();
 				rfc.addInput();
 			})
 		</script>
 		<link rel="stylesheet" type="text/css" href="css/rhinoform.css" />
 		<link rel="stylesheet" type="text/css" href="css/rhinoform-creator.css" />
+		<link href='http://fonts.googleapis.com/css?family=Pontano+Sans' rel='stylesheet' type='text/css'>
+		<style>
+			body { font-family: 'Pontano Sans', sans-serif; }
+		</style>
 	</head>
 	<body>
 		<h1>Rhinoform Creator</h1>
@@ -25,12 +29,12 @@
 				Validation Function:<br/><textarea name="validationFunction"></textarea><br/>
 			</form>
 		</div>
-		<div id="formHolder">
+		<div id="formContainer">
 		</div>
 		<div id="controls">
-			<button onclick="rfc.newForm()">New form</button><br/>
+			<button onclick="rfc.newForm()">New form</button>
 			<button onclick="rfc.addInput()">Add field</button><br/>
-			Save function in progress<br/>
+			No save function or flow creator yet.<br/>
 		</div>
 		
 	</body>

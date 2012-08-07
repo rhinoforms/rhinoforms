@@ -39,11 +39,6 @@ public class FormFlow {
 		this.formLists = new HashMap<String, List<Form>>();
 	}
 
-	public FormFlow(Scriptable scope, Document dataDocument) {
-		this(scope);
-		this.dataDocument = dataDocument;
-	}
-
 	public String navigateToFirstForm() {
 		this.currentFormList = formLists.get("main");
 		this.currentForm = currentFormList.iterator().next();

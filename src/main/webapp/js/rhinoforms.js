@@ -1,5 +1,30 @@
 function Rhinoforms() {
 	
+	this.validationKeywords;
+	
+	this.init = function() {
+		this.validationKeywords = {};
+		
+		// Enable the 'required' validation keyword
+		this.enableValidationKeyword("required", function(name, value) {
+			if (value.length == 0) {
+				return name + " is required.";
+			}
+		});
+
+		// Enable the 'email' validation function
+		this.enableValidationKeyword("email", function(name, value) {
+			var reg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
+			if (reg.test(value) != true) {
+				return name + " is not a valid email address.";
+			}
+		});
+	}
+	
+	this.enableValidationKeyword = function(keyword, func) {
+		this.validationKeywords[keyword] = func;
+	}
+	
 	this.loadFlow = function(flowPath, $container, initData) {
 		var rf = this;
 		$.ajax({
@@ -43,13 +68,13 @@ function Rhinoforms() {
 				success: function(data) {
 					switch (jqXHR.getResponseHeader("rf.responseType")) {
 					case "data":
-						$($form.parents()[0]).html($("<textarea>").attr("style", "width: 700px; height: 350px;").text(data));
+						$($form.parents()[0]).html($("<h3>").text("Collected Data:").append("<br/>").append($("<textarea>").attr("style", "width: 700px; height: 350px;").text(data)));
 						break;
 					default:
 						rf.insertForm(data, $container);
 					}
 				},
-				failure: function() {
+				error: function() {
 					alert("Failed to perform action.");
 				}
 			});
@@ -144,18 +169,14 @@ function Rhinoforms() {
 		for (a in validationArray) {
 			var validation = validationArray[a];
 			var message = null;
-			if (validation == "required") {
-				if (value.length == 0) {
-					message = name + " is required.";
+			
+			if (this.validationKeywords[validation]) {
+				message = this.validationKeywords[validation](name, value);
+				if (message) {
+					return { name: name, message: message };
 				}
-			} else if (validation == "email") {
-				var result = this.validateEmail(value);
-				if (result != true) {
-					message = name + " is not a valid email address.";
-				}
-			}
-			if (message) {
-				return { name: name, message: message };
+			} else {
+				alert("Validation keyword '" + validation + "' is not defined.");
 			}
 		}
 		return null;
@@ -177,4 +198,6 @@ function Rhinoforms() {
 	this.trace = function(message) {
 		$("#trace").append(message);
 	}
+	
+	this.init();
 }

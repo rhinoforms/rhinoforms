@@ -1,3 +1,25 @@
 .invalid {
 	background-color: Salmon;
 }
+
+#formContainer {
+	border: 1px solid black;
+	padding: 20px;
+	width: 800px
+}
+
+button {
+	margin-top: 20px;
+}
+
+.clear {
+	clear: both;
+}
+
+.menu-block {
+	float: left;
+	margin-top: -20px;
+	margin-right: 50px;
+	margin-bottom: 20px;
+	margin-left: 10px;
+}

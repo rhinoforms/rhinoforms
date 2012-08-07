@@ -72,6 +72,10 @@ public class DocumentHelper {
 		}
 	}
 	
+	public void createNodeIfNotThere(Document dataDocument, String xPathString) throws DocumentHelperException {
+		lookupOrCreateNode(dataDocument, xPathString);
+	}
+	
 	private Node lookupOrCreateNode(Document dataDocument, String xPathString) throws DocumentHelperException {
 		try {
 			XPathExpression fullXPathExpression = newXPath(xPathString);
@@ -140,9 +144,21 @@ public class DocumentHelper {
 	}
 
 	public void documentToWriter(Node document, Writer writer) throws TransformerException {
+		documentToWriter(document, writer, false);
+	}
+	
+	public void documentToWriterPretty(Node document, Writer writer) throws TransformerException {
+		documentToWriter(document, writer, true);
+	}
+	
+	private void documentToWriter(Node document, Writer writer, boolean indent) throws TransformerException {
 		TransformerFactory transFactory = TransformerFactory.newInstance();
 		Transformer transformer = transFactory.newTransformer();
 		transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+		if (indent) {
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+		}
 		transformer.transform(new DOMSource(document), new StreamResult(writer));
 	}
 

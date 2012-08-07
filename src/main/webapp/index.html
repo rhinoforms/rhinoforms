@@ -6,22 +6,118 @@
 			var rf = new Rhinoforms();
 		</script>
 		<link rel="stylesheet" type="text/css" href="css/rhinoform.css" />
+		<link href='http://fonts.googleapis.com/css?family=Pontano+Sans' rel='stylesheet' type='text/css'>
+		<style>
+			body { font-family: 'Pontano Sans', sans-serif; }
+		</style>
 	</head>
 	<body>
+	
 		<h1>Rhinoform Dev Page</h1>
 		
-		<a href="#" onclick="rf.loadFlow('forms/demo-flow-1/demo-flow.js', $('#formHolder'), '<customer><name>Kai</name><car>Abc</car></customer>'); return false;">Demo form flow</a><br/>
+		<!-- Menu -->
+		<div class="menu-block">
+			<h2>Demo</h2>
+			<ul>
+				<li>
+					<a href="#" onclick="$('#formContainer').html($('#overview').html()); return false;">Overview</a>
+				</li>
+				<li>
+					<a href="#" onclick="rf.loadFlow('forms/simplest/simplest-flow.js', $('#formContainer')); return false;">Simplest Example</a>
+				</li>
+				<li>
+					<a href="#" onclick="rf.loadFlow('forms/validation-attribute/validation-attribute-flow.js', $('#formContainer')); return false;">Validation Attribute</a>
+				</li>
+				<li>
+					<a href="#" onclick="rf.loadFlow('forms/validation-function/validation-function-flow.js', $('#formContainer')); return false;">Validation Function</a>
+				</li>
+				<li>
+					<a href="#" onclick="rf.loadFlow('forms/quote-example/quote-example-flow.js', $('#formContainer'), '<customer><name>Kai</name><vehicle>Nissan</vehicle></customer>'); return false;">Example form flow</a>
+				</li>
+				<li>
+					<a href="#" onclick="$('#formContainer').html($('#nextSteps').html()); return false;">Next Steps</a>
+				</li>
+			</ul>
+		</div>
+		<div class="menu-block">
+			<h2>Other Stuff</h2>
+			<ul>
+				<li><a href="creator.html">Start of Form Creator</a></li>
+				<li><a href="https://github.com/kaicode/rhino-forms" target="_blank">Rhinoforms on GitHub</a></li>
+			</ul>
+		</div>
+		<div class="clear"></div>
 		
-<!--
--- Single forms disabled at the moment
-		<a href="#" onclick="rf.loadForm('forms/demo-a.html', $('#formHolder')); return false;">DemoA</a><br/>
-		<a href="#" onclick="rf.loadForm('forms/demo-one.html', $('#formHolder')); return false;">Demo one field</a><br/>
--->
 		
-		<div id="formHolder">
+		<!-- Form Container -->
+		<div id="formContainer">
+			Empty form container
 		</div>
 		
-		<p><a href="creator.html">Form Creator</a></p>
 		
+		
+		<!-- Hidden Content for demo page -->
+		<div id="overview" style="display: none;">
+			<h3>Overview</h3>
+			<p>Rhinoforms is a forms framework.</p>
+			<h4>Aims:</h4>
+			<ul>
+				<li>Collect user data and bind to an XML document
+					<ul>
+						<li>Existing data can be loaded into session</li>
+						<li>Allow for repeating elements</li>
+					</ul>
+				</li>
+				<li>Easy to pick up
+					<ul>
+						<li>Familiar markup based on plain html forms</li>
+						<li>XPath expressions avoided where possible</li>
+						<li>Less code as possible making more readable forms</li>
+					</ul>
+				</li>
+				<li>Write once, run client-side and server-side validation
+					<ul>
+						<li>Rock solid security without server-side programming</li>
+						<li>No lag when validating form</li>
+						<li>Good for slow connections</li>
+						<li>Good for mobile browsers</li>
+						<li>Less server load</li>
+						<li>Fail gracefully if Javascript disabled</li>
+					</ul>
+				</li>
+				<li>Simple to load forms
+					<ul>
+						<li>Load a form into any dom element</li>
+						<li>No parent form needed</li>
+						<li>Allow many form sessions to be loaded into one page</li>
+					</ul>
+				</li>
+				<li>Non linear form flows</li>
+			</ul>
+			<h4>What it's not:</h4>
+			<ul>
+				<li>It's not an implementation of xforms</li>
+				<li>It does not allow you to build an entire application, only capture input</li>
+			</ul>
+		</div>
+		<div id="nextSteps" style="display: none;">
+			<h3>Next steps</h3>
+			<ul>
+				<li>Enter should navigate forward</li>
+				<li>Dev tools
+					<ul>
+						<li>XML data inspector</li>
+						<li>XML data editor?</li>
+					</ul>
+				</li>
+				<li>Allow validation functions to access fields from previous forms</li>
+				<li>Auto-complete combo fields (with validation)</li>
+				<li>Calculated fields (with validation)</li>
+				<li>Pulling initial XML from a URL (server side)</li>
+				<li>Pushing XML to a URL, allow for result to be injected into the flow data document (server side)</li>
+				<li>Return server-side errors for graceful fail-over when javascript disabled?</li>
+			</ul>
+		</div>
+
 	</body>
 </html>

@@ -1,10 +1,16 @@
 Load by ajax
+Simple validation
 Validation functions
 Submit by ajax
 Allows for many forms on a page
 Form flows
+Flow actions
 Initial data xml doc with new flow request
 Bind field to underlying XML doc
+Allow repeating entities
+Allow entity edit
+Allow entity delete
 
 Todo:
-Allow repeating entities
+calculated fields
+read-only fields

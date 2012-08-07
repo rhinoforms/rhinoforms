@@ -176,14 +176,12 @@ public class FormServlet extends HttpServlet {
 				if (nextUrl != null) {
 					loadForm(request, response, formFlow, nextUrl);
 				} else {
-					// End of flow
-					// Build XML from submitted values
-
+					// End of flow. Spit out XML.
 					response.setContentType("text/plain");
 					response.setHeader("rf.responseType", "data");
 					PrintWriter writer = response.getWriter();
 					try {
-						documentHelper.documentToWriter(formFlow.getDataDocument(), writer);
+						documentHelper.documentToWriterPretty(formFlow.getDataDocument(), writer);
 					} catch (TransformerException e) {
 						String message = "Failed to output the underlaying xml data.";
 						LOGGER.error(message, e);
