@@ -4,21 +4,23 @@
 <h3>Validation Function Example</h3>
 <p>Here input field validationFunction is used on the 'Favourite meat' field. That field is only required if 'Veggie' is unchecked.</p>
 <p>Again validation is performed first in the browser and again on the server using the same javascript code.</p>
+
 <form rhinoforms="true">
-	<label for="firstName">First name:</label><br/>
-	<input type="text" name="firstName" rf.validation="required"/><br/>
-	<br/>
-	<label for="surname">Surname:</label><br/>
-	<input type="text" name="surname" rf.validation="required"/><br/>
-	<br/>
-	<label for="email">Email:</label><br/>
-	<input type="text" name="email" rf.validation="required email"/><br/>
-	<br/>
-	<label for="veggie">Veggie:</label><br/>
-	<input type="checkbox" name="veggie"/><br/>
-	<br/>
-	<label for="favouriteMeat">Favourite meat:</label><br/>
-	<input type="text" name="favouriteMeat" rf.validationFunction="{ if(fields.veggie.value == false) { this.validate('required'); } }"/><br/>
-	<br/>
+
+	<label for="input_firstName">First name:</label>
+	<input id="input_firstName" type="text" name="firstName" rf.validation="required"/>
+	
+	<label for="input_surname">Surname:</label>
+	<input id="input_surname" type="text" name="surname" rf.validation="required"/>
+	
+	<label for="input_email">Email:</label>
+	<input id="input_email" type="text" name="email" rf.validation="required email"/>
+	
+	<label for="input_veggie">Veggie:</label>
+	<input id="input_veggie" type="checkbox" name="veggie"/>
+	
+	<label for="input_favouriteMeat">Favourite meat:</label>
+	<input id="input_favouriteMeat" type="text" name="favouriteMeat" rf.validationFunction="{ if(fields.veggie.value == false) { this.validate('required'); } }"/>
+	
 	<button action="finish">Finish</button>
 </form>

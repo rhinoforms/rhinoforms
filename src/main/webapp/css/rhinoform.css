@@ -16,10 +16,24 @@ button {
 	clear: both;
 }
 
+.menu, .buttons {
+	overflow: hidden;
+	width: 100%;
+}
+
+button[action='back'] {
+	float: left;
+}
+
 .menu-block {
 	float: left;
 	margin-top: -20px;
 	margin-right: 50px;
 	margin-bottom: 20px;
 	margin-left: 10px;
+}
+
+label, input {
+	display: block;
+	clear: both;
 }

@@ -17,38 +17,39 @@
 		<h1>Rhinoforms Dev Page</h1>
 		
 		<!-- Menu -->
-		<div class="menu-block">
-			<h2>Demo</h2>
-			<ul>
-				<li>
-					<a href="#" onclick="$('#formContainer').html($('#overview').html()); return false;">Overview</a>
-				</li>
-				<li>
-					<a href="#" onclick="rf.loadFlow('forms/simplest/simplest-flow.js', $('#formContainer')); return false;">Simplest Example</a>
-				</li>
-				<li>
-					<a href="#" onclick="rf.loadFlow('forms/validation-attribute/validation-attribute-flow.js', $('#formContainer')); return false;">Validation Attribute</a>
-				</li>
-				<li>
-					<a href="#" onclick="rf.loadFlow('forms/validation-function/validation-function-flow.js', $('#formContainer')); return false;">Validation Function</a>
-				</li>
-				<li>
-					<a href="#" onclick="rf.loadFlow('forms/quote-example/quote-example-flow.js', $('#formContainer'), '<customer><name>Kai</name><vehicle>Nissan</vehicle></customer>'); return false;">Example form flow</a>
-				</li>
-				<li>
-					<a href="#" onclick="$('#formContainer').html($('#nextSteps').html()); return false;">Next Steps</a>
-				</li>
-			</ul>
+		<div class="menu">
+			<div class="menu-block">
+				<h2>Demo</h2>
+				<ul>
+					<li>
+						<a href="#" onclick="$('#formContainer').html($('#overview').html()); return false;">Overview</a>
+					</li>
+					<li>
+						<a href="#" onclick="rf.loadFlow('forms/simplest/simplest-flow.js', $('#formContainer')); return false;">Simplest Example</a>
+					</li>
+					<li>
+						<a href="#" onclick="rf.loadFlow('forms/validation-attribute/validation-attribute-flow.js', $('#formContainer')); return false;">Validation Attribute</a>
+					</li>
+					<li>
+						<a href="#" onclick="rf.loadFlow('forms/validation-function/validation-function-flow.js', $('#formContainer')); return false;">Validation Function</a>
+					</li>
+					<li>
+						<a href="#" onclick="rf.loadFlow('forms/quote-example/quote-example-flow.js', $('#formContainer'), '<customer><name>Kai</name><vehicle>Nissan</vehicle></customer>'); return false;">Example form flow</a>
+					</li>
+					<li>
+						<a href="#" onclick="$('#formContainer').html($('#nextSteps').html()); return false;">Next Steps</a>
+					</li>
+				</ul>
+			</div>
+			<div class="menu-block">
+				<h2>Other Stuff</h2>
+				<ul>
+					<li><a href="creator.html">Start of Form Creator</a></li>
+					<li><a href="html5-test-page.html">HTML5 test page</a></li>
+					<li><a href="https://github.com/kaicode/rhinoforms" target="_blank">Rhinoforms on GitHub</a></li>
+				</ul>
+			</div>
 		</div>
-		<div class="menu-block">
-			<h2>Other Stuff</h2>
-			<ul>
-				<li><a href="creator.html">Start of Form Creator</a></li>
-				<li><a href="html5-test-page.html">HTML5 test page</a></li>
-				<li><a href="https://github.com/kaicode/rhinoforms" target="_blank">Rhinoforms on GitHub</a></li>
-			</ul>
-		</div>
-		<div class="clear"></div>
 		
 		
 		<!-- Form Container -->
@@ -105,7 +106,8 @@
 		<div id="nextSteps" style="display: none;">
 			<h3>Next steps</h3>
 			<ul>
-				<li>Enter should navigate forward</li>
+				<li>Identify which html5 validation/type markup could conflict</li>
+				<li>Let html5 validation/type markup prevail if there and supported by browser</li>
 				<li>Write Wiki - explain flows, standard actions, etc</li>
 				<li>Dev tools
 					<ul>
@@ -118,6 +120,7 @@
 				<li>Calculated fields (with validation)</li>
 				<li>Pulling initial XML from a URL (server side)</li>
 				<li>Pushing XML to a URL, allow for result to be injected into the flow data document (server side)</li>
+				<li>Hash URLs and enable back navigation?</li>
 				<li>Return server-side errors for graceful fail-over when javascript disabled?</li>
 			</ul>
 		</div>

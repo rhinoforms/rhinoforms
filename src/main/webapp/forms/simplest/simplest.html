@@ -4,7 +4,9 @@
 <h3>Simplest Example</h3>
 <p>Here we collect one field named 'firstName'. The docBase for this form flow is '/myData' so the field will be bound to a node /myData/firstName. Hit 'Finish' and the data is spat out.</p>
 <form rhinoforms="true">
-	<label for="firstName">First Name:</label><br/>
-	<input type="text" name="firstName"/><br/>
+
+	<label for="input_firstName">First Name:</label>
+	<input id="input_firstName" type="text" name="firstName"/>
+	
 	<button action="finish">Finish</button>
 </form>		

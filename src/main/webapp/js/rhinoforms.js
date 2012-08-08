@@ -56,6 +56,7 @@ function Rhinoforms() {
 				return false;
 			});
 		});
+		$("input[type!='hidden']", $container).first().focus();
 	}
 	
 	this.doAction = function(action, $form, $container) {
