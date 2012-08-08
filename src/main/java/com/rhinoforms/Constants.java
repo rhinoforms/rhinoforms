@@ -13,4 +13,9 @@ public interface Constants {
 	String FLOW_PATH_PARAM = "rf.flowPath";
 	String INIT_DATA_PARAM = "rf.initData";
 	
+	String NAME_ATTR = "name";
+	String TYPE_ATTR = "type";
+	String VALIDATION_ATTR = "rf.validation";
+	String VALIDATION_FUNCTION_ATTR = "rf.validationFunction";
+	
 }

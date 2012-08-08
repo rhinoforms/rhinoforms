@@ -82,10 +82,10 @@ public class FormParser {
 			@SuppressWarnings("unchecked")
 			List<TagNode> inputs = formNode.getElementListByName("input", false);
 			for (TagNode inputTagNode : inputs) {
-				String name = inputTagNode.getAttributeByName("name");
-				String type = inputTagNode.getAttributeByName("type");
-				String validation = inputTagNode.getAttributeByName("validation");
-				String validationFunction = inputTagNode.getAttributeByName("validationFunction");
+				String name = inputTagNode.getAttributeByName(Constants.NAME_ATTR);
+				String type = inputTagNode.getAttributeByName(Constants.TYPE_ATTR);
+				String validation = inputTagNode.getAttributeByName(Constants.VALIDATION_ATTR);
+				String validationFunction = inputTagNode.getAttributeByName(Constants.VALIDATION_FUNCTION_ATTR);
 				
 				String inputValue = lookupValueByFieldName(dataDocument, name, docBase);
 				if (inputValue != null) {

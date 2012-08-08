@@ -99,8 +99,8 @@ function Rhinoforms() {
 			} else {
 				value = $input.val();
 			}
-			var validation = $input.attr('validation');
-			var validationFunction = $input.attr('validationFunction');
+			var validation = $input.attr("rf.validation");
+			var validationFunction = $input.attr("rf.validationFunction");
 			
 			fields[name] = { name:name, value:value, validation:validation, validationFunction:validationFunction };
 		});

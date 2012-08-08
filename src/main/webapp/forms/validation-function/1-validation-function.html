@@ -6,19 +6,19 @@
 <p>Again validation is performed first in the browser and again on the server using the same javascript code.</p>
 <form rhinoforms="true">
 	<label for="firstName">First name:</label><br/>
-	<input type="text" name="firstName" validation="required"/><br/>
+	<input type="text" name="firstName" rf.validation="required"/><br/>
 	<br/>
 	<label for="surname">Surname:</label><br/>
-	<input type="text" name="surname" validation="required"/><br/>
+	<input type="text" name="surname" rf.validation="required"/><br/>
 	<br/>
 	<label for="email">Email:</label><br/>
-	<input type="text" name="email" validation="required email"/><br/>
+	<input type="text" name="email" rf.validation="required email"/><br/>
 	<br/>
 	<label for="veggie">Veggie:</label><br/>
 	<input type="checkbox" name="veggie"/><br/>
 	<br/>
 	<label for="favouriteMeat">Favourite meat:</label><br/>
-	<input type="text" name="favouriteMeat" validationFunction="{ if(fields.veggie.value == false) { this.validate('required'); } }"/><br/>
+	<input type="text" name="favouriteMeat" rf.validationFunction="{ if(fields.veggie.value == false) { this.validate('required'); } }"/><br/>
 	<br/>
 	<button action="finish">Finish</button>
 </form>
