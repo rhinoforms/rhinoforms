@@ -1,0 +1,27 @@
+<html>
+	<head>
+		<title>Rhinoforms</title>
+		<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+		<script type='text/javascript' src='js/rhinoforms.js' ></script>
+		<script type='text/javascript'>
+			var rf = new Rhinoforms();
+			$(window).load(function() {
+				rf.loadFlow('forms/quote-example/quote-example-flow.js', $('#formContainer'), '<customer><name>Kai</name><vehicle>Nissan</vehicle></customer>');
+			})
+		</script>
+		<script type='text/javascript' src="js/eCSStender.js"></script>
+		<link rel="stylesheet" type="text/css" href="css/rhinoform.css" />
+		<link href='http://fonts.googleapis.com/css?family=Pontano+Sans' rel='stylesheet' type='text/css'>
+		<style>
+			body { font-family: 'Pontano Sans', sans-serif; }
+		</style>
+	</head>
+	<body>
+	
+		<!-- Form Container -->
+		<div id="formContainer">
+			Empty form container
+		</div>
+		
+	</body>
+</html>
