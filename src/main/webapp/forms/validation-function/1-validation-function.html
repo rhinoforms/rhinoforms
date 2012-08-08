@@ -7,20 +7,30 @@
 
 <form rhinoforms="true">
 
-	<label for="input_firstName">First name:</label>
-	<input id="input_firstName" type="text" name="firstName" rf.validation="required"/>
+	<div class="field">
+		<label for="input_firstName">First name:</label>
+		<input id="input_firstName" type="text" name="firstName" rf.validation="required"/>
+	</div>
 	
-	<label for="input_surname">Surname:</label>
-	<input id="input_surname" type="text" name="surname" rf.validation="required"/>
+	<div class="field">
+		<label for="input_surname">Surname:</label>
+		<input id="input_surname" type="text" name="surname" rf.validation="required"/>
+	</div>
 	
-	<label for="input_email">Email:</label>
-	<input id="input_email" type="text" name="email" rf.validation="required email"/>
-	
-	<label for="input_veggie">Veggie:</label>
-	<input id="input_veggie" type="checkbox" name="veggie"/>
-	
-	<label for="input_favouriteMeat">Favourite meat:</label>
-	<input id="input_favouriteMeat" type="text" name="favouriteMeat" rf.validationFunction="{ if(fields.veggie.value == false) { this.validate('required'); } }"/>
+	<div class="field">
+		<label for="input_email">Email:</label>
+		<input id="input_email" type="text" name="email" rf.validation="required email"/>
+	</div>
+		
+	<div class="field">
+		<label for="input_veggie">Veggie:</label>
+		<input id="input_veggie" type="checkbox" name="veggie"/>
+	</div>
+		
+	<div class="field">
+		<label for="input_favouriteMeat">Favourite meat:</label>
+		<input id="input_favouriteMeat" type="text" name="favouriteMeat" rf.validationFunction="{ if(fields.veggie.value == false) { this.validate('required'); } }"/>
+	</div>
 	
 	<button action="finish">Finish</button>
 </form>

@@ -6,8 +6,10 @@
 <p>Validation is performed first in the browser but again on the server using the same javascript code.</p>
 <form rhinoforms="true">
 
-	<label for="input_firstName">First Name:</label>
-	<input id="input_firstName" type="text" name="firstName" rf.validation="required"/>
+	<div class="field">
+		<label for="input_firstName">First Name:</label>
+		<input id="input_firstName" type="text" name="firstName" rf.validation="required"/>
+	</div>
 	
 	<button action="next">Next</button>
 </form>

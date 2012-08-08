@@ -5,8 +5,25 @@
 <h4>Customer Details</h4>
 <form rhinoforms="true">
 
-	<label for="input_name">Name:</label>
-	<input id="input_name" type="text" name="name" rf.validation="required"/>
+	<!-- 
+	<div class="field">
+		<label>Do you agree to all of the above?</label>
+		<input id="input_terms_agree" type="radio" name="terms"/>
+		<label for="input_terms_agree" class="forRadio">I agree</label>
+		<input id="input_terms_disagree" type="radio" name="terms" class="radio"/>
+		<label for="input_terms_disagree">I don't agree</label>
+	</div>
+	<div class="field">
+		<label for="input_title">Title:</label>
+		<select id="input_title" name="title" rf.source="resources/titles.txt">
+		</select>
+	</div>
+	 -->
+	
+	<div class="field">
+		<label for="input_name">Name:</label>
+		<input id="input_name" type="text" name="name" rf.validation="required"/>
+	</div>
 	
 	<button action="next">Next</button>
 </form>		

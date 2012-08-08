@@ -16,7 +16,7 @@ button {
 	clear: both;
 }
 
-.menu, .buttons {
+.menu,.buttons {
 	overflow: hidden;
 	width: 100%;
 }
@@ -33,7 +33,15 @@ button[action='back'] {
 	margin-left: 10px;
 }
 
-label, input {
-	display: block;
-	clear: both;
+label {
+	width: 150px;
+	display: inline-block;
+}
+
+.field {
+	margin: 15px 0;
+}
+
+input[type='radio'] + label {
+	width: auto;
 }

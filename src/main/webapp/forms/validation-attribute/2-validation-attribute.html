@@ -6,8 +6,10 @@
 <p>These are built-in keywords. Your own can be added using the rf.enableValidationKeyword method.</p>
 <form rhinoforms="true">
 
-	<label for="input_email">Email:</label>
-	<input id="input_email" type="text" name="email" rf.validation="required email"/>
+	<div class="field">
+		<label for="input_email">Email:</label>
+		<input id="input_email" type="text" name="email" rf.validation="required email"/>
+	</div>
 	
 	<button action="finish">Finish</button>
 	<button action="back">Back</button>
