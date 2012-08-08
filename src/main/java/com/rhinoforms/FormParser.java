@@ -73,14 +73,15 @@ public class FormParser {
 			parent.removeChild(forEachNode);
 		}
 
-		Object[] rfFormNodes = documentNode.evaluateXPath("//form[@" + Constants.RHINOFORM_FLAG + "='true']");
+		Object[] rfFormNodes = documentNode.evaluateXPath("//form[@" + Constants.RHINOFORMS_FLAG + "='true']");
 		if (rfFormNodes.length > 0) {
 			LOGGER.debug(rfFormNodes.length + " forms found.");
 			TagNode formNode = (TagNode) rfFormNodes[0];
-
+			
+			// Record input fields
 			List<InputPojo> inputPojos = new ArrayList<InputPojo>();
 			@SuppressWarnings("unchecked")
-			List<TagNode> inputs = formNode.getElementListByName("input", false);
+			List<TagNode> inputs = formNode.getElementListByName("input", true);
 			for (TagNode inputTagNode : inputs) {
 				String name = inputTagNode.getAttributeByName(Constants.NAME_ATTR);
 				String type = inputTagNode.getAttributeByName(Constants.TYPE_ATTR);
@@ -96,38 +97,42 @@ public class FormParser {
 
 				LOGGER.debug("input " + name + " - validation:" + validation);
 			}
-
 			formFlow.setCurrentInputPojos(inputPojos);
 
-			formNode.setAttribute("parsed", "true");
+			// Add flowId as hidden field
 			TagNode flowIdNode = new TagNode("input");
 			flowIdNode.setAttribute("name", Constants.FLOW_ID_FIELD_NAME);
 			flowIdNode.setAttribute("type", "hidden");
 			flowIdNode.setAttribute("value", formFlow.getId() + "");
 			formNode.insertChild(0, flowIdNode);
 
-			Scriptable scope = formFlow.getScope();
-
-			String script = Constants.RHINOFORM_SCRIPT;
-			Context jsContext = Context.enter();
-			try {
-				jsContext.evaluateReader(scope, new InputStreamReader(resourceLoader.getResourceAsStream(script)), script, 1, null);
-
-				Object[] rfScriptNodes = documentNode.evaluateXPath("//script[@" + Constants.RHINOFORM_FLAG + "='true']");
-				TagNode rfScriptNode = null;
-				for (Object rfScriptNodeObject : rfScriptNodes) {
-					rfScriptNode = (TagNode) rfScriptNodeObject;
-					StringBuffer rfScriptNodeScript = rfScriptNode.getText();
-					String rfScriptNodeScriptText = rfScriptNodeScript.toString();
-					jsContext.evaluateString(scope, rfScriptNodeScriptText, "<cmd>", 1, null);
-				}
-				new SimpleHtmlSerializer(cleaner.getProperties()).write(documentNode, writer, "utf-8");
-			} finally {
-				Context.exit();
-			}
+			// Mark form as parsed
+			formNode.setAttribute("parsed", "true");
 		} else {
 			LOGGER.warn("No forms found");
 		}
+			
+		// Evaluate javascript on the page
+		Context jsContext = Context.enter();
+		try {
+			Scriptable scope = formFlow.getScope();
+			String script = Constants.RHINOFORM_SCRIPT;
+			jsContext.evaluateReader(scope, new InputStreamReader(resourceLoader.getResourceAsStream(script)), script, 1, null);
+
+			Object[] rfScriptNodes = documentNode.evaluateXPath("//script[@" + Constants.RHINOFORMS_FLAG + "='true']");
+			TagNode rfScriptNode = null;
+			for (Object rfScriptNodeObject : rfScriptNodes) {
+				rfScriptNode = (TagNode) rfScriptNodeObject;
+				StringBuffer rfScriptNodeScript = rfScriptNode.getText();
+				String rfScriptNodeScriptText = rfScriptNodeScript.toString();
+				jsContext.evaluateString(scope, rfScriptNodeScriptText, "<cmd>", 1, null);
+			}
+		} finally {
+			Context.exit();
+		}
+		
+		// Write out processed document
+		new SimpleHtmlSerializer(cleaner.getProperties()).write(documentNode, writer, "utf-8");
 	}
 
 	private String lookupValueByFieldName(Node document, String name, String docBase) throws XPathExpressionException {
