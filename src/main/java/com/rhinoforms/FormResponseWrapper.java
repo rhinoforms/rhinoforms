@@ -14,6 +14,9 @@ import javax.xml.xpath.XPathExpressionException;
 
 import org.htmlcleaner.XPatherException;
 
+import com.rhinoforms.resourceloader.ResourceLoader;
+import com.rhinoforms.resourceloader.ResourceLoaderException;
+
 public class FormResponseWrapper extends HttpServletResponseWrapper {
 
 	private CharArrayWriter charArrayWriter;
@@ -37,7 +40,7 @@ public class FormResponseWrapper extends HttpServletResponseWrapper {
 	}
 
 	public void parseResponseAndWrite(ServletContext servletContext, FormFlow formFlow)
-			throws IOException, XPatherException, TransformerConfigurationException, XPathExpressionException {
+			throws IOException, XPatherException, TransformerConfigurationException, XPathExpressionException, ResourceLoaderException {
 
 		printWriterOutputStream.flush();
 		printWriterOutputStream.close();

@@ -23,6 +23,7 @@ public class FormFlow {
 	private Document dataDocument;
 	private String docBase;
 	private String flowDocBase;
+	private Map<String, FieldSourceProxy> fieldSourceProxies;
 
 	private DocumentHelper documentHelper;
 
@@ -37,6 +38,7 @@ public class FormFlow {
 		this.id = (int) (Math.random() * 100000000f);
 		this.scope = scope;
 		this.formLists = new HashMap<String, List<Form>>();
+		this.fieldSourceProxies = new HashMap<String, FieldSourceProxy>();
 	}
 
 	public String navigateToFirstForm() {
@@ -46,6 +48,8 @@ public class FormFlow {
 	}
 
 	public String doAction(String action, Map<String, String> paramsFromFontend) throws ActionError {
+		clearFormSpecificResources();
+		
 		FlowAction flowAction = getAction(action);
 		Map<String, String> actionParams = filterActionParams(paramsFromFontend, flowAction.getParams());
 		String actionName = flowAction.getName();
@@ -98,6 +102,10 @@ public class FormFlow {
 		return currentForm.getPath();
 	}
 
+	private void clearFormSpecificResources() {
+		clearFieldSourceProxies();
+	}
+
 	public FlowAction getAction(String action) throws ActionError {
 		Map<String, FlowAction> actions = currentForm.getActions();
 		if (actions.containsKey(action)) {
@@ -120,13 +128,25 @@ public class FormFlow {
 		}
 		return filteredActionParams;
 	}
-
+	
 	public String getCurrentPath() {
 		return currentForm.getPath();
 	}
 
 	public void addFormList(String listName, List<Form> formList) {
 		this.formLists.put(listName, formList);
+	}
+
+	public void addFieldSourceProxy(FieldSourceProxy fieldSourceProxy) {
+		fieldSourceProxies.put(fieldSourceProxy.getProxyPath(), fieldSourceProxy);
+	}
+	
+	public FieldSourceProxy getFieldSourceProxy(String proxyPath) {
+		return fieldSourceProxies.get(proxyPath);
+	}
+	
+	public void clearFieldSourceProxies() {
+		fieldSourceProxies.clear();
 	}
 
 	public int getId() {

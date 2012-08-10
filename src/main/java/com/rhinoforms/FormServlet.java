@@ -1,7 +1,6 @@
 package com.rhinoforms;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -26,6 +25,8 @@ import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
+import com.rhinoforms.resourceloader.ResourceLoader;
+import com.rhinoforms.resourceloader.ServletResourceLoader;
 import com.rhinoforms.serverside.InputPojo;
 
 @SuppressWarnings("serial")
@@ -36,35 +37,52 @@ public class FormServlet extends HttpServlet {
 	private FormFlowFactory formFlowFactory;
 	private DocumentHelper documentHelper;
 	private ResourceLoader resourceLoader;
+	private static final String PROXY_ERROR_MESSAGE = "Failed to perform proxy request.";
 
 	@Override
 	public void init() throws ServletException {
 		this.formFlowFactory = new FormFlowFactory();
 		this.documentHelper = new DocumentHelper();
-		this.resourceLoader = new ResourceLoader() {
-			@Override
-			public InputStream getResourceAsStream(String path) {
-				return getServletContext().getResourceAsStream(path);
-			}
-		};
+		this.resourceLoader = new ServletResourceLoader(getServletContext());
 	}
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		String formFlowPath = request.getParameter(Constants.FLOW_PATH_PARAM);
-		String initData = request.getParameter(Constants.INIT_DATA_PARAM);
-
-		Context jsContext = Context.enter();
-		try {
-			String realFormFlowPath = getServletContext().getRealPath(formFlowPath);
-			FormFlow newFormFlow = formFlowFactory.createFlow(realFormFlowPath, jsContext, initData);
-			SessionHelper.addFlow(newFormFlow, request.getSession());
-			String formUrl = newFormFlow.navigateToFirstForm();
-			loadForm(request, response, newFormFlow, formUrl);
-		} catch (FormFlowFactoryException e) {
-			throw new ServletException(e.getMessage(), e);
-		} finally {
-			Context.exit();
+		String pathInfo = request.getPathInfo();
+		HttpSession session = request.getSession();
+		
+		if (pathInfo != null) {
+			LOGGER.debug("pathInfo = " + pathInfo);
+			String proxyPathPrefix = "/proxy/";
+			if (pathInfo.startsWith(proxyPathPrefix)) {
+				// Proxy request
+				String proxyPath = pathInfo.substring(proxyPathPrefix.length());
+				FormFlow formFlow = getFlow(request);
+				FieldSourceProxy fieldSourceProxy = formFlow.getFieldSourceProxy(proxyPath);
+				String valueParam = request.getParameter("value");
+				try {
+					fieldSourceProxy.makeRequest(valueParam, response);
+				} catch (FieldSourceProxyException e) {
+					response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, PROXY_ERROR_MESSAGE);
+				}
+			}
+		} else {
+			// Create requested form flow
+			String formFlowPath = request.getParameter(Constants.FLOW_PATH_PARAM);
+			String initData = request.getParameter(Constants.INIT_DATA_PARAM);
+			
+			Context jsContext = Context.enter();
+			try {
+				String realFormFlowPath = getServletContext().getRealPath(formFlowPath);
+				FormFlow newFormFlow = formFlowFactory.createFlow(realFormFlowPath, jsContext, initData);
+				SessionHelper.addFlow(newFormFlow, session);
+				String formUrl = newFormFlow.navigateToFirstForm();
+				loadForm(request, response, newFormFlow, formUrl);
+			} catch (FormFlowFactoryException e) {
+				throw new ServletException(e.getMessage(), e);
+			} finally {
+				Context.exit();
+			}
 		}
 	}
 
@@ -84,9 +102,8 @@ public class FormServlet extends HttpServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		HttpSession session = request.getSession();
-
-		int flowId = Integer.parseInt(request.getParameter(Constants.FLOW_ID_FIELD_NAME));
+		FormFlow formFlow = getFlow(request);
+		
 		String action = request.getParameter("rf.action");
 
 		@SuppressWarnings("unchecked")
@@ -101,7 +118,6 @@ public class FormServlet extends HttpServlet {
 			actionParams.putAll(actionParamsFromString);
 		}
 
-		FormFlow formFlow = SessionHelper.getFlow(flowId, session);
 		Scriptable scope = formFlow.getScope();
 
 		if (scope != null) {
@@ -196,6 +212,18 @@ public class FormServlet extends HttpServlet {
 		}
 	}
 
+	private FormFlow getFlow(HttpServletRequest request) throws ServletException {
+		String parameter = request.getParameter(Constants.FLOW_ID_FIELD_NAME);
+		if (parameter != null && parameter.matches("\\d+")) {
+			int flowId = Integer.parseInt(parameter);
+			HttpSession session = request.getSession();
+			FormFlow formFlow = SessionHelper.getFlow(flowId, session);
+			return formFlow;
+		} else {
+			throw new ServletException("Missing " + Constants.FLOW_ID_FIELD_NAME);
+		}
+	}
+	
 	public Map<String, String> paramsStringToMap(String params) {
 		Map<String, String> paramsMap = new HashMap<String, String>();
 		if (params != null) {

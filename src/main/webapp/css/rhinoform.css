@@ -42,6 +42,25 @@ label {
 	margin: 15px 0;
 }
 
-input[type='radio'] + label {
+input[type='radio']+label {
 	width: auto;
+}
+
+.rf-dropdown {
+	position: absolute;
+	height: 9em;
+	overflow-y: scroll;
+}
+
+.rf-dropdown ul {
+	margin: 0;
+	padding: 0;
+}
+
+.rf-dropdown li {
+	list-style-type: none;
+}
+
+.rf-dropdown li:hover {
+	background-color: lightblue;
 }

@@ -1,4 +1,4 @@
-package com.rhinoforms;
+package com.rhinoforms.resourceloader;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;

@@ -15,6 +15,7 @@ import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.io.output.StringBuilderWriter;
 import org.apache.log4j.Logger;
+import org.htmlcleaner.ContentNode;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.SimpleHtmlSerializer;
 import org.htmlcleaner.TagNode;
@@ -25,29 +26,36 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.rhinoforms.resourceloader.ResourceLoader;
+import com.rhinoforms.resourceloader.ResourceLoaderException;
 import com.rhinoforms.serverside.InputPojo;
 
 public class FormParser {
 
-	private ResourceLoader resourceLoader;
-	
 	private static final FieldPathHelper fieldPathHelper = new FieldPathHelper();
 	private static final XPathFactory xPathFactory = XPathFactory.newInstance();
 	private static final Pattern CURLY_BRACKET_CONTENTS_PATTERN = Pattern.compile(".*?\\{([^}]+)\\}.*", Pattern.DOTALL);
 	private static final Logger LOGGER = Logger.getLogger(FormParser.class);
 
+	private ResourceLoader resourceLoader;
+	private SelectOptionHelper selectOptionHelper;
+	private ProxyFactory proxyFactory;
+
 	public FormParser(ResourceLoader resourceLoader) {
 		this.resourceLoader = resourceLoader;
+		this.selectOptionHelper = new SelectOptionHelper(resourceLoader);
+		this.proxyFactory = new ProxyFactory();
 	}
 
 	public void parseForm(String formContents, FormFlow formFlow, PrintWriter writer) throws XPatherException, XPathExpressionException,
-			IOException {
+			IOException, ResourceLoaderException {
 
 		HtmlCleaner cleaner = new HtmlCleaner();
 		TagNode documentNode = cleaner.clean(formContents);
 
 		Document dataDocument = formFlow.getDataDocument();
 		String docBase = formFlow.getDocBase();
+		String currentPath = formFlow.getCurrentPath();
 
 		// Process rf.forEach statements
 		Object[] forEachNodes = documentNode.evaluateXPath("//rf.forEach");
@@ -77,7 +85,38 @@ public class FormParser {
 		if (rfFormNodes.length > 0) {
 			LOGGER.debug(rfFormNodes.length + " forms found.");
 			TagNode formNode = (TagNode) rfFormNodes[0];
+
+			// Process dynamic select elements
+			Object[] dynamicSelectNodes = formNode.evaluateXPath("//select[@" + Constants.SELECT_SOURCE_ATTR + "]");
+			for (Object dynamicSelectNodeO : dynamicSelectNodes) {
+				TagNode dynamicSelectNode = (TagNode) dynamicSelectNodeO;
+				String name = dynamicSelectNode.getAttributeByName(Constants.NAME_ATTR);
+				String source = dynamicSelectNode.getAttributeByName(Constants.SELECT_SOURCE_ATTR);
+				dynamicSelectNode.removeAttribute(Constants.SELECT_SOURCE_ATTR);
+				LOGGER.debug("Found dynamicSelectNode name:" + name + ", source:" + source);
+
+				List<SelectOptionPojo> options = selectOptionHelper.loadOptions(source);
+				options.add(0, new SelectOptionPojo("-- Please Select --"));
+				for (SelectOptionPojo selectOptionPojo : options) {
+					TagNode optionNode = new TagNode("option");
+					optionNode.addChild(new ContentNode(selectOptionPojo.getText()));
+					dynamicSelectNode.addChild(optionNode);
+				}
+			} // TODO: validate that submitted value comes from the list
 			
+			// Process auto-complete fields
+			Object[] autoCompleteNodes = formNode.evaluateXPath("//input[@" + Constants.SELECT_SOURCE_ATTR + "]");
+			for (Object autoCompleteNodeO : autoCompleteNodes) {
+				TagNode autoCompleteNode = (TagNode) autoCompleteNodeO;
+				String fieldName = autoCompleteNode.getAttributeByName(Constants.NAME_ATTR);
+				String source = autoCompleteNode.getAttributeByName(Constants.INPUT_SOURCE_ATTR);
+				
+				FieldSourceProxy fieldSourceProxy = proxyFactory.createFlowProxy(currentPath, fieldName, source);
+				formFlow.addFieldSourceProxy(fieldSourceProxy);
+				autoCompleteNode.removeAttribute(Constants.INPUT_SOURCE_ATTR);
+				autoCompleteNode.setAttribute("rf.source", "form/proxy/" + fieldSourceProxy.getProxyPath());
+			}
+
 			// Record input fields
 			List<InputPojo> inputPojos = new ArrayList<InputPojo>();
 			@SuppressWarnings("unchecked")
@@ -87,7 +126,7 @@ public class FormParser {
 				String type = inputTagNode.getAttributeByName(Constants.TYPE_ATTR);
 				String validation = inputTagNode.getAttributeByName(Constants.VALIDATION_ATTR);
 				String validationFunction = inputTagNode.getAttributeByName(Constants.VALIDATION_FUNCTION_ATTR);
-				
+
 				String inputValue = lookupValueByFieldName(dataDocument, name, docBase);
 				if (inputValue != null) {
 					inputTagNode.setAttribute("value", inputValue);
@@ -111,7 +150,7 @@ public class FormParser {
 		} else {
 			LOGGER.warn("No forms found");
 		}
-			
+
 		// Evaluate javascript on the page
 		Context jsContext = Context.enter();
 		try {
@@ -130,7 +169,7 @@ public class FormParser {
 		} finally {
 			Context.exit();
 		}
-		
+
 		// Write out processed document
 		new SimpleHtmlSerializer(cleaner.getProperties()).write(documentNode, writer, "utf-8");
 	}
@@ -150,14 +189,14 @@ public class FormParser {
 
 	private void replaceCurlyBrackets(StringBuilder builder, Node node, int dataNodeindex) throws XPathExpressionException {
 		StringBuffer completedText = new StringBuffer();
-		
+
 		String nodeName = node.getNodeName();
 		Matcher matcher = CURLY_BRACKET_CONTENTS_PATTERN.matcher(builder);
 		while (matcher.matches()) {
 			// get brackets contents
 			String group = matcher.group(1);
 			if (group.startsWith(nodeName + ".")) {
-				
+
 				String value = null;
 				if (group.equals(nodeName + ".index")) {
 					value = "" + dataNodeindex;
@@ -171,10 +210,10 @@ public class FormParser {
 						value = item.getTextContent();
 					}
 				}
-				
+
 				int groupStart = builder.indexOf("{" + group + "}");
 				int groupEnd = groupStart + group.length() + 2;
-				
+
 				int end;
 				if (value != null) {
 					builder.replace(groupStart, groupEnd, value);
@@ -187,10 +226,10 @@ public class FormParser {
 			}
 			matcher = CURLY_BRACKET_CONTENTS_PATTERN.matcher(builder);
 		}
-		
+
 		completedText.append(builder);
 		builder.delete(0, builder.length());
 		builder.append(completedText);
 	}
-	
+
 }

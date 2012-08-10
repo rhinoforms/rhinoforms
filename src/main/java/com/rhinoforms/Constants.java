@@ -17,5 +17,8 @@ public interface Constants {
 	String TYPE_ATTR = "type";
 	String VALIDATION_ATTR = "rf.validation";
 	String VALIDATION_FUNCTION_ATTR = "rf.validationFunction";
+
+	String SELECT_SOURCE_ATTR = "rf.source";
+	String INPUT_SOURCE_ATTR = SELECT_SOURCE_ATTR;
 	
 }

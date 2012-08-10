@@ -1,19 +1,25 @@
 function Rhinoforms() {
 	
+	// Should be configurable
+	this.alertOnSetupError = true;
+	
+	// For internal use
 	this.validationKeywords;
+	this.customTypes;
 	
 	this.init = function() {
 		this.validationKeywords = {};
+		this.customTypes = {};
 		
 		// Enable the 'required' validation keyword
-		this.enableValidationKeyword("required", function(name, value) {
+		this.registerValidationKeyword("required", function(name, value) {
 			if (value.length == 0) {
 				return name + " is required.";
 			}
 		});
 
 		// Enable the 'email' validation function
-		this.enableValidationKeyword("email", function(name, value) {
+		this.registerValidationKeyword("email", function(name, value) {
 			var reg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
 			if (reg.test(value) != true) {
 				return name + " is not a valid email address.";
@@ -21,8 +27,12 @@ function Rhinoforms() {
 		});
 	}
 	
-	this.enableValidationKeyword = function(keyword, func) {
+	this.registerValidationKeyword = function(keyword, func) {
 		this.validationKeywords[keyword] = func;
+	}
+	
+	this.registerCustomType = function(keyword, func) {
+		this.customTypes[keyword] = func;
 	}
 	
 	this.loadFlow = function(flowPath, $container, initData) {
@@ -43,10 +53,32 @@ function Rhinoforms() {
 	}
 	
 	this.insertForm = function(html, $container) {
+		var rf = this;
+		
+		// Insert html
 		$container.html(html);
+		
+		this.flowId = $("[name='rf.flowId']").val();
+		
+		// Disable standard form submission
 		$("form", $container).submit(function() {
 			return false;
 		})
+		
+		// Process customTypes
+		$("input[rf\\.customType]", $container).each(function() {
+			var input = this;
+			var $input = $(input);
+			var customType = $input.attr("rf.customType");
+			if (rf.customTypes[customType]) {
+				var customTypeFunction = rf.customTypes[customType];
+				customTypeFunction(input, rf.flowId);
+			} else {
+				rf.setupError("Input custom-type not found '" + customType + "'.")
+			}
+		})
+		
+		// Wire action buttons
 		$("form", $container).each(function() {
 			var $form = $(this);
 			$form.attr("action", "javascript: void(0)");
@@ -56,6 +88,8 @@ function Rhinoforms() {
 				return false;
 			});
 		});
+		
+		// Give first input focus
 		$("input[type!='hidden']", $container).first().focus();
 	}
 	
@@ -194,6 +228,11 @@ function Rhinoforms() {
 	this.validateEmail = function(email) {
 		var reg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
 		return reg.test(email);
+	}
+	
+	this.setupError = function(message) {
+		if (this.alertOnSetupError) alert(message);
+		this.trace(message);
 	}
 	
 	this.trace = function(message) {

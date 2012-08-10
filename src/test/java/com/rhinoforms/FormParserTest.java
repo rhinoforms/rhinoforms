@@ -15,6 +15,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 
+import com.rhinoforms.resourceloader.ResourceLoader;
+
 public class FormParserTest {
 
 	private FormParser formParser;
@@ -25,6 +27,7 @@ public class FormParserTest {
 	public void setup() throws Exception {
 		this.formParser = new FormParser(resourceLoader);
 		this.formFlow = new FormFlowFactory().createFlow("src/test/resources/test-flow1.js", Context.enter(), "<myData><fishes><fish><name>One</name></fish><fish><name>Two</name></fish></fishes></myData>");
+		this.formFlow.navigateToFirstForm();
 	}
 
 	@Test
