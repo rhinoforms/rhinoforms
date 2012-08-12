@@ -6,8 +6,9 @@ import java.util.Map;
 
 import javax.xml.xpath.XPathExpressionException;
 
-import org.apache.log4j.Logger;
 import org.mozilla.javascript.Scriptable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
 import com.rhinoforms.serverside.InputPojo;
@@ -32,8 +33,8 @@ public class FormFlow {
 	public static final String CANCEL_ACTION = "cancel";
 	public static final String FINISH_ACTION = "finish";
 
-	private static final Logger LOGGER = Logger.getLogger(FormFlow.class);
-
+	final Logger logger = LoggerFactory.getLogger(FormFlow.class);
+	
 	public FormFlow(Scriptable scope) {
 		this.id = (int) (Math.random() * 100000000f);
 		this.scope = scope;
@@ -187,7 +188,7 @@ public class FormFlow {
 
 	public void setDocBase(String docBase) {
 		if (!docBase.equals(this.docBase)) {
-			LOGGER.debug("New doc base: " + docBase);
+			logger.debug("New doc base: {}", docBase);
 		}
 		this.docBase = docBase;
 	}

@@ -19,11 +19,12 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.xml.transform.TransformerException;
 
-import org.apache.log4j.Logger;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rhinoforms.resourceloader.ResourceLoader;
 import com.rhinoforms.resourceloader.ServletResourceLoader;
@@ -32,7 +33,7 @@ import com.rhinoforms.serverside.InputPojo;
 @SuppressWarnings("serial")
 public class FormServlet extends HttpServlet {
 
-	private static final Logger LOGGER = Logger.getLogger(FormServlet.class);
+	final Logger logger = LoggerFactory.getLogger(FormServlet.class);
 	private static final String UTF8 = "UTF-8";
 	private FormFlowFactory formFlowFactory;
 	private DocumentHelper documentHelper;
@@ -52,7 +53,7 @@ public class FormServlet extends HttpServlet {
 		HttpSession session = request.getSession();
 		
 		if (pathInfo != null) {
-			LOGGER.debug("pathInfo = " + pathInfo);
+			logger.debug("pathInfo = {}", pathInfo);
 			String proxyPathPrefix = "/proxy/";
 			if (pathInfo.startsWith(proxyPathPrefix)) {
 				// Proxy request
@@ -95,7 +96,7 @@ public class FormServlet extends HttpServlet {
 			formResponseWrapper.parseResponseAndWrite(getServletContext(), formFlow);
 		} catch (Exception e) {
 			String message = "Failed to load next form.";
-			LOGGER.error(message, e);
+			logger.error(message, e);
 			throw new ServletException(message);
 		}
 	}
@@ -133,7 +134,7 @@ public class FormServlet extends HttpServlet {
 				}
 
 				String jsPojoMap = inputPOJOListtoJS(inputPOJOs);
-				LOGGER.debug("inputPojos as js:" + jsPojoMap);
+				logger.debug("inputPojos as js:{}", jsPojoMap);
 
 				StringBuilder commandStringBuilder = new StringBuilder();
 				commandStringBuilder.append("rf.validateFields(");
@@ -171,7 +172,7 @@ public class FormServlet extends HttpServlet {
 						documentHelper.persistFormData(inputPOJOs, docBase, formFlow.getDataDocument());
 					} catch (DocumentHelperException e) {
 						String message = "Failed to map field to xml document.";
-						LOGGER.error(message, e);
+						logger.error(message, e);
 						throw new ServletException(message, e);
 					}
 				}
@@ -184,7 +185,7 @@ public class FormServlet extends HttpServlet {
 					try {
 						nextUrl = formFlow.doAction(action, actionParams);
 					} catch (ActionError e) {
-						LOGGER.error(e, e);
+						logger.error(e.getMessage(), e);
 						throw new ServletException(e);
 					}
 				}
@@ -200,7 +201,7 @@ public class FormServlet extends HttpServlet {
 						documentHelper.documentToWriterPretty(formFlow.getDataDocument(), writer);
 					} catch (TransformerException e) {
 						String message = "Failed to output the underlaying xml data.";
-						LOGGER.error(message, e);
+						logger.error(message, e);
 						response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message);
 					}
 				}
@@ -236,7 +237,7 @@ public class FormServlet extends HttpServlet {
 					try {
 						paramValue = URLDecoder.decode(paramValue, UTF8);
 					} catch (UnsupportedEncodingException e) {
-						LOGGER.warn("UnsupportedEncodingException while decoding paramValue:'" + paramValue + "', using " + UTF8, e);
+						logger.warn("UnsupportedEncodingException while decoding paramValue:'{}', using " + UTF8, paramValue, e);
 					}
 					paramsMap.put(paramName, paramValue);
 				}

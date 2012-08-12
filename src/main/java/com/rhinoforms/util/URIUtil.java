@@ -6,11 +6,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class URIUtil {
 
-	private static final Logger LOGGER = Logger.getLogger(URIUtil.class);
+	final Logger logger = LoggerFactory.getLogger(URIUtil.class);
 	private static final String UTF8 = "UTF-8";
 	
 	public Map<String, String> paramsStringToMap(String params) {
@@ -25,7 +26,7 @@ public class URIUtil {
 					try {
 						paramValue = URLDecoder.decode(paramValue, UTF8);
 					} catch (UnsupportedEncodingException e) {
-						LOGGER.warn("UnsupportedEncodingException while decoding paramValue:'" + paramValue + "', using " + UTF8, e);
+						logger.warn("UnsupportedEncodingException while decoding paramValue:'{}', using " + UTF8, paramValue, e);
 					}
 					paramsMap.put(paramName, paramValue);
 				}

@@ -20,7 +20,8 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -30,8 +31,8 @@ import com.rhinoforms.serverside.InputPojo;
 public class DocumentHelper {
 
 	private XPathFactory xPathFactory;
-	
-	private static final Logger LOGGER = Logger.getLogger(DocumentHelper.class);
+
+	final Logger logger = LoggerFactory.getLogger(DocumentHelper.class);
 
 	public DocumentHelper() {
 		this.xPathFactory = XPathFactory.newInstance();
@@ -104,11 +105,11 @@ public class DocumentHelper {
 		NodeList nodeSet = lookup(doc, newXPath(progressiveXpath));
 		Node nextNode;
 		if (nodeSet.getLength() == 0) {
-			LOGGER.debug("Creating node at " + progressiveXpath);
+			logger.debug("Creating node at {}", progressiveXpath);
 			nextNode = doc.createElement(cleanNodeName(nodeToFindOrCreate));
 			currentNode.appendChild(nextNode);
 		} else if (nodeSet.getLength() == 1){
-			LOGGER.debug("Found node at " + progressiveXpath);
+			logger.debug("Found node at {}", progressiveXpath);
 			nextNode = nodeSet.item(0);
 		} else {
 			throw new DocumentHelperException("Node list should contain one element. XPath:'" + progressiveXpath + "', node count:" + nodeSet.getLength());

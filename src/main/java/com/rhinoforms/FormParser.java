@@ -14,7 +14,6 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.io.output.StringBuilderWriter;
-import org.apache.log4j.Logger;
 import org.htmlcleaner.ContentNode;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.SimpleHtmlSerializer;
@@ -22,6 +21,8 @@ import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPatherException;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -35,7 +36,7 @@ public class FormParser {
 	private static final FieldPathHelper fieldPathHelper = new FieldPathHelper();
 	private static final XPathFactory xPathFactory = XPathFactory.newInstance();
 	private static final Pattern CURLY_BRACKET_CONTENTS_PATTERN = Pattern.compile(".*?\\{([^}]+)\\}.*", Pattern.DOTALL);
-	private static final Logger LOGGER = Logger.getLogger(FormParser.class);
+	final Logger logger = LoggerFactory.getLogger(FormParser.class);
 
 	private ResourceLoader resourceLoader;
 	private SelectOptionHelper selectOptionHelper;
@@ -83,7 +84,7 @@ public class FormParser {
 
 		Object[] rfFormNodes = documentNode.evaluateXPath("//form[@" + Constants.RHINOFORMS_FLAG + "='true']");
 		if (rfFormNodes.length > 0) {
-			LOGGER.debug(rfFormNodes.length + " forms found.");
+			logger.debug("{} forms found.", rfFormNodes.length);
 			TagNode formNode = (TagNode) rfFormNodes[0];
 
 			// Process dynamic select elements
@@ -93,7 +94,7 @@ public class FormParser {
 				String name = dynamicSelectNode.getAttributeByName(Constants.NAME_ATTR);
 				String source = dynamicSelectNode.getAttributeByName(Constants.SELECT_SOURCE_ATTR);
 				dynamicSelectNode.removeAttribute(Constants.SELECT_SOURCE_ATTR);
-				LOGGER.debug("Found dynamicSelectNode name:" + name + ", source:" + source);
+				logger.debug("Found dynamicSelectNode name:{}, source:{}", name, source);
 
 				List<SelectOptionPojo> options = selectOptionHelper.loadOptions(source);
 				options.add(0, new SelectOptionPojo("-- Please Select --"));
@@ -134,7 +135,7 @@ public class FormParser {
 
 				inputPojos.add(new InputPojo(name, type, validation, validationFunction));
 
-				LOGGER.debug("input " + name + " - validation:" + validation);
+				logger.debug("input {} - validation:{}", name, validation);
 			}
 			formFlow.setCurrentInputPojos(inputPojos);
 
@@ -148,7 +149,7 @@ public class FormParser {
 			// Mark form as parsed
 			formNode.setAttribute("parsed", "true");
 		} else {
-			LOGGER.warn("No forms found");
+			logger.warn("No forms found");
 		}
 
 		// Evaluate javascript on the page
@@ -181,8 +182,8 @@ public class FormParser {
 		if (nodeList != null && nodeList.getLength() == 1) {
 			inputValue = nodeList.item(0).getTextContent();
 		} else if (nodeList != null && nodeList.getLength() > 1) {
-			LOGGER.warn("Multiple nodes matched for documentBasePath: '" + docBase + "', field name: '" + name
-					+ "'. No value will be pushed into the form and there may be submission problems.");
+			logger.warn("Multiple nodes matched for documentBasePath: '{}', field name: '{}"
+					+ "'. No value will be pushed into the form and there may be submission problems.", docBase, name);
 		}
 		return inputValue;
 	}

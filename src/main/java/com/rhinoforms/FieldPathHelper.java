@@ -4,12 +4,13 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FieldPathHelper {
 
 	private XPathFactory xPathFactory;
-	private static final Logger LOGGER = Logger.getLogger(FieldPathHelper.class);
+	final Logger logger = LoggerFactory.getLogger(FieldPathHelper.class);
 
 	public FieldPathHelper() {
 		this.xPathFactory = XPathFactory.newInstance();
@@ -21,7 +22,7 @@ public class FieldPathHelper {
 	
 	public String fieldToXPathString(String documentBasePath, String fieldName) {
 		String xPathString = documentBasePath + "/" + fieldName.replaceAll("\\.", "/");
-		LOGGER.debug("field name:" + fieldName + ", xPathString:" + xPathString);
+		logger.debug("field name:{}, xPathString:{}", fieldName, xPathString);
 		return xPathString;
 	}
 	

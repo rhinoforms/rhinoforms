@@ -27,7 +27,8 @@ import org.apache.http.protocol.RequestContent;
 import org.apache.http.protocol.RequestExpectContinue;
 import org.apache.http.protocol.RequestTargetHost;
 import org.apache.http.protocol.RequestUserAgent;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rhinoforms.util.StreamUtils;
 
@@ -38,7 +39,7 @@ public class FieldSourceProxy {
 	
 	private static StreamUtils streamUtils = new StreamUtils();
 
-	private static final Logger LOGGER = Logger.getLogger(FieldSourceProxy.class);
+	final Logger logger = LoggerFactory.getLogger(FieldSourceProxy.class);
 
 	public FieldSourceProxy(String proxyPath, String url) {
 		this.proxyPath = proxyPath;
@@ -55,7 +56,7 @@ public class FieldSourceProxy {
 
 	public void makeRequest(String value, HttpServletResponse response) throws FieldSourceProxyException {
 		String thisUrl = url.replace("{value}", value);
-		LOGGER.debug("Proxying url " + thisUrl);
+		logger.debug("Proxying url {}", thisUrl);
 		
 		DefaultHttpClientConnection conn = null;
 		try {
@@ -126,26 +127,26 @@ public class FieldSourceProxy {
 				}
 			}
 		} catch (IllegalArgumentException e) {
-			LOGGER.error("Proxy URL problem '" + thisUrl + "'", e);
+			logger.error("Proxy URL problem '{}'", thisUrl, e);
 			throw new FieldSourceProxyException();
 		} catch (URISyntaxException e) {
-			LOGGER.error("Proxy URL problem '" + thisUrl + "'", e);
+			logger.error("Proxy URL problem '{}'", thisUrl, e);
 			throw new FieldSourceProxyException();
 		} catch (UnknownHostException e) {
-			LOGGER.error("Proxy URL problem '" + thisUrl + "'", e);
+			logger.error("Proxy URL problem '{}'", thisUrl, e);
 			throw new FieldSourceProxyException();
 		} catch (IOException e) {
-			LOGGER.error("Proxy URL problem '" + thisUrl + "'", e);
+			logger.error("Proxy URL problem '{}'", thisUrl, e);
 			throw new FieldSourceProxyException();
 		} catch (HttpException e) {
-			LOGGER.error("Proxy URL problem '" + thisUrl + "'", e);
+			logger.error("Proxy URL problem '{}'", thisUrl, e);
 			throw new FieldSourceProxyException();
 		} finally {
 			if (conn != null) {
 				try {
 					conn.close();
 				} catch (IOException e) {
-					LOGGER.error("Failed to close connection to proxy url.", e);
+					logger.error("Failed to close connection to proxy url.", e);
 				}
 			}
 		}
