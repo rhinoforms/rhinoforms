@@ -35,7 +35,7 @@
 	
 	<div class="field">
 		<label for="input_occupation">What do you do for a living?:</label>
-		<input id="input_occupation" type="text" name="occupation" rf.validation="required" rf.customType="auto-complete-select" rf.source="http://www.bigggg.com/resource-manager/REST/files/itb-resources-test2/lists/_itbLists-occupationSheet.xml?transformer=xslt&xslt=/itb-resources-test2/lists/occupationLookupTransformJSONmin.xsl&contentType=application%2Fjson&occupation={value}" />
+		<input id="input_occupation" type="text" name="occupation" rf.validation="required" rf.customType="auto-complete-select" rf.source="/resource-manager/REST/files/itb-resources-test2/lists/_itbLists-occupationSheet.xml?transformer=xslt&xslt=/itb-resources-test2/lists/occupationLookupTransformJSONmin.xsl&contentType=application%2Fjson&occupation={value}" />
 	</div>
 	
 	<button action="next">Next</button>
