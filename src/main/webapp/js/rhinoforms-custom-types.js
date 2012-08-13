@@ -8,6 +8,8 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 	this.lastLookup;
 	this.lookupLoading;
 	this.$list;
+	this.$ul;
+	this.mouseDown = false;
 	
 	this.init = function() {
 		var ct = this;
@@ -16,30 +18,54 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 		this.source = this.$input.attr("rf.source");
 		this.$list = $("<div>").addClass("rf-dropdown");
 		
-		$input.on("input textInput propertychange paste cut keydown drop", function() {
+		this.$input.on("input textInput propertychange paste cut keydown drop focus", function() {
 			var value = $(this).attr("value");
 			if (ct.value != value) {
 				ct.valueChanged(value);
 			}
 		});
-		$input.on("focus", function() {
-			ct.showList();
+
+		this.$input.on("blur", function() {
+			if (!ct.mouseDown) {
+				ct.hideList();
+			}
 		})
-		$input.on("blur", function() {
-			ct.hideList();
+		
+		// Navigate list with arrow keys
+		this.$input.on("keydown", function(e) {
+			var keyCode = e.keyCode;
+			if ((keyCode == 40 || keyCode == 38) && $("li", ct.$list).size() > 0) {
+				var $item = ct.getOverItem();
+				if (keyCode == 40) {
+					$item = $item.nextAll(":visible").first();
+					if ($item.size() == 0) {
+						$item = $("li:visible", ct.$list).first();
+					}
+				} else if (keyCode == 38) {
+					$item = $item.prevAll(":visible").first();
+					if ($item.size() == 0) {
+						$item = $("li:visible", ct.$list).last();
+					}
+				}
+				ct.over($item);
+				scroll($item);
+			}
 		})
-//		$input.on("keydown", function(e) {
-//			if (e.keyCode == 40) {
-//				alert("down");
-//			} else if (e.keyCode == 38) {
-//				alert("up");
-//			}
-//		})
+		
+		// Select list item with enter button or tab
+		this.$input.on("keydown", function(e) {
+			var keyCode = e.keyCode;
+			if (keyCode == 13 || keyCode == 9) {
+				var $item = ct.getOverItem();
+				if ($item.size() != 0) {
+					ct.selectItem($item)
+				}
+			}
+		})
 	}
 	
 	this.valueChanged = function(value) {
 		this.value = value;
-//		alert("Value changed '" + this.value + "'");
 		if (value.length >= 3) {
 			var lookup = value.substring(0, 3);
 			lookup = firstUpper(lookup);
@@ -57,8 +83,6 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 	
 	this.doLookup = function(lookup) {
 		this.lookupLoading = lookup;
-//		alert("Doing lookup '" + lookup + "'");
-
 		this.$list.detach();
 		
 		var ct = this;
@@ -66,10 +90,9 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 			url: source,
 			data: {"value": lookup, "rf.flowId": ct.flowId},
 			success: function(data) {
-				var $ul = $("<ul>");
-				ct.$list = $("<div>").addClass("rf-dropdown").append($ul);
 				if (lookup == ct.lookupLoading) {
-//					alert("Lookup success " + data.length);
+					var $ul = $("<ul>");
+					ct.$list = $("<div>").addClass("rf-dropdown").append($ul);
 					ct.lastLookup = lookup;
 					
 					for (var i in data) {
@@ -78,12 +101,23 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 						$ul.append($li);
 					}
 					
-					$("li", $ul).click(function() {
-						alert($(this).attr("text"));
-					})
 					ct.filter(lookup);
 					ct.$list.css("left", ct.$input[0].offsetLeft);
 					ct.$input.after(ct.$list);
+					ct.$ul = $("ul", $list);
+					$("li", $list).on("mouseover", function () {
+						ct.over($(this));
+					}).on("mousedown", function () {
+						ct.mouseDown = true;
+					}).on("mouseout", function () {
+						if (ct.mouseDown) {
+							ct.mouseDown = false;
+							ct.hideList();
+						}
+					}).on("click", function () {
+						ct.mouseDown = false;
+						ct.selectItem($(this));
+					})
 				} else {
 					// discard old lookup
 				}
@@ -105,8 +139,13 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 		$("li", this.$list).each(function() {
 			var $li = $(this);
 			var text = $li.attr("text");
-			if (text.toLowerCase().indexOf(valueLow) == 0) {
-				$li.html("<b>" + text.substring(0, value.length) + "</b>" + text.substring(value.length));
+			var textLower = text.toLowerCase();
+			var index = textLower.indexOf(valueLow);
+			if (index == -1) {
+				index = textLower.indexOf(" " + valueLow);
+			}
+			if (index != -1) {
+				$li.html(text.substring(0, index) +  "<b>" + text.substring(index, index + value.length) + "</b>" + text.substring(index + value.length));
 				$li.show();
 			} else {
 				$li.hide();
@@ -115,11 +154,37 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 	}
 	
 	this.showList = function() {
+		this.overNone();
 		this.$list.show();
 	}
 	
 	this.hideList = function() {
 		this.$list.hide();
+	}
+	
+	this.overNone = function() {
+		$("li", $list).removeClass("over");
+	}
+	
+	this.over = function($item) {
+		this.overNone();
+		$item.addClass("over");
+	}
+	
+	this.scroll = function($item) {
+		this.$ul.scrollTop($item.offset().top - this.$ul.offset().top + this.$ul.scrollTop());
+	}
+	
+	this.getOverItem = function() {
+		return $("li.over", this.$list);
+	}
+	
+	this.selectItem = function($item) {
+		var text = $item.text();
+		this.value = text;
+		this.$input.val(text);
+		this.filter(text);
+		this.hideList();
 	}
 	
 	this.init();

@@ -6,7 +6,7 @@
 		<script type='text/javascript'>
 			var rf = new Rhinoforms();
 			$(window).load(function() {
-				rf.loadFlow('forms/quote-example/quote-example-flow.js', $('#formContainer'), '<customer><name>Kai</name><vehicle>Nissan</vehicle></customer>');
+				rf.loadFlow('forms/quote-example/quote-example-flow.js', $('#formContainer'), '<customer><name>Kai</name><vehicle>Nissan</vehicle></customer>', function() { $("[rf\\.customType]").focus() });
 			})
 		</script>
 		<script type='text/javascript' src='js/rhinoforms-custom-types.js' ></script>
@@ -20,9 +20,16 @@
 	<body>
 	
 		<!-- Form Container -->
-		<div id="formContainer">
+		<div id="formContainer" style="float: left;">
 			Empty form container
 		</div>
 		
+		<!-- Debug Trace -->
+		<div style="position: absolute; right: 0px; width: 300px; background-color: lightgoldenrodyellow; height: 12em;">
+			<h3 style="font-size: 1em; margin: 0; padding: 0;">Trace</h3>
+			<div style="overflow-y: scroll;height: 10em;">
+				<pre id="trace" style="margin: 0;"></pre>
+			</div>
+		</div>
 	</body>
 </html>

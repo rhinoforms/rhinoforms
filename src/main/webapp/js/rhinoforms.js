@@ -35,7 +35,7 @@ function Rhinoforms() {
 		this.customTypes[keyword] = func;
 	}
 	
-	this.loadFlow = function(flowPath, $container, initData) {
+	this.loadFlow = function(flowPath, $container, initData, callback) {
 		var rf = this;
 		$.ajax({
 			url: "form",
@@ -45,6 +45,11 @@ function Rhinoforms() {
 				},
 			success: function(html) {
 				rf.insertForm(html, $container);
+				if (callback) {
+					if (typeof callback === 'function') {
+						callback();
+					}
+				}
 			},
 			failure: function() {
 				alert("Failed to load form");
@@ -236,8 +241,12 @@ function Rhinoforms() {
 	}
 	
 	this.trace = function(message) {
-		$("#trace").append(message);
+		rf_trace(message);
 	}
 	
 	this.init();
+}
+
+function rf_trace(message) {
+	$("#trace").append(message + "\n").parent().scrollTop(9999999);
 }

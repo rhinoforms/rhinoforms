@@ -48,19 +48,19 @@ input[type='radio']+label {
 
 .rf-dropdown {
 	position: absolute;
-	height: 9em;
-	overflow-y: scroll;
 }
 
 .rf-dropdown ul {
 	margin: 0;
 	padding: 0;
+	height: 9em;
+	overflow-y: scroll;
 }
 
 .rf-dropdown li {
 	list-style-type: none;
 }
 
-.rf-dropdown li:hover {
+.rf-dropdown li.over {
 	background-color: lightblue;
 }
