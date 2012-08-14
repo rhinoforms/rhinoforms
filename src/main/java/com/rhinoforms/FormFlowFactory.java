@@ -33,8 +33,7 @@ public class FormFlowFactory {
 			FormFlowFactoryException {
 
 		ScriptableObject scope = jsContext.initStandardObjects();
-		FormFlow formFlow = new FormFlow(scope);
-		formFlow.setDocumentHelper(documentHelper);
+		FormFlow formFlow = new FormFlow();
 
 		Object wrappedFormFlow = Context.javaToJS(formFlow, scope);
 		ScriptableObject.putProperty(scope, "formFlow", wrappedFormFlow);

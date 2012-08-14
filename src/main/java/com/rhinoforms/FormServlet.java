@@ -20,6 +20,7 @@ import javax.servlet.http.HttpSession;
 import javax.xml.transform.TransformerException;
 
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -34,10 +35,12 @@ import com.rhinoforms.serverside.InputPojo;
 public class FormServlet extends HttpServlet {
 
 	final Logger logger = LoggerFactory.getLogger(FormServlet.class);
-	private static final String UTF8 = "UTF-8";
 	private FormFlowFactory formFlowFactory;
 	private DocumentHelper documentHelper;
 	private ResourceLoader resourceLoader;
+	private ScriptableObject masterScope;
+	
+	private static final String UTF8 = "UTF-8";
 	private static final String PROXY_ERROR_MESSAGE = "Failed to perform proxy request.";
 
 	@Override
@@ -45,6 +48,17 @@ public class FormServlet extends HttpServlet {
 		this.formFlowFactory = new FormFlowFactory();
 		this.documentHelper = new DocumentHelper();
 		this.resourceLoader = new ServletResourceLoader(getServletContext());
+		
+		Context jsContext = Context.enter();
+		try {
+			this.masterScope = new RhinoFormsScopeFactory().createMasterScope(jsContext, resourceLoader);
+		} catch (IOException e) {
+			String message = "Failed to create master scope.";
+			logger.error(message, e);
+			throw new ServletException(message);
+		} finally {
+			Context.exit();
+		}
 	}
 
 	@Override
@@ -93,7 +107,7 @@ public class FormServlet extends HttpServlet {
 		FormResponseWrapper formResponseWrapper = new FormResponseWrapper(response, resourceLoader);
 		requestDispatcher.forward(request, formResponseWrapper);
 		try {
-			formResponseWrapper.parseResponseAndWrite(getServletContext(), formFlow);
+			formResponseWrapper.parseResponseAndWrite(getServletContext(), formFlow, masterScope);
 		} catch (Exception e) {
 			String message = "Failed to load next form.";
 			logger.error(message, e);
@@ -104,26 +118,29 @@ public class FormServlet extends HttpServlet {
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		FormFlow formFlow = getFlow(request);
-		
-		String action = request.getParameter("rf.action");
 
-		@SuppressWarnings("unchecked")
-		Map<String, String[]> parameterMap = request.getParameterMap();
-		Map<String, String> actionParams = new HashMap<String, String>();
-		getMatchingParamsStripPrefix(actionParams, "rf.action.", parameterMap);
-		if (action.contains("?")) {
-			String[] actionParts = action.split("\\?");
-			action = actionParts[0];
-			String actionParamsString = actionParts[1];
-			Map<String, String> actionParamsFromString = paramsStringToMap(actionParamsString);
-			actionParams.putAll(actionParamsFromString);
-		}
-
-		Scriptable scope = formFlow.getScope();
-
-		if (scope != null) {
+		if (formFlow != null) {
+			
+			String action = request.getParameter("rf.action");
+			
+			// Collect action parameters
+			@SuppressWarnings("unchecked")
+			Map<String, String[]> parameterMap = request.getParameterMap();
+			Map<String, String> actionParams = new HashMap<String, String>();
+			getMatchingParamsStripPrefix(actionParams, "rf.action.", parameterMap);
+			if (action.contains("?")) {
+				String[] actionParts = action.split("\\?");
+				action = actionParts[0];
+				String actionParamsString = actionParts[1];
+				Map<String, String> actionParamsFromString = paramsStringToMap(actionParamsString);
+				actionParams.putAll(actionParamsFromString);
+			}
+			
+			
 			boolean validationError = false;
 			if (!action.equals(FormFlow.CANCEL_ACTION)) {
+				
+				// Collect input values
 				List<InputPojo> inputPOJOs = formFlow.getCurrentInputPojos();
 				for (InputPojo inputPOJO : inputPOJOs) {
 					if (inputPOJO.type.equalsIgnoreCase("checkbox")) {
@@ -133,27 +150,34 @@ public class FormServlet extends HttpServlet {
 					}
 				}
 
+				// Validate input
 				String jsPojoMap = inputPOJOListtoJS(inputPOJOs);
 				logger.debug("inputPojos as js:{}", jsPojoMap);
-
 				StringBuilder commandStringBuilder = new StringBuilder();
 				commandStringBuilder.append("rf.validateFields(");
 				commandStringBuilder.append(jsPojoMap);
 				commandStringBuilder.append(")");
-
 				Set<String> fieldsInError = new HashSet<String>();
 				Context jsContext = Context.enter();
+				Scriptable scope = jsContext.newObject(masterScope);
+				scope.setPrototype(masterScope);
+				scope.setParentScope(null);
 				try {
 					NativeArray errors = (NativeArray) jsContext.evaluateString(scope, commandStringBuilder.toString(), "<cmd>", 1, null);
 					for (int i = 0; i < errors.getLength(); i++) {
 						ScriptableObject error = (ScriptableObject) errors.get(i, scope);
 						fieldsInError.add(error.get("name", scope).toString());
 					}
+				} catch (EcmaError e) {
+					String message = "";
+					logger.error(message, e);
+					throw new ServletException(message, e);
 				} finally {
 					Context.exit();
 				}
 
-				if (!fieldsInError.isEmpty() && action.equals(FormFlow.BACK_ACTION)) {
+				// If Back action remove any invalid input
+				if (action.equals(FormFlow.BACK_ACTION) && !fieldsInError.isEmpty()) {
 					HashSet<InputPojo> inputPOJOsToRemove = new HashSet<InputPojo>();
 					for (InputPojo inputPojo : inputPOJOs) {
 						if (fieldsInError.contains(inputPojo.name)) {
@@ -163,6 +187,7 @@ public class FormServlet extends HttpServlet {
 					inputPOJOs.removeAll(inputPOJOsToRemove);
 					fieldsInError.clear();
 				}
+				
 				validationError = !fieldsInError.isEmpty();
 
 				if (!validationError) {
@@ -183,7 +208,7 @@ public class FormServlet extends HttpServlet {
 				String nextUrl = null;
 				if (action != null) {
 					try {
-						nextUrl = formFlow.doAction(action, actionParams);
+						nextUrl = formFlow.doAction(action, actionParams, documentHelper);
 					} catch (ActionError e) {
 						logger.error(e.getMessage(), e);
 						throw new ServletException(e);

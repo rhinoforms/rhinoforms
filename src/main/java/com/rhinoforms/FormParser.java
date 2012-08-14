@@ -1,7 +1,6 @@
 package com.rhinoforms;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,8 +18,7 @@ import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.SimpleHtmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPatherException;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -48,7 +46,7 @@ public class FormParser {
 		this.proxyFactory = new ProxyFactory();
 	}
 
-	public void parseForm(String formContents, FormFlow formFlow, PrintWriter writer) throws XPatherException, XPathExpressionException,
+	public void parseForm(String formContents, FormFlow formFlow, PrintWriter writer, ScriptableObject masterScope) throws XPatherException, XPathExpressionException,
 			IOException, ResourceLoaderException {
 
 		HtmlCleaner cleaner = new HtmlCleaner();
@@ -152,10 +150,11 @@ public class FormParser {
 			logger.warn("No forms found");
 		}
 
+/*	Don't need to do this at the moment.	
 		// Evaluate javascript on the page
 		Context jsContext = Context.enter();
 		try {
-			Scriptable scope = formFlow.getScope();
+			Scriptable scope = jsContext.newObject(masterScope);
 			String script = Constants.RHINOFORM_SCRIPT;
 			jsContext.evaluateReader(scope, new InputStreamReader(resourceLoader.getResourceAsStream(script)), script, 1, null);
 
@@ -170,7 +169,7 @@ public class FormParser {
 		} finally {
 			Context.exit();
 		}
-
+*/
 		// Write out processed document
 		new SimpleHtmlSerializer(cleaner.getProperties()).write(documentNode, writer, "utf-8");
 	}

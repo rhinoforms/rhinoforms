@@ -6,7 +6,6 @@ import java.util.Map;
 
 import javax.xml.xpath.XPathExpressionException;
 
-import org.mozilla.javascript.Scriptable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -16,7 +15,6 @@ import com.rhinoforms.serverside.InputPojo;
 public class FormFlow {
 
 	private int id;
-	private Scriptable scope;
 	private List<InputPojo> currentInputPojos;
 	private Map<String, List<Form>> formLists;
 	private Form currentForm;
@@ -26,8 +24,6 @@ public class FormFlow {
 	private String flowDocBase;
 	private Map<String, FieldSourceProxy> fieldSourceProxies;
 
-	private DocumentHelper documentHelper;
-
 	public static final String NEXT_ACTION = "next";
 	public static final String BACK_ACTION = "back";
 	public static final String CANCEL_ACTION = "cancel";
@@ -35,9 +31,8 @@ public class FormFlow {
 
 	final Logger logger = LoggerFactory.getLogger(FormFlow.class);
 	
-	public FormFlow(Scriptable scope) {
+	public FormFlow() {
 		this.id = (int) (Math.random() * 100000000f);
-		this.scope = scope;
 		this.formLists = new HashMap<String, List<Form>>();
 		this.fieldSourceProxies = new HashMap<String, FieldSourceProxy>();
 	}
@@ -48,7 +43,7 @@ public class FormFlow {
 		return currentForm.getPath();
 	}
 
-	public String doAction(String action, Map<String, String> paramsFromFontend) throws ActionError {
+	public String doAction(String action, Map<String, String> paramsFromFontend, DocumentHelper documentHelper) throws ActionError {
 		clearFormSpecificResources();
 		
 		FlowAction flowAction = getAction(action);
@@ -154,10 +149,6 @@ public class FormFlow {
 		return id;
 	}
 
-	public Scriptable getScope() {
-		return scope;
-	}
-
 	public List<InputPojo> getCurrentInputPojos() {
 		return currentInputPojos;
 	}
@@ -200,14 +191,6 @@ public class FormFlow {
 	public void setFlowDocBase(String flowDocBase) {
 		this.flowDocBase = flowDocBase;
 		setDocBase(flowDocBase);
-	}
-
-	public DocumentHelper getDocumentHelper() {
-		return documentHelper;
-	}
-
-	public void setDocumentHelper(DocumentHelper documentHelper) {
-		this.documentHelper = documentHelper;
 	}
 
 }

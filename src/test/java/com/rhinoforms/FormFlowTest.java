@@ -17,6 +17,7 @@ public class FormFlowTest {
 	private Context jsContext;
 	private HashMap<String, String> actionParams;
 	private FormFlow formFlow;
+	private DocumentHelper documentHelper;
 
 	@Before
 	public void setup() throws IOException, FormFlowFactoryException {
@@ -24,6 +25,7 @@ public class FormFlowTest {
 		this.formFlowFactory = new FormFlowFactory();
 		this.actionParams = new HashMap<String, String>();
 		this.formFlow = formFlowFactory.createFlow("src/test/resources/test-flow1.js", jsContext, "<myData/>");
+		this.documentHelper = new DocumentHelper();
 	}
 	
 	@Test
@@ -34,49 +36,49 @@ public class FormFlowTest {
 	@Test
 	public void testNavNextBack() throws Exception {
 		Assert.assertEquals("one.html", formFlow.navigateToFirstForm());
-		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams));
-		Assert.assertEquals("one.html", formFlow.doAction("back", actionParams));
-		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams));
-		Assert.assertEquals("three.html", formFlow.doAction("next", actionParams));
-		Assert.assertEquals("two.html", formFlow.doAction("back", actionParams));
-		Assert.assertEquals("one.html", formFlow.doAction("back", actionParams));
-		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams));
-		Assert.assertEquals("three.html", formFlow.doAction("next", actionParams));
-		Assert.assertEquals("four.html", formFlow.doAction("next", actionParams));
-		Assert.assertEquals(null, formFlow.doAction("finish", actionParams));
+		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams, documentHelper));
+		Assert.assertEquals("one.html", formFlow.doAction("back", actionParams, documentHelper));
+		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams, documentHelper));
+		Assert.assertEquals("three.html", formFlow.doAction("next", actionParams, documentHelper));
+		Assert.assertEquals("two.html", formFlow.doAction("back", actionParams, documentHelper));
+		Assert.assertEquals("one.html", formFlow.doAction("back", actionParams, documentHelper));
+		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams, documentHelper));
+		Assert.assertEquals("three.html", formFlow.doAction("next", actionParams, documentHelper));
+		Assert.assertEquals("four.html", formFlow.doAction("next", actionParams, documentHelper));
+		Assert.assertEquals(null, formFlow.doAction("finish", actionParams, documentHelper));
 	}
 	
 	@Test
 	public void testNavSideways() throws Exception {
 		Assert.assertEquals("one.html", formFlow.navigateToFirstForm());
-		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams));
-		Assert.assertEquals("addSomething.html", formFlow.doAction("add", actionParams));
-		Assert.assertEquals("two.html", formFlow.doAction("cancel", actionParams));
-		Assert.assertEquals("addSomething.html", formFlow.doAction("add", actionParams));
-		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams));
-		Assert.assertEquals("three.html", formFlow.doAction("next", actionParams));
+		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams, documentHelper));
+		Assert.assertEquals("addSomething.html", formFlow.doAction("add", actionParams, documentHelper));
+		Assert.assertEquals("two.html", formFlow.doAction("cancel", actionParams, documentHelper));
+		Assert.assertEquals("addSomething.html", formFlow.doAction("add", actionParams, documentHelper));
+		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams, documentHelper));
+		Assert.assertEquals("three.html", formFlow.doAction("next", actionParams, documentHelper));
 	}
 	
 	@Test
 	public void testNavDocBaseWithNext() throws Exception {
 		Assert.assertEquals("one.html", formFlow.navigateToFirstForm());
-		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams));
-		Assert.assertEquals("three.html", formFlow.doAction("next", actionParams));
+		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams, documentHelper));
+		Assert.assertEquals("three.html", formFlow.doAction("next", actionParams, documentHelper));
 		
 		Assert.assertEquals("/myData", formFlow.getDocBase());
-		Assert.assertEquals("editFish.html", formFlow.doAction("add", actionParams));
+		Assert.assertEquals("editFish.html", formFlow.doAction("add", actionParams, documentHelper));
 		Assert.assertEquals("/myData/fishes/fish[1]", formFlow.getDocBase());
 	}
 	
 	@Test
 	public void testNavDocBaseWithIndex() throws Exception {
 		Assert.assertEquals("one.html", formFlow.navigateToFirstForm());
-		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams));
-		Assert.assertEquals("three.html", formFlow.doAction("next", actionParams));
+		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams, documentHelper));
+		Assert.assertEquals("three.html", formFlow.doAction("next", actionParams, documentHelper));
 		
 		Assert.assertEquals("/myData", formFlow.getDocBase());
 		actionParams.put("index", "2");
-		Assert.assertEquals("editFish.html", formFlow.doAction("edit", actionParams));
+		Assert.assertEquals("editFish.html", formFlow.doAction("edit", actionParams, documentHelper));
 		Assert.assertEquals("/myData/fishes/fish[2]", formFlow.getDocBase());
 	}
 	
