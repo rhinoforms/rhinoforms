@@ -16,6 +16,7 @@ import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.WrappedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +53,6 @@ public class FormSubmissionHelper {
 	}
 	
 	public Set<String> validateAndPersist(FormFlow formFlow, String action, Map<String, String> parameterMap) throws ServletException {
-		Set<String> fieldsInError = new HashSet<String>();
 
 		// Collect input values
 		List<InputPojo> inputPOJOs = formFlow.getCurrentInputPojos();
@@ -64,28 +64,7 @@ public class FormSubmissionHelper {
 			}
 		}
 
-		// Validate input
-		String jsPojoMap = jsSerialiser.inputPOJOListToJS(inputPOJOs);
-		logger.debug("inputPojos as js:{}", jsPojoMap);
-		StringBuilder commandStringBuilder = new StringBuilder();
-		commandStringBuilder.append("rf.validateFields(");
-		commandStringBuilder.append(jsPojoMap);
-		commandStringBuilder.append(")");
-		Context jsContext = Context.enter();
-		Scriptable scope = masterScope.createWorkingScope();
-		try {
-			NativeArray errors = (NativeArray) jsContext.evaluateString(scope, commandStringBuilder.toString(), "<cmd>", 1, null);
-			for (int i = 0; i < errors.getLength(); i++) {
-				ScriptableObject error = (ScriptableObject) errors.get(i, scope);
-				fieldsInError.add(error.get("name", scope).toString());
-			}
-		} catch (EcmaError e) {
-			String message = "";
-			logger.error(message, e);
-			throw new ServletException(message, e);
-		} finally {
-			Context.exit();
-		}
+		Set<String> fieldsInError = validateInput(inputPOJOs);
 
 		// If Back action remove any invalid input
 		if (action.equals(FormFlow.BACK_ACTION) && !fieldsInError.isEmpty()) {
@@ -111,6 +90,39 @@ public class FormSubmissionHelper {
 			}
 		}
 
+		return fieldsInError;
+	}
+
+	Set<String> validateInput(List<InputPojo> inputPOJOs) throws ServletException {
+		Set<String> fieldsInError = new HashSet<String>();
+		String jsPojoMap = jsSerialiser.inputPOJOListToJS(inputPOJOs);
+		logger.debug("inputPojos as js:{}", jsPojoMap);
+		StringBuilder commandStringBuilder = new StringBuilder();
+		commandStringBuilder.append("rf.validateFields(");
+		commandStringBuilder.append(jsPojoMap);
+		commandStringBuilder.append(")");
+		Context jsContext = Context.enter();
+		Scriptable scope = masterScope.createWorkingScope();
+		try {
+			NativeArray errors = (NativeArray) jsContext.evaluateString(scope, commandStringBuilder.toString(), "<cmd>", 1, null);
+			for (int i = 0; i < errors.getLength(); i++) {
+				ScriptableObject error = (ScriptableObject) errors.get(i, scope);
+				String errorFieldName = error.get("name", scope).toString();
+				String errorFieldMessage = error.get("message", scope).toString();
+				logger.info("Input error, name:'{}', message:'{}'", errorFieldName, errorFieldMessage);
+				fieldsInError.add(errorFieldName);
+			}
+		} catch (EcmaError e) {
+			String message = "EcmaError error while calling Javascript function rf.validateFields.";
+			logger.error(message, e);
+			throw new ServletException(message, e);
+		} catch (WrappedException e) {
+			String message = "WrappedException error while calling Javascript function rf.validateFields.";
+			logger.error(message, e);
+			throw new ServletException(message, e);
+		} finally {
+			Context.exit();
+		}
 		return fieldsInError;
 	}
 	

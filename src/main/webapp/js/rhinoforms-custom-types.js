@@ -19,7 +19,8 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 		this.$list = $("<div>").addClass("rf-dropdown");
 		
 		this.$input.on("input textInput propertychange paste cut keydown drop focus", function() {
-			var value = $(this).attr("value");
+			var $input = $(this);
+			var value = $input.attr("value");
 			if (ct.value != value) {
 				ct.valueChanged(value);
 			}
@@ -29,6 +30,10 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 			if (!ct.mouseDown) {
 				ct.hideList();
 			}
+		})
+		
+		this.$input.on("change", function() {
+			ct.validate($(this));
 		})
 		
 		// Navigate list with arrow keys
@@ -67,10 +72,9 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 	this.valueChanged = function(value) {
 		this.value = value;
 		if (value.length >= 3) {
-			var lookup = value.substring(0, 3);
-			lookup = firstUpper(lookup);
-			if (lookup != this.lastLookup) {
-				this.doLookup(lookup);
+			var lookup = value.substring(0, 3).toLowerCase();
+			if (lookup != this.lastLookup && lookup != this.lookupLoading) {
+				this.lookup(lookup);
 			} else {
 				this.showList();
 				this.filter(value);
@@ -78,46 +82,51 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 		} else {
 			this.hideList();
 		}
-		
 	}
 	
-	this.doLookup = function(lookup) {
-		this.lookupLoading = lookup;
+	this.lookup = function(lookup) {
 		this.$list.detach();
-		
 		var ct = this;
+		this.doLookup(lookup, function(data) {
+			var $ul = $("<ul>");
+			ct.$list = $("<div>").addClass("rf-dropdown").append($ul);
+			ct.lastLookup = lookup;
+			
+			for (var i in data) {
+				var item = data[i];
+				var $li = $("<li>").attr("val", item[0]).attr("text", item[1]).attr("textLower", item[1].toLowerCase()).text(item[1]);
+				$ul.append($li);
+			}
+			
+			ct.filter(lookup);
+			ct.$list.css("left", ct.$input[0].offsetLeft);
+			ct.$input.after(ct.$list);
+			ct.$ul = $("ul", $list);
+			$("li", $list).on("mouseover", function () {
+				ct.over($(this));
+			}).on("mousedown", function () {
+				ct.mouseDown = true;
+			}).on("mouseout", function () {
+				if (ct.mouseDown) {
+					ct.mouseDown = false;
+					ct.hideList();
+				}
+			}).on("click", function () {
+				ct.mouseDown = false;
+				ct.selectItem($(this));
+			})
+		});
+	}
+	
+	this.doLookup = function(lookup, successCallback) {
+		var ct = this;
+		this.lookupLoading = lookup;
 		$.ajax({
 			url: source,
 			data: {"value": lookup, "rf.flowId": ct.flowId},
 			success: function(data) {
 				if (lookup == ct.lookupLoading) {
-					var $ul = $("<ul>");
-					ct.$list = $("<div>").addClass("rf-dropdown").append($ul);
-					ct.lastLookup = lookup;
-					
-					for (var i in data) {
-						var item = data[i];
-						var $li = $("<li>").attr("val", item[0]).attr("text", item[1]).text(item[1]);
-						$ul.append($li);
-					}
-					
-					ct.filter(lookup);
-					ct.$list.css("left", ct.$input[0].offsetLeft);
-					ct.$input.after(ct.$list);
-					ct.$ul = $("ul", $list);
-					$("li", $list).on("mouseover", function () {
-						ct.over($(this));
-					}).on("mousedown", function () {
-						ct.mouseDown = true;
-					}).on("mouseout", function () {
-						if (ct.mouseDown) {
-							ct.mouseDown = false;
-							ct.hideList();
-						}
-					}).on("click", function () {
-						ct.mouseDown = false;
-						ct.selectItem($(this));
-					})
+					successCallback(data);
 				} else {
 					// discard old lookup
 				}
@@ -128,10 +137,6 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 				}
 			}
 		});
-	}
-	
-	this.firstUpper = function(string) {
-		return string.substring(0, 1).toUpperCase() + string.substring(1).toLowerCase();
 	}
 	
 	this.filter = function(value) {
@@ -185,6 +190,38 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 		this.$input.val(text);
 		this.filter(text);
 		this.hideList();
+	}
+	
+	this.validate = function($input) {
+		$input.removeAttr("rf.valueFromSource");
+		
+		var valueLower = $input.val().toLowerCase();
+		var $listMatch = null;
+		
+		if (this.$list) {
+			$listMatch = $("[textLower='" + valueLower + "']", this.$list);
+		}
+		
+		if ($listMatch && $listMatch.size() > 0) {
+			rf_trace("value in current list");
+			// Set correct case on input value.
+			$input.val($listMatch.attr("text"));
+			$input.attr("rf.valueFromSource", "true");
+		} else {
+			var lookup = valueLower.substring(0, 3);
+			if (lookup != this.lastLookup) {
+				this.doLookup(valueLower.substring(0, 3), function(data) {
+					for (var i in data) {
+						if (valueLower == data[i][1]) {
+							$input.attr("rf.valueFromSource", "true");
+							break;
+						}
+					}
+				});
+			}
+		}
+		
+		
 	}
 	
 	this.init();

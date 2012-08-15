@@ -102,19 +102,6 @@ public class FormParser {
 				}
 			} // TODO: validate that submitted value comes from the list
 			
-			// Process auto-complete fields
-			Object[] autoCompleteNodes = formNode.evaluateXPath("//input[@" + Constants.SELECT_SOURCE_ATTR + "]");
-			for (Object autoCompleteNodeO : autoCompleteNodes) {
-				TagNode autoCompleteNode = (TagNode) autoCompleteNodeO;
-				String fieldName = autoCompleteNode.getAttributeByName(Constants.NAME_ATTR);
-				String source = autoCompleteNode.getAttributeByName(Constants.INPUT_SOURCE_ATTR);
-				
-				FieldSourceProxy fieldSourceProxy = proxyFactory.createFlowProxy(currentPath, fieldName, source);
-				formFlow.addFieldSourceProxy(fieldSourceProxy);
-				autoCompleteNode.removeAttribute(Constants.INPUT_SOURCE_ATTR);
-				autoCompleteNode.setAttribute("rf.source", "form/proxy/" + fieldSourceProxy.getProxyPath());
-			}
-
 			// Record input fields
 			List<InputPojo> inputPojos = new ArrayList<InputPojo>();
 			@SuppressWarnings("unchecked")
@@ -139,6 +126,19 @@ public class FormParser {
 				}
 			}
 			formFlow.setCurrentInputPojos(inputPojos);
+			
+			// Process auto-complete fields, replace source with proxy path
+			Object[] autoCompleteNodes = formNode.evaluateXPath("//input[@" + Constants.SELECT_SOURCE_ATTR + "]");
+			for (Object autoCompleteNodeO : autoCompleteNodes) {
+				TagNode autoCompleteNode = (TagNode) autoCompleteNodeO;
+				String fieldName = autoCompleteNode.getAttributeByName(Constants.NAME_ATTR);
+				String source = autoCompleteNode.getAttributeByName(Constants.INPUT_SOURCE_ATTR);
+				
+				FieldSourceProxy fieldSourceProxy = proxyFactory.createFlowProxy(currentPath, fieldName, source);
+				formFlow.addFieldSourceProxy(fieldSourceProxy);
+				autoCompleteNode.removeAttribute(Constants.INPUT_SOURCE_ATTR);
+				autoCompleteNode.setAttribute("rf.source", "form/proxy/" + fieldSourceProxy.getProxyPath());
+			}
 
 			// Add flowId as hidden field
 			TagNode flowIdNode = new TagNode("input");

@@ -25,6 +25,14 @@ function Rhinoforms() {
 				return name + " is not a valid email address.";
 			}
 		});
+		
+		// Enable the 'fromSource' validation keyword
+		// This function will be replaced for server-side validation.
+		this.registerValidationKeyword("fromSource", function(name, value, rfAttributes) {
+			if ("true" != rfAttributes["rf.valueFromSource".toLowerCase()]) {
+				return name + " should be a value from the drop-down list."
+			}
+		});
 	}
 	
 	this.registerValidationKeyword = function(keyword, func) {
@@ -130,6 +138,7 @@ function Rhinoforms() {
 		// Compile map of fields with their values and validation options
 		var fields = {};
 		$(":input", $form).each(function() {
+			var input = this;
 			var $input = $(this);
 			var name = $input.attr("name")
 			var type = $input.attr("type")
@@ -141,8 +150,15 @@ function Rhinoforms() {
 			}
 			var validation = $input.attr("rf.validation");
 			var validationFunction = $input.attr("rf.validationfunction");
+			var rfAttributes = {};
+			for (var a in input.attributes) {
+				var attribute = input.attributes[a];
+				if (attribute.name && attribute.name.indexOf("rf.") == 0) {
+					rfAttributes[attribute.name] = attribute.value;
+				}
+			}
 			
-			fields[name] = { name:name, value:value, validation:validation, validationFunction:validationFunction };
+			fields[name] = { name:name, value:value, validation:validation, validationFunction:validationFunction, rfAttributes:rfAttributes };
 		});
 		
 		// Pass map and get list of errors back
@@ -187,10 +203,10 @@ function Rhinoforms() {
 			var field = fields[a];
 			var error = null;
 			if (field.validation) {
-				error = this.validateField(field.name, field.value, field.validation);
+				error = this.validateField(field.name, field.value, field.rfAttributes, field.validation);
 			} else if (field.validationFunction) {
 				field.validate = function(validationList) {
-					error = simpleForm.validateField(this.name, this.value, validationList);
+					error = simpleForm.validateField(this.name, this.value, this.rfAttributes, validationList);
 				}
 				field.validationFunctionRun = function() {
 					eval(field.validationFunction);
@@ -204,14 +220,14 @@ function Rhinoforms() {
 		return errors;
 	}
 	
-	this.validateField = function(name, value, validationList) {
+	this.validateField = function(name, value, rfAttributes, validationList) {
 		var validationArray = validationList.split(" ");
 		for (a in validationArray) {
 			var validation = validationArray[a];
 			var message = null;
 			
 			if (this.validationKeywords[validation]) {
-				message = this.validationKeywords[validation](name, value);
+				message = this.validationKeywords[validation](name, value, rfAttributes);
 				if (message) {
 					return { name: name, message: message };
 				}

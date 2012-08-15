@@ -4,7 +4,8 @@ public interface Constants {
 
 	String RHINOFORMS_FLAG = "rhinoforms";
 	
-	String RHINOFORM_SCRIPT = "/js/rhinoforms.js";
+	String RHINOFORMS_SCRIPT = "/js/rhinoforms.js";
+	String RHINOFORMS_SERVER_SIDE_SCRIPT = "/js/rhinoforms-server-side.js";
 	
 	String FLOW_ID_FIELD_NAME = "rf.flowId";
 	

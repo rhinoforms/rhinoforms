@@ -15,6 +15,7 @@ public class InputPojo {
 		this.name = name;
 		this.type = type;
 		this.rfAttributes = rfAttributes;
+		value = "";
 	}
 
 	public InputPojo(String name, String value) {
