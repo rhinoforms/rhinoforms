@@ -2,7 +2,7 @@
 	var rf = new Rhinoforms();
 </script>
 <h3>Validation Function Example</h3>
-<p>Here input field validationFunction is used on the 'Favourite meat' field. That field is only required if 'Veggie' is unchecked.</p>
+<p>Here an input field validation-function is used on the 'Favourite meat' field. That field is only required if 'Veggie' is unchecked.</p>
 <p>Again validation is performed first in the browser and again on the server using the same javascript code.</p>
 
 <form rhinoforms="true">
@@ -29,7 +29,7 @@
 		
 	<div class="field">
 		<label for="input_favouriteMeat">Favourite meat:</label>
-		<input id="input_favouriteMeat" type="text" name="favouriteMeat" rf.validationFunction="{ if(fields.veggie.value == false) { this.validate('required'); } }"/>
+		<input id="input_favouriteMeat" type="text" name="favouriteMeat" rf.validationfunction="{ if(fields.veggie.value == false) { this.validate('required'); } }"/>
 	</div>
 	
 	<button action="finish">Finish</button>

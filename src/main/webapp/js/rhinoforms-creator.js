@@ -60,7 +60,7 @@ function RhinoformsCreator() {
 		$("[name='label']", this.$fieldEditor).val($("label", this.$currentFieldDiv).text());
 		$("[name='name']", this.$fieldEditor).val($("input", this.$currentFieldDiv).attr("name"));
 		$("[name='validation']", this.$fieldEditor).val($("input", this.$currentFieldDiv).attr("validation"));
-		$("[name='validationFunction']", this.$fieldEditor).val($("input", this.$currentFieldDiv).attr("validationFunction"));
+		$("[name='validationFunction']", this.$fieldEditor).val($("input", this.$currentFieldDiv).attr("validationfunction"));
 		this.$fieldEditor.show().css("top", $fieldDiv[0].offsetTop);
 	}
 	

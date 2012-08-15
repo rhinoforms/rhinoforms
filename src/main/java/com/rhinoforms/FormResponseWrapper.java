@@ -13,8 +13,6 @@ import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
 import org.htmlcleaner.XPatherException;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptableObject;
 
 import com.rhinoforms.resourceloader.ResourceLoader;
 import com.rhinoforms.resourceloader.ResourceLoaderException;
@@ -41,7 +39,7 @@ public class FormResponseWrapper extends HttpServletResponseWrapper {
 		response.setHeader("Pragma", "no-cache");
 	}
 
-	public void parseResponseAndWrite(ServletContext servletContext, FormFlow formFlow, ScriptableObject masterScope)
+	public void parseResponseAndWrite(ServletContext servletContext, FormFlow formFlow, JSMasterScope masterScope)
 			throws IOException, XPatherException, TransformerConfigurationException, XPathExpressionException, ResourceLoaderException {
 
 		printWriterOutputStream.flush();

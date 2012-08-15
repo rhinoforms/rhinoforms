@@ -40,9 +40,9 @@ public class DocumentHelper {
 
 	public void persistFormData(List<InputPojo> inputPOJOs, String documentBasePath, Document dataDocument) throws DocumentHelperException {
 		for (InputPojo inputPojo : inputPOJOs) {
-			String xPathString = documentBasePath + "/" + inputPojo.name.replaceAll("\\.", "/");
+			String xPathString = documentBasePath + "/" + inputPojo.getName().replaceAll("\\.", "/");
 			Node node = lookupOrCreateNode(dataDocument, xPathString);
-			node.setTextContent(inputPojo.value);
+			node.setTextContent(inputPojo.getValue());
 		}
 	}
 	

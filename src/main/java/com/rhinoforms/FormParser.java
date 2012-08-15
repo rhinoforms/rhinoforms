@@ -3,7 +3,9 @@ package com.rhinoforms;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,7 +20,6 @@ import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.SimpleHtmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPatherException;
-import org.mozilla.javascript.ScriptableObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -36,17 +37,15 @@ public class FormParser {
 	private static final Pattern CURLY_BRACKET_CONTENTS_PATTERN = Pattern.compile(".*?\\{([^}]+)\\}.*", Pattern.DOTALL);
 	final Logger logger = LoggerFactory.getLogger(FormParser.class);
 
-	private ResourceLoader resourceLoader;
 	private SelectOptionHelper selectOptionHelper;
 	private ProxyFactory proxyFactory;
 
 	public FormParser(ResourceLoader resourceLoader) {
-		this.resourceLoader = resourceLoader;
 		this.selectOptionHelper = new SelectOptionHelper(resourceLoader);
 		this.proxyFactory = new ProxyFactory();
 	}
 
-	public void parseForm(String formContents, FormFlow formFlow, PrintWriter writer, ScriptableObject masterScope) throws XPatherException, XPathExpressionException,
+	public void parseForm(String formContents, FormFlow formFlow, PrintWriter writer, JSMasterScope masterScope) throws XPatherException, XPathExpressionException,
 			IOException, ResourceLoaderException {
 
 		HtmlCleaner cleaner = new HtmlCleaner();
@@ -123,17 +122,21 @@ public class FormParser {
 			for (TagNode inputTagNode : inputs) {
 				String name = inputTagNode.getAttributeByName(Constants.NAME_ATTR);
 				String type = inputTagNode.getAttributeByName(Constants.TYPE_ATTR);
-				String validation = inputTagNode.getAttributeByName(Constants.VALIDATION_ATTR);
-				String validationFunction = inputTagNode.getAttributeByName(Constants.VALIDATION_FUNCTION_ATTR);
+				// Collect all rf.xxx attributes
+				Map<String, String> rfAttributes = new HashMap<String, String>();
+				Map<String, String> attributes = inputTagNode.getAttributes();
+				for (String attName : attributes.keySet()) {
+					if (attName.startsWith("rf.")) {
+						rfAttributes.put(attName, attributes.get(attName));
+					}
+				}
+
+				inputPojos.add(new InputPojo(name, type, rfAttributes));
 
 				String inputValue = lookupValueByFieldName(dataDocument, name, docBase);
 				if (inputValue != null) {
 					inputTagNode.setAttribute("value", inputValue);
 				}
-
-				inputPojos.add(new InputPojo(name, type, validation, validationFunction));
-
-				logger.debug("input {} - validation:{}", name, validation);
 			}
 			formFlow.setCurrentInputPojos(inputPojos);
 

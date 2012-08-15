@@ -14,7 +14,6 @@ import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptableObject;
 
 import com.rhinoforms.resourceloader.ResourceLoader;
 
@@ -22,7 +21,7 @@ public class FormParserTest {
 
 	private FormParser formParser;
 	private FormFlow formFlow;
-	private ScriptableObject masterScope;
+	private JSMasterScope masterScope;
 	private static ResourceLoader resourceLoader = getResourceLoader();
 
 	@Before
@@ -33,7 +32,7 @@ public class FormParserTest {
 		
 		Context jsContext = Context.enter();
 		try {
-			this.masterScope = new RhinoFormsScopeFactory().createMasterScope(jsContext, resourceLoader);
+			this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
 		} finally {
 			Context.exit();
 		}
