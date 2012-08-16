@@ -65,6 +65,25 @@ public class FormSubmissionHelperTest {
 	}
 	
 	@Test
+	public void testValidationKeyword_date() throws Exception {
+		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
+		HashMap<String, String> rfAttributes = new HashMap<String, String>();
+		rfAttributes.put(Constants.VALIDATION_ATTR, "date");
+		InputPojo dob = new InputPojo("dob", "text", rfAttributes);
+		dob.setValue("1");
+		inputs.add(dob);
+		
+		Set<String> fieldsInError = formSubmissionHelper.validateInput(inputs);
+		Assert.assertEquals(1, fieldsInError.size());
+		Assert.assertEquals("dob", fieldsInError.iterator().next());
+		
+		dob.setValue("20/12/1983");
+		Assert.assertEquals(0, formSubmissionHelper.validateInput(inputs).size());
+		Assert.assertEquals(0, formSubmissionHelper.validateInput(inputs).size());
+		Assert.assertEquals(0, formSubmissionHelper.validateInput(inputs).size());
+	}
+	
+	@Test
 	public void testValidationKeyword_fromSource() throws Exception {
 		
 		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();

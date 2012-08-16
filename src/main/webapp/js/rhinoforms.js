@@ -13,26 +13,41 @@ function Rhinoforms() {
 		
 		// Enable the 'required' validation keyword
 		this.registerValidationKeyword("required", function(name, value) {
-			if (value.length == 0) {
+			if (!value) {
 				return name + " is required.";
 			}
 		});
 
 		// Enable the 'email' validation function
 		this.registerValidationKeyword("email", function(name, value) {
-			var reg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
-			if (reg.test(value) != true) {
-				return name + " is not a valid email address.";
+			if (value) {
+				var regex = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
+				if (regex.test(value) != true) {
+					return name + " is not a valid email address.";
+				}
 			}
 		});
 		
 		// Enable the 'fromSource' validation keyword
 		// This function will be replaced for server-side validation.
 		this.registerValidationKeyword("fromSource", function(name, value, rfAttributes) {
-			if ("true" != rfAttributes["rf.valueFromSource".toLowerCase()]) {
-				return name + " should be a value from the drop-down list."
+			if (value) {
+				if ("true" != rfAttributes["rf.valueFromSource".toLowerCase()]) {
+					return name + " should be a value from the drop-down list."
+				}
 			}
 		});
+		
+		// Enable the 'date' validation function
+		this.registerValidationKeyword("date", function(name, value) {
+			if (value) {
+				var dateRegex = new RegExp(/([0-9]{2})\/([0-9]{2})\/([0-9]{4})/g);
+				if (!dateRegex.exec(value)) {
+					return name + " should match the format dd/mm/yyyy, got '" + value + "', regex '" + dateRegex + "'";
+				}
+			}
+		});
+
 	}
 	
 	this.registerValidationKeyword = function(keyword, func) {
@@ -145,6 +160,10 @@ function Rhinoforms() {
 			var value;
 			if (type == 'checkbox') {
 				value = $input.prop('checked');
+			} else if (type == 'radio') {
+				if ($input.prop('checked')) {
+					value = $input.val();
+				} 
 			} else {
 				value = $input.val();
 			}
@@ -158,7 +177,14 @@ function Rhinoforms() {
 				}
 			}
 			
-			fields[name] = { name:name, value:value, validation:validation, validationFunction:validationFunction, rfAttributes:rfAttributes };
+			if (type == 'radio' && fields[name]) {
+				if (value) {
+					// Update existing radio entry rather than replacing
+					fields[name].value = value;
+				}
+			} else {
+				fields[name] = { name:name, value:value, validation:validation, validationFunction:validationFunction, rfAttributes:rfAttributes };
+			}
 		});
 		
 		// Pass map and get list of errors back

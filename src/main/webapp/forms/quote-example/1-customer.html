@@ -7,15 +7,14 @@
 
 	<div class="field">
 		<label>Do you agree to all of the above?</label>
-		<input id="input_terms_agree" type="radio" name="terms"/>
+		<input id="input_terms" type="radio" name="terms" value="agree" rf.validation="required"/>
 		<label for="input_terms_agree" class="forRadio">I agree</label>
-		<input id="input_terms_disagree" type="radio" name="terms" class="radio"/>
+		<input id="input_terms" type="radio" name="terms" value="disagree"/>
 		<label for="input_terms_disagree">I don't agree</label>
 	</div>
 	<div class="field">
 		<label for="input_title">Title:</label>
-		<select id="input_title" name="title" rf.source="/forms/quote-example/resources/titles.txt" rf.preselectFirstOption="false">
-		</select>
+		<select id="input_title" name="title" rf.validation="required" rf.source="/forms/quote-example/resources/titles.txt" rf.preselectFirstOption="false"></select>
 	</div>
 	
 	<div class="field">
@@ -27,12 +26,11 @@
 		<label for="input_surname">Surname:</label>
 		<input id="input_surname" type="text" name="surname" rf.validation="required"/>
 	</div>
-	<!-- 
+
 	<div class="field">
-		<label for="input_dateOfBirth">Date of birth:</label>
-		<input id="input_dateOfBirth" type="text" name="dateOfBirth" rf.validation="required date('dd/mm/yyyy')" rf.type="date"/>
+		<label for="input_dateOfBirthDay">Date of birth (dd/mm/yyyy):</label>
+		<input id="input_dateOfBirth" type="text" name="dateOfBirth" rf.validation="required date"/>
 	</div>
-	 -->
 	
 	<div class="field">
 		<label for="input_occupation">What do you do for a living?:</label>

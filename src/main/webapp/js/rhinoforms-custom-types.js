@@ -9,7 +9,7 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 	this.lookupLoading;
 	this.$list;
 	this.$ul;
-	this.mouseDown = false;
+	this.mouseDown;
 	
 	this.init = function() {
 		var ct = this;
@@ -17,10 +17,13 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 		this.value = this.$input.attr("value");
 		this.source = this.$input.attr("rf.source");
 		this.$list = $("<div>").addClass("rf-dropdown");
+		this.lastLookup = "";
+		this.lookupLoading = "";
+		this.mouseDown = false;
 		
 		this.$input.on("input textInput propertychange paste cut keydown drop focus", function() {
 			var $input = $(this);
-			var value = $input.attr("value");
+			var value = $input.val();
 			if (ct.value != value) {
 				ct.valueChanged(value);
 			}
@@ -33,7 +36,9 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 		})
 		
 		this.$input.on("change", function() {
-			ct.validate($(this));
+			var $this = $(this);
+			rf_trace("change " + $this.val());
+			ct.validate($this);
 		})
 		
 		// Navigate list with arrow keys
@@ -67,6 +72,8 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 				}
 			}
 		})
+		
+		this.$input.change();
 	}
 	
 	this.valueChanged = function(value) {
@@ -185,14 +192,17 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 	}
 	
 	this.selectItem = function($item) {
+		rf_trace("selectItem");
 		var text = $item.text();
 		this.value = text;
 		this.$input.val(text);
 		this.filter(text);
 		this.hideList();
+		this.$input.change();
 	}
 	
 	this.validate = function($input) {
+		rf_trace("removing valueFromSource");
 		$input.removeAttr("rf.valueFromSource");
 		
 		var valueLower = $input.val().toLowerCase();
@@ -212,7 +222,10 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 			if (lookup != this.lastLookup) {
 				this.doLookup(valueLower.substring(0, 3), function(data) {
 					for (var i in data) {
-						if (valueLower == data[i][1]) {
+						if (valueLower == data[i][1].toLowerCase()) {
+							rf_trace("value in new downloaded list");
+							// Set correct case on input value.
+							$input.val(data[i][1]);
 							$input.attr("rf.valueFromSource", "true");
 							break;
 						}
@@ -220,8 +233,6 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 				});
 			}
 		}
-		
-		
 	}
 	
 	this.init();

@@ -1,0 +1,24 @@
+<script type='text/javascript' rhinoforms="true">
+	var rf = new Rhinoforms();
+</script>
+<form rhinoforms="true">
+	<div class="field">
+		<label>Do you agree to all of the above?</label>
+		<input id="input_terms" type="radio" name="terms" value="agree" rf.validation="required"/>
+		<label for="input_terms_agree" class="forRadio">I agree</label>
+		<input id="input_terms" type="radio" name="terms" value="disagree"/>
+		<label for="input_terms_disagree">I don't agree</label>
+	</div>
+	
+	<div class="field">
+		<label for="input_title">Title:</label>
+		<select id="input_title" name="title" rf.validation="required" rf.source="/forms/quote-example/resources/titles.txt" rf.preselectFirstOption="false"></select>
+	</div>
+	
+	<div class="field">
+		<label for="input_firstName">First name:</label>
+		<input id="input_firstName" type="text" name="firstName" rf.validation="required"/>
+	</div>
+	
+	<button action="next">Next</button>
+</form>

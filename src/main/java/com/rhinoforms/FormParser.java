@@ -104,25 +104,55 @@ public class FormParser {
 			
 			// Record input fields
 			List<InputPojo> inputPojos = new ArrayList<InputPojo>();
+			Map<String, InputPojo> inputPojosMap = new HashMap<String, InputPojo>();
+
 			@SuppressWarnings("unchecked")
 			List<TagNode> inputs = formNode.getElementListByName("input", true);
+			@SuppressWarnings("unchecked")
+			List<TagNode> selects = formNode.getElementListByName("select", true);
+			inputs.addAll(selects);
 			for (TagNode inputTagNode : inputs) {
 				String name = inputTagNode.getAttributeByName(Constants.NAME_ATTR);
-				String type = inputTagNode.getAttributeByName(Constants.TYPE_ATTR);
-				// Collect all rf.xxx attributes
-				Map<String, String> rfAttributes = new HashMap<String, String>();
-				Map<String, String> attributes = inputTagNode.getAttributes();
-				for (String attName : attributes.keySet()) {
-					if (attName.startsWith("rf.")) {
-						rfAttributes.put(attName, attributes.get(attName));
-					}
+				String type;
+				
+				if (inputTagNode.getName().equals("select")) {
+					type = "select";
+				} else {
+					type = inputTagNode.getAttributeByName(Constants.TYPE_ATTR);
 				}
-
-				inputPojos.add(new InputPojo(name, type, rfAttributes));
-
+				
+				if (!(type.equals("radio") && inputPojosMap.containsKey(name))) {
+				
+					// Collect all rf.xxx attributes
+					Map<String, String> rfAttributes = new HashMap<String, String>();
+					Map<String, String> attributes = inputTagNode.getAttributes();
+					for (String attName : attributes.keySet()) {
+						if (attName.startsWith("rf.")) {
+							rfAttributes.put(attName, attributes.get(attName));
+						}
+					}
+	
+					InputPojo inputPojo = new InputPojo(name, type, rfAttributes);
+					inputPojosMap.put(name, inputPojo);
+					inputPojos.add(inputPojo);
+				}
+				
+				// Push values from the dataDocument into the form html.
 				String inputValue = lookupValueByFieldName(dataDocument, name, docBase);
 				if (inputValue != null) {
-					inputTagNode.setAttribute("value", inputValue);
+					if (type.equals("radio")) {
+						String value = inputTagNode.getAttributeByName(Constants.VALUE_ATTR);
+						if (inputValue.equals(value)) {
+							inputTagNode.setAttribute(Constants.CHECKED_ATTR, "true");
+						}
+					} else if (type.equals("select")) {
+						Object[] node = inputTagNode.evaluateXPath("option[text()=\"" + inputValue + "\"]");
+						if (node.length > 0) {
+							((TagNode) node[0]).setAttribute(Constants.SELECTED_ATTR, "selected");
+						}
+					} else {
+						inputTagNode.setAttribute("value", inputValue);
+					}
 				}
 			}
 			formFlow.setCurrentInputPojos(inputPojos);

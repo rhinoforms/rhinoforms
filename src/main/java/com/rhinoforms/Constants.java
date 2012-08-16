@@ -14,10 +14,14 @@ public interface Constants {
 	
 	String NAME_ATTR = "name";
 	String TYPE_ATTR = "type";
+	String VALUE_ATTR = "value";
+	String CHECKED_ATTR = "checked";
+	String SELECTED_ATTR = "selected";
 	String RF_ATTR_PREFIX = "rf.";
 	String VALIDATION_ATTR = "rf.validation";
 	String VALIDATION_FUNCTION_ATTR = "rf.validationfunction";
 	String SELECT_SOURCE_ATTR = "rf.source";
 	String INPUT_SOURCE_ATTR = SELECT_SOURCE_ATTR;
+
 	
 }
