@@ -1,0 +1,5 @@
+Single
+Married
+Common-Law/Partner
+Divorced
+Widowed

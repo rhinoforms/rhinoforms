@@ -2,6 +2,7 @@ package com.rhinoforms;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,12 +21,17 @@ public class SelectOptionHelper {
 	public List<SelectOptionPojo> loadOptions(String source) throws ResourceLoaderException {
 		List<SelectOptionPojo> options = new ArrayList<SelectOptionPojo>();
 		try {
-			BufferedReader reader = new BufferedReader(new InputStreamReader(resourceLoader.getResourceAsStream(source)));
-			while (reader.ready()) {
-				options.add(new SelectOptionPojo(reader.readLine()));
+			InputStream resourceAsStream = resourceLoader.getResourceAsStream(source);
+			if (resourceAsStream != null) {
+				BufferedReader reader = new BufferedReader(new InputStreamReader(resourceAsStream));
+				while (reader.ready()) {
+					options.add(new SelectOptionPojo(reader.readLine()));
+				}
+			} else {
+				throw new ResourceLoaderException("Failed to load select options, source: '" + source + "'");
 			}
 		} catch (IOException e) {
-			throw new ResourceLoaderException("Failed to load select options.", e);
+			throw new ResourceLoaderException("Failed to load select options, source: '" + source + "'", e);
 		}
 		return options;
 	}

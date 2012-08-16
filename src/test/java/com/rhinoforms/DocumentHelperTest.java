@@ -124,6 +124,30 @@ public class DocumentHelperTest {
 	}
 	
 	@Test
+	public void testClearFormDataOtherChildrenInDoc() throws Exception {
+		String initialDoc = "<myData><customers><customer><name>Kai</name></customer><customer><name>Sam</name></customer></customers></myData>";
+		setDoc(initialDoc);
+		this.inputPOJOs.add(new InputPojo("name", ""));
+		Assert.assertEquals(initialDoc, documentManipulator.documentToString(dataDocument));
+		
+		documentManipulator.clearFormData(this.inputPOJOs, "/myData/customers/customer[2]", dataDocument);
+		
+		Assert.assertEquals("<myData><customers><customer><name>Kai</name></customer></customers></myData>", documentManipulator.documentToString(dataDocument));
+	}
+	
+	@Test
+	public void testClearFormDataOnlyThingInDoc() throws Exception {
+		String initialDoc = "<myData><customers><customer><name>Sam</name></customer></customers></myData>";
+		setDoc(initialDoc);
+		this.inputPOJOs.add(new InputPojo("name", ""));
+		Assert.assertEquals(initialDoc, documentManipulator.documentToString(dataDocument));
+		
+		documentManipulator.clearFormData(this.inputPOJOs, "/myData/customers/customer", dataDocument);
+		
+		Assert.assertEquals("<myData/>", documentManipulator.documentToString(dataDocument));
+	}
+	
+	@Test
 	public void testResolveXpathIndexesForAction_oneNumbered() throws Exception {
 		String initialDoc = "<myData><customers><customer><name>Kai</name></customer><customer><name>Sam</name></customer></customers></myData>";
 		setDoc(initialDoc);

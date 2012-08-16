@@ -3,6 +3,7 @@ package com.rhinoforms;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 
 import junit.framework.Assert;
@@ -27,16 +28,24 @@ public class FormSubmissionHelperTest {
 	@Before
 	public void before() throws Exception {
 		context = Context.enter();
-		RhinoFormsMasterScopeFactory masterScopeFactory = new RhinoFormsMasterScopeFactory();
 		
-		// Hacktastic NetUtil implementation for unit-test
-		masterScopeFactory.setNetUtil(new NetUtil() {
+		// Modified NetUtil implementation for unit-test
+		final NetUtil testNetUtil = new NetUtil() {
 			@Override
 			public Object httpGetJsObject(String urlString) throws IOException {
 				netUtilUrlRequested = urlString;
 				return netUtilReturnObject;
 			}
-		});
+		};
+		
+		// Modified factory which uses the testNetUtil
+		RhinoFormsMasterScopeFactory masterScopeFactory = new RhinoFormsMasterScopeFactory() {
+			@Override
+			NetUtil createNetUtil(JSMasterScope masterScope) {
+				return testNetUtil;
+			}
+		};
+		
 		
 		masterScope = masterScopeFactory.createMasterScope(context, new TestResourceLoader());
 		formSubmissionHelper = new FormSubmissionHelper(masterScope);
@@ -124,6 +133,28 @@ public class FormSubmissionHelperTest {
 		
 		marriedInputPojo.setValue("false");
 		Assert.assertEquals(0, formSubmissionHelper.validateInput(inputs).size());
+	}
+	
+	@Test
+	public void testGetIncludeFalseInputs() throws Exception {
+		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
+		
+		InputPojo movedHouseInput = new InputPojo("movedHouse", "checkbox", new HashMap<String, String>());
+		movedHouseInput.setValue("true");
+		inputs.add(movedHouseInput);
+		
+		HashMap<String, String> oldAddressRfAttributes = new HashMap<String, String>();
+		oldAddressRfAttributes.put(Constants.INCLUDE_IF_ATTR, "{ fields.movedHouse.value == true }");
+		InputPojo oldAddressInput = new InputPojo("oldAddress", "text", oldAddressRfAttributes);
+		inputs.add(oldAddressInput);
+		
+		Assert.assertEquals(0, formSubmissionHelper.getIncludeFalseInputs(inputs).size());
+		
+		movedHouseInput.setValue("false");
+		
+		List<InputPojo> includeFalseInputs = formSubmissionHelper.getIncludeFalseInputs(inputs);
+		Assert.assertEquals(1, includeFalseInputs.size());
+		Assert.assertEquals("oldAddress", includeFalseInputs.get(0).getName());
 	}
 	
 }

@@ -2,6 +2,7 @@ package com.rhinoforms;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -63,6 +64,9 @@ public class FormSubmissionHelper {
 				inputPOJO.setValue(parameterMap.get(inputPOJO.getName()));
 			}
 		}
+		
+		List<InputPojo> includeFalseInputs = getIncludeFalseInputs(inputPOJOs);
+		inputPOJOs.removeAll(includeFalseInputs);
 
 		Set<String> fieldsInError = validateInput(inputPOJOs);
 
@@ -83,6 +87,7 @@ public class FormSubmissionHelper {
 			String docBase = formFlow.getDocBase();
 			try {
 				documentHelper.persistFormData(inputPOJOs, docBase, formFlow.getDataDocument());
+				documentHelper.clearFormData(includeFalseInputs, docBase, formFlow.getDataDocument());
 			} catch (DocumentHelperException e) {
 				String message = "Failed to map field to xml document.";
 				logger.error(message, e);
@@ -93,16 +98,43 @@ public class FormSubmissionHelper {
 		return fieldsInError;
 	}
 
-	Set<String> validateInput(List<InputPojo> inputPOJOs) throws ServletException {
+	List<InputPojo> getIncludeFalseInputs(List<InputPojo> inputPojos) {
+		List<InputPojo> includeFalseInputPojos = new ArrayList<InputPojo>();
+		List<InputPojo> inputsWithIncludeIfStatements = new ArrayList<InputPojo>();
+		for (InputPojo inputPojo : inputPojos) {
+			if (inputPojo.getRfAttributes().containsKey(Constants.INCLUDE_IF_ATTR)) {
+				inputsWithIncludeIfStatements.add(inputPojo);
+			}
+		}
+		if (!inputsWithIncludeIfStatements.isEmpty()) {
+			String jsPojoMapString = jsSerialiser.inputPOJOListToJS(inputPojos);
+			Scriptable workingScope = masterScope.createWorkingScope();
+			Context context = masterScope.getCurrentContext();
+			context.evaluateString(workingScope, "var fields = " + jsPojoMapString, "Add fields to scope", 1, null);
+			for (InputPojo inputPojo : inputsWithIncludeIfStatements) {
+				String inputName = inputPojo.getName();
+				String includeIfStatement = inputPojo.getRfAttributes().get(Constants.INCLUDE_IF_ATTR);
+				Object object = context.evaluateString(workingScope, includeIfStatement, inputName + " includeif statement", 1, null);
+				boolean b = Context.toBoolean(object);
+				logger.debug("input includeif name:'{}', result:'{}'", inputName, b);
+				if (!b) {
+					includeFalseInputPojos.add(inputPojo);
+				}
+			}
+		}
+		return includeFalseInputPojos;
+	}
+
+	Set<String> validateInput(List<InputPojo> inputPojos) throws ServletException {
 		Set<String> fieldsInError = new HashSet<String>();
-		String jsPojoMap = jsSerialiser.inputPOJOListToJS(inputPOJOs);
-		logger.debug("inputPojos as js:{}", jsPojoMap);
+		String jsPojoMapString = jsSerialiser.inputPOJOListToJS(inputPojos);
+		logger.debug("inputPojos as js:{}", jsPojoMapString);
 		StringBuilder commandStringBuilder = new StringBuilder();
 		commandStringBuilder.append("rf.validateFields(");
-		commandStringBuilder.append(jsPojoMap);
+		commandStringBuilder.append(jsPojoMapString);
 		commandStringBuilder.append(")");
-		Context jsContext = Context.enter();
 		Scriptable scope = masterScope.createWorkingScope();
+		Context jsContext = Context.getCurrentContext();
 		try {
 			NativeArray errors = (NativeArray) jsContext.evaluateString(scope, commandStringBuilder.toString(), "<cmd>", 1, null);
 			for (int i = 0; i < errors.getLength(); i++) {
@@ -120,8 +152,6 @@ public class FormSubmissionHelper {
 			String message = "WrappedException error while calling Javascript function rf.validateFields.";
 			logger.error(message, e);
 			throw new ServletException(message, e);
-		} finally {
-			Context.exit();
 		}
 		return fieldsInError;
 	}

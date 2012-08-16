@@ -1,6 +1,3 @@
-<script type='text/javascript' rhinoforms="true">
-	var rf = new Rhinoforms();
-</script>
 <form rhinoforms="true">
 	<div class="field">
 		<label>Do you agree to all of the above?</label>
@@ -18,6 +15,11 @@
 	<div class="field">
 		<label for="input_firstName">First name:</label>
 		<input id="input_firstName" type="text" name="firstName" rf.validation="required"/>
+	</div>
+	
+	<div class="field">
+		<label for="input_canWalkOnHands">Can you walk on your hands?:</label>
+		<input id="input_canWalkOnHands" type="checkbox" name="canWalkOnHands"/>
 	</div>
 	
 	<button action="next">Next</button>

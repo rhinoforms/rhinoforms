@@ -14,12 +14,6 @@ import com.rhinoforms.resourceloader.ResourceLoader;
 
 public class RhinoFormsMasterScopeFactory {
 
-	private NetUtil netUtil;
-
-	public RhinoFormsMasterScopeFactory() {
-		netUtil = new NetUtilImpl();
-	}
-	
 	public JSMasterScope createMasterScope(Context jsContext, ResourceLoader resourceLoader) throws IOException {
 		ScriptableObject sharedScope = jsContext.initStandardObjects(null, true);
 
@@ -32,14 +26,21 @@ public class RhinoFormsMasterScopeFactory {
 		// Load server-side only functions into the scope
 		loadScript(Constants.RHINOFORMS_SERVER_SIDE_SCRIPT, sharedScope, jsContext, resourceLoader);
 		
+		JSMasterScope masterScope = new JSMasterScope(sharedScope);
+		
 		// Define netUtil for use by server-side functions
+		NetUtil netUtil = createNetUtil(masterScope);
 		Object wrappedNetUtil = Context.javaToJS(netUtil, sharedScope);
 		ScriptableObject.putProperty(sharedScope, "netUtil", wrappedNetUtil);
 
 		// It would be good to seal the sharedScope here but we can't because of a bug when xerces or xalan is on the classpath.
 		//sharedScope.sealObject();
 
-		return new JSMasterScope(sharedScope);
+		return masterScope;
+	}
+
+	NetUtil createNetUtil(JSMasterScope masterScope) {
+		return new NetUtilImpl(masterScope);
 	}
 
 	private void loadScript(String scriptPath, ScriptableObject sharedScope, Context jsContext, ResourceLoader resourceLoader)
@@ -48,8 +49,4 @@ public class RhinoFormsMasterScopeFactory {
 		jsContext.evaluateReader(sharedScope, new InputStreamReader(resourceAsStream), scriptPath, 1, null);
 	}
 	
-	public void setNetUtil(NetUtil netUtil) {
-		this.netUtil = netUtil;
-	}
-
 }

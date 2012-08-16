@@ -93,6 +93,12 @@ function Rhinoforms() {
 			return false;
 		})
 		
+		this.processIncludeIf($container);
+		
+		$(":input", $container).on("change", function() {
+			rf.processIncludeIf($container);
+		});
+		
 		// Process customTypes
 		$("input[rf\\.customType]", $container).each(function() {
 			var input = this;
@@ -109,6 +115,7 @@ function Rhinoforms() {
 		// Wire action buttons
 		$("form", $container).each(function() {
 			var $form = $(this);
+			
 			$form.attr("action", "javascript: void(0)");
 			$("[action]", $form).click(function() {
 				var action = $(this).attr("action");
@@ -119,6 +126,26 @@ function Rhinoforms() {
 		
 		// Give first input focus
 		$("input[type!='hidden']", $container).first().focus();
+	}
+	
+	this.processIncludeIf = function($container) {
+		var rf = this;
+		var $form = $("form", $container);
+		var $inputs = $("[rf\\.includeif]", $container);
+		rf_trace("processIncludeIf, inputs:" + $inputs.size());
+		$inputs.each(function(index) {
+			var $input = $(this);
+			var includeIfStatement = $input.attr("rf.includeif");
+			rf_trace("processIncludeIf index:" + index + ", statement:'" + includeIfStatement + "'");
+			var fields = rf.getFieldsMap($form);
+			var result = eval(includeIfStatement);
+			rf_trace("processIncludeIf result = " + result + "");
+			if (result) {
+				$input.show();
+			} else {
+				$input.hide();
+			}
+		})
 	}
 	
 	this.doAction = function(action, $form, $container) {
@@ -150,43 +177,8 @@ function Rhinoforms() {
 		var simpleForm = this;
 		var submit = true;
 		
-		// Compile map of fields with their values and validation options
-		var fields = {};
-		$(":input", $form).each(function() {
-			var input = this;
-			var $input = $(this);
-			var name = $input.attr("name")
-			var type = $input.attr("type")
-			var value;
-			if (type == 'checkbox') {
-				value = $input.prop('checked');
-			} else if (type == 'radio') {
-				if ($input.prop('checked')) {
-					value = $input.val();
-				} 
-			} else {
-				value = $input.val();
-			}
-			var validation = $input.attr("rf.validation");
-			var validationFunction = $input.attr("rf.validationfunction");
-			var rfAttributes = {};
-			for (var a in input.attributes) {
-				var attribute = input.attributes[a];
-				if (attribute.name && attribute.name.indexOf("rf.") == 0) {
-					rfAttributes[attribute.name] = attribute.value;
-				}
-			}
-			
-			if (type == 'radio' && fields[name]) {
-				if (value) {
-					// Update existing radio entry rather than replacing
-					fields[name].value = value;
-				}
-			} else {
-				fields[name] = { name:name, value:value, validation:validation, validationFunction:validationFunction, rfAttributes:rfAttributes };
-			}
-		});
-		
+		// Compile map of fields with their values, include validation options and rf fields
+		var fields = this.getFieldsMap($form, true);
 		// Pass map and get list of errors back
 		var errors = this.validateFields(fields);
 		
@@ -218,6 +210,51 @@ function Rhinoforms() {
 			// return true if no errors, otherwise false
 			return true;
 		}
+	}
+	
+	this.getFieldsMap = function($form, includeValidationAndRfAttributes) {
+		var fields = {};
+		$(":input:visible", $form).each(function() {
+			var input = this;
+			var $input = $(this);
+			var name = $input.attr("name")
+			var type = $input.attr("type")
+			var value;
+			if (type == 'checkbox') {
+				value = $input.prop('checked');
+			} else if (type == 'radio') {
+				if ($input.prop('checked')) {
+					value = $input.val();
+				} 
+			} else {
+				value = $input.val();
+			}
+			
+			var validation
+			var validationFunction;
+			var rfAttributes;
+			if (includeValidationAndRfAttributes) {
+				validation = $input.attr("rf.validation");
+				validationFunction = $input.attr("rf.validationfunction");
+				rfAttributes = {};
+				for (var a in input.attributes) {
+					var attribute = input.attributes[a];
+					if (attribute.name && attribute.name.indexOf("rf.") == 0) {
+						rfAttributes[attribute.name] = attribute.value;
+					}
+				}
+			}
+			
+			if (type == 'radio' && fields[name]) {
+				if (value) {
+					// Update existing radio entry rather than replacing
+					fields[name].value = value;
+				}
+			} else {
+				fields[name] = { name:name, value:value, validation:validation, validationFunction:validationFunction, rfAttributes:rfAttributes };
+			}
+		});
+		return fields;
 	}
 	
 	// Take a map of fields and validate each returning a list of any errors.

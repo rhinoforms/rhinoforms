@@ -21,7 +21,9 @@ public interface Constants {
 	String VALIDATION_ATTR = "rf.validation";
 	String VALIDATION_FUNCTION_ATTR = "rf.validationfunction";
 	String SELECT_SOURCE_ATTR = "rf.source";
+	String SELECT_RANGE_START_ATTR = "rf.rangestart";
+	String SELECT_RANGE_END_ATTR = "rf.rangeend";
 	String INPUT_SOURCE_ATTR = SELECT_SOURCE_ATTR;
-
+	String INCLUDE_IF_ATTR = "rf.includeif";
 	
 }

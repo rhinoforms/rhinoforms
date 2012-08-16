@@ -20,6 +20,8 @@ import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.SimpleHtmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPatherException;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Scriptable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -45,8 +47,8 @@ public class FormParser {
 		this.proxyFactory = new ProxyFactory();
 	}
 
-	public void parseForm(String formContents, FormFlow formFlow, PrintWriter writer, JSMasterScope masterScope) throws XPatherException, XPathExpressionException,
-			IOException, ResourceLoaderException {
+	public void parseForm(String formContents, FormFlow formFlow, PrintWriter writer, JSMasterScope masterScope) throws XPatherException,
+			XPathExpressionException, IOException, ResourceLoaderException {
 
 		HtmlCleaner cleaner = new HtmlCleaner();
 		TagNode documentNode = cleaner.clean(formContents);
@@ -101,7 +103,57 @@ public class FormParser {
 					dynamicSelectNode.addChild(optionNode);
 				}
 			} // TODO: validate that submitted value comes from the list
-			
+
+			// Process range select elements
+			Object[] rangeSelectNodes = formNode.evaluateXPath("//select[@" + Constants.SELECT_RANGE_START_ATTR + "]");
+			if (rangeSelectNodes.length > 0) {
+				Scriptable workingScope = masterScope.createWorkingScope();
+				Context context = masterScope.getCurrentContext();
+				for (Object rangeSelectNodeO : rangeSelectNodes) {
+					TagNode rangeSelectNode = (TagNode) rangeSelectNodeO;
+					String name = rangeSelectNode.getAttributeByName(Constants.NAME_ATTR);
+					String rangeStart = rangeSelectNode.getAttributeByName(Constants.SELECT_RANGE_START_ATTR);
+					String rangeEnd = rangeSelectNode.getAttributeByName(Constants.SELECT_RANGE_END_ATTR);
+					rangeSelectNode.removeAttribute(Constants.SELECT_RANGE_START_ATTR);
+					rangeSelectNode.removeAttribute(Constants.SELECT_RANGE_END_ATTR);
+					logger.debug("Found rangeSelectNode name:{}, rangeStart:{}, rangeEnd:{}", new String[] { name, rangeStart, rangeEnd });
+					boolean rangeStartValid = rangeStart != null && !rangeStart.isEmpty();
+					boolean rangeEndValid = rangeEnd != null && !rangeEnd.isEmpty();
+					if (rangeStartValid && rangeEndValid) {
+						Object rangeStartResult = context.evaluateString(workingScope, "{" + rangeStart + "}", Constants.SELECT_RANGE_START_ATTR, 1, null);
+						Object rangeEndResult = context.evaluateString(workingScope, "{" + rangeEnd + "}", Constants.SELECT_RANGE_END_ATTR, 1, null);
+						logger.debug("RangeSelectNode name:{}, rangeStartResult:{}, rangeEndResult:{}", new Object[] { name, rangeStartResult, rangeEndResult });
+						
+						double rangeStartResultNumber = Context.toNumber(rangeStartResult);
+						double rangeEndResultNumber = Context.toNumber(rangeEndResult);
+						String comparator;
+						String incrementor;
+						if (rangeStartResultNumber < rangeEndResultNumber) {
+							comparator = "<";
+							incrementor = "++";
+						} else {
+							comparator = ">";
+							incrementor = "--";
+						}
+						
+						String rangeStatement = "{ var range = []; for( var i = " + rangeStartResult + "; i " + comparator + " " + rangeEndResult + "; i" + incrementor + ") { range.push(i); }; '' + range; }";
+						logger.debug("RangeSelectNode name:{}, rangeStatement:{}", name, rangeStatement);
+						String rangeResult = (String) context.evaluateString(workingScope, rangeStatement, "Calculate range", 1, null);
+						logger.debug("RangeSelectNode name:{}, rangeResult:{}", name, rangeResult);
+						
+						for (String item : rangeResult.split(",")) {
+							TagNode optionNode = new TagNode("option");
+							optionNode.addChild(new ContentNode(item));
+							rangeSelectNode.addChild(optionNode);
+						}
+
+					} else {
+						logger.warn("Range select node '{}' not processed because {} is empty.", name,
+								(rangeStartValid ? Constants.SELECT_RANGE_START_ATTR : Constants.SELECT_RANGE_END_ATTR));
+					}
+				}
+			}
+
 			// Record input fields
 			List<InputPojo> inputPojos = new ArrayList<InputPojo>();
 			Map<String, InputPojo> inputPojosMap = new HashMap<String, InputPojo>();
@@ -114,15 +166,15 @@ public class FormParser {
 			for (TagNode inputTagNode : inputs) {
 				String name = inputTagNode.getAttributeByName(Constants.NAME_ATTR);
 				String type;
-				
+
 				if (inputTagNode.getName().equals("select")) {
 					type = "select";
 				} else {
 					type = inputTagNode.getAttributeByName(Constants.TYPE_ATTR);
 				}
-				
+
 				if (!(type.equals("radio") && inputPojosMap.containsKey(name))) {
-				
+
 					// Collect all rf.xxx attributes
 					Map<String, String> rfAttributes = new HashMap<String, String>();
 					Map<String, String> attributes = inputTagNode.getAttributes();
@@ -131,19 +183,23 @@ public class FormParser {
 							rfAttributes.put(attName, attributes.get(attName));
 						}
 					}
-	
+
 					InputPojo inputPojo = new InputPojo(name, type, rfAttributes);
 					inputPojosMap.put(name, inputPojo);
 					inputPojos.add(inputPojo);
 				}
-				
+
 				// Push values from the dataDocument into the form html.
 				String inputValue = lookupValueByFieldName(dataDocument, name, docBase);
 				if (inputValue != null) {
 					if (type.equals("radio")) {
 						String value = inputTagNode.getAttributeByName(Constants.VALUE_ATTR);
 						if (inputValue.equals(value)) {
-							inputTagNode.setAttribute(Constants.CHECKED_ATTR, "true");
+							inputTagNode.setAttribute(Constants.CHECKED_ATTR, Constants.CHECKED_ATTR);
+						}
+					} else if (type.equals("checkbox")) {
+						if (inputValue.equals("true")) {
+							inputTagNode.setAttribute(Constants.CHECKED_ATTR, Constants.CHECKED_ATTR);
 						}
 					} else if (type.equals("select")) {
 						Object[] node = inputTagNode.evaluateXPath("option[text()=\"" + inputValue + "\"]");
@@ -156,14 +212,14 @@ public class FormParser {
 				}
 			}
 			formFlow.setCurrentInputPojos(inputPojos);
-			
+
 			// Process auto-complete fields, replace source with proxy path
 			Object[] autoCompleteNodes = formNode.evaluateXPath("//input[@" + Constants.SELECT_SOURCE_ATTR + "]");
 			for (Object autoCompleteNodeO : autoCompleteNodes) {
 				TagNode autoCompleteNode = (TagNode) autoCompleteNodeO;
 				String fieldName = autoCompleteNode.getAttributeByName(Constants.NAME_ATTR);
 				String source = autoCompleteNode.getAttributeByName(Constants.INPUT_SOURCE_ATTR);
-				
+
 				FieldSourceProxy fieldSourceProxy = proxyFactory.createFlowProxy(currentPath, fieldName, source);
 				formFlow.addFieldSourceProxy(fieldSourceProxy);
 				autoCompleteNode.removeAttribute(Constants.INPUT_SOURCE_ATTR);

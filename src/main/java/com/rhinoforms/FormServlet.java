@@ -50,7 +50,7 @@ public class FormServlet extends HttpServlet {
 		} finally {
 			Context.exit();
 		}
-		
+
 		this.formSubmissionHelper = new FormSubmissionHelper(masterScope);
 	}
 
@@ -96,53 +96,58 @@ public class FormServlet extends HttpServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		@SuppressWarnings("unchecked")
-		Map<String, String[]> parameterMapMultiValue = request.getParameterMap();
-		Map<String, String> parameterMap = servletHelper.mapOfArraysToMapOfFirstValues(parameterMapMultiValue);
+		Context.enter();
+		try {
+			@SuppressWarnings("unchecked")
+			Map<String, String[]> parameterMapMultiValue = request.getParameterMap();
+			Map<String, String> parameterMap = servletHelper.mapOfArraysToMapOfFirstValues(parameterMapMultiValue);
 
-		FormFlow formFlow = getFlow(request);
+			FormFlow formFlow = getFlow(request);
 
-		if (formFlow != null) {
-			Map<String, String> actionParams = new HashMap<String, String>();
-			String action = formSubmissionHelper.collectActionParameters(actionParams, parameterMap);
+			if (formFlow != null) {
+				Map<String, String> actionParams = new HashMap<String, String>();
+				String action = formSubmissionHelper.collectActionParameters(actionParams, parameterMap);
 
-			Set<String> fieldsInError = null;
-			if (!action.equals(FormFlow.CANCEL_ACTION)) {
-				fieldsInError = formSubmissionHelper.validateAndPersist(formFlow, action, parameterMap);
-			}
-
-			if (fieldsInError == null || fieldsInError.isEmpty()) {
-				// Find next form
-				String nextUrl = null;
-				if (action != null) {
-					try {
-						nextUrl = formFlow.doAction(action, actionParams, documentHelper);
-					} catch (ActionError e) {
-						logger.error(e.getMessage(), e);
-						throw new ServletException(e);
-					}
+				Set<String> fieldsInError = null;
+				if (!action.equals(FormFlow.CANCEL_ACTION)) {
+					fieldsInError = formSubmissionHelper.validateAndPersist(formFlow, action, parameterMap);
 				}
 
-				if (nextUrl != null) {
-					forwardToAndParseForm(request, response, formFlow, nextUrl);
-				} else {
-					// End of flow. Spit out XML.
-					response.setContentType("text/plain");
-					response.setHeader("rf.responseType", "data");
-					PrintWriter writer = response.getWriter();
-					try {
-						documentHelper.documentToWriterPretty(formFlow.getDataDocument(), writer);
-					} catch (TransformerException e) {
-						String message = "Failed to output the underlaying xml data.";
-						logger.error(message, e);
-						response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message);
+				if (fieldsInError == null || fieldsInError.isEmpty()) {
+					// Find next form
+					String nextUrl = null;
+					if (action != null) {
+						try {
+							nextUrl = formFlow.doAction(action, actionParams, documentHelper);
+						} catch (ActionError e) {
+							logger.error(e.getMessage(), e);
+							throw new ServletException(e);
+						}
 					}
+
+					if (nextUrl != null) {
+						forwardToAndParseForm(request, response, formFlow, nextUrl);
+					} else {
+						// End of flow. Spit out XML.
+						response.setContentType("text/plain");
+						response.setHeader("rf.responseType", "data");
+						PrintWriter writer = response.getWriter();
+						try {
+							documentHelper.documentToWriterPretty(formFlow.getDataDocument(), writer);
+						} catch (TransformerException e) {
+							String message = "Failed to output the underlaying xml data.";
+							logger.error(message, e);
+							response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message);
+						}
+					}
+				} else {
+					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Validation error.");
 				}
 			} else {
-				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Validation error.");
+				response.sendError(HttpServletResponse.SC_FORBIDDEN, "Your session has expired.");
 			}
-		} else {
-			response.sendError(HttpServletResponse.SC_FORBIDDEN, "Your session has expired.");
+		} finally {
+			Context.exit();
 		}
 	}
 
@@ -157,7 +162,7 @@ public class FormServlet extends HttpServlet {
 			throw new ServletException("Missing " + Constants.FLOW_ID_FIELD_NAME);
 		}
 	}
-	
+
 	private void forwardToAndParseForm(HttpServletRequest request, HttpServletResponse response, FormFlow formFlow, String formUrl)
 			throws ServletException, IOException {
 		RequestDispatcher requestDispatcher = getServletContext().getRequestDispatcher(formUrl);

@@ -6,6 +6,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import junit.framework.Assert;
 
@@ -48,7 +50,7 @@ public class FormParserTest {
 
 	@Test
 	public void testAllInputTypes() throws Exception {
-		this.formFlow = new FormFlowFactory().createFlow("src/test/resources/test-flow1.js", Context.enter(), "<myData><terms>disagree</terms><title>Miss</title></myData>");
+		this.formFlow = new FormFlowFactory().createFlow("src/test/resources/test-flow1.js", Context.enter(), "<myData><terms>disagree</terms><title>Miss</title><canWalkOnHands>true</canWalkOnHands></myData>");
 		this.formFlow.navigateToFirstForm();
 		
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -56,13 +58,25 @@ public class FormParserTest {
 		
 		List<InputPojo> inputPojos = formFlow.getCurrentInputPojos();
 		
-		Assert.assertEquals(3, inputPojos.size());
+		Assert.assertEquals(4, inputPojos.size());
 		Assert.assertEquals("terms", inputPojos.get(0).getName());
 		Assert.assertEquals("firstName", inputPojos.get(1).getName());
-		Assert.assertEquals("title", inputPojos.get(2).getName());
+		Assert.assertEquals("canWalkOnHands", inputPojos.get(2).getName());
+		Assert.assertEquals("title", inputPojos.get(3).getName());
 		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
-		Assert.assertTrue(parsedFormHtml.contains("name=\"terms\" value=\"disagree\" checked=\"true\""));
+		System.out.println(parsedFormHtml);
+		Assert.assertTrue(parsedFormHtml.contains("type=\"radio\" name=\"terms\" value=\"disagree\" checked=\"checked\""));
 		Assert.assertTrue(parsedFormHtml.contains("<option selected=\"selected\">Miss</option>"));
+		Assert.assertTrue(parsedFormHtml.contains("type=\"checkbox\" name=\"canWalkOnHands\" checked=\"checked\""));
+	}
+	
+	@Test
+	public void testSelectRange() throws Exception {
+		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+		formParser.parseForm(readFileContents("src/test/resources/select-range.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope);
+		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
+		String[] split = parsedFormHtml.split("<option>\\d\\d\\d\\d");
+		Assert.assertEquals(6, split.length);
 	}
 	
 	private String readFileContents(String filePath) throws IOException {

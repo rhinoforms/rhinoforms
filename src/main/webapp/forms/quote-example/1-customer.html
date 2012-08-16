@@ -1,6 +1,3 @@
-<script type='text/javascript' rhinoforms="true">
-	var rf = new Rhinoforms();
-</script>
 <h3>Quote Example - work in progress</h3>
 <h4>Customer Details</h4>
 <form rhinoforms="true">
@@ -12,29 +9,52 @@
 		<input id="input_terms" type="radio" name="terms" value="disagree"/>
 		<label for="input_terms_disagree">I don't agree</label>
 	</div>
+	
 	<div class="field">
-		<label for="input_title">Title:</label>
+		<label for="input_title">Title</label>
 		<select id="input_title" name="title" rf.validation="required" rf.source="/forms/quote-example/resources/titles.txt" rf.preselectFirstOption="false"></select>
 	</div>
 	
 	<div class="field">
-		<label for="input_firstName">First name:</label>
+		<label for="input_firstName">First name</label>
 		<input id="input_firstName" type="text" name="firstName" rf.validation="required"/>
 	</div>
 	
 	<div class="field">
-		<label for="input_surname">Surname:</label>
+		<label for="input_surname">Surname</label>
 		<input id="input_surname" type="text" name="surname" rf.validation="required"/>
 	</div>
 
 	<div class="field">
-		<label for="input_dateOfBirthDay">Date of birth (dd/mm/yyyy):</label>
+		<label for="input_dateOfBirthDay">Date of birth (dd/mm/yyyy)</label>
 		<input id="input_dateOfBirth" type="text" name="dateOfBirth" rf.validation="required date"/>
 	</div>
 	
 	<div class="field">
-		<label for="input_occupation">What do you do for a living?:</label>
+		<label>Gender</label>
+		<input id="input_gender" type="radio" name="gender" value="Male" rf.validation="required"/>
+		<label for="input_gender_male" class="forRadio">Male</label>
+		<input id="input_gender" type="radio" name="gender" value="Female"/>
+		<label for="input_gender_female">Female</label>
+	</div>
+	
+	<div class="field">
+		<label for="input_occupation">Primary occupation</label>
 		<input id="input_occupation" type="text" name="occupation" rf.validation="required fromSource" rf.customType="auto-complete-select" rf.source="http://integration.osldev.net/resource-manager/REST/files/itb-resources-test2/lists/_itbLists-occupationSheet.xml?transformer=xslt&xslt=/itb-resources-test2/lists/occupationLookupTransformJSONmin.xsl&contentType=application%2Fjson&occupation={value}" />
+	</div>
+
+	<div class="field">
+		<label for="input_maritalStatus">Marital status</label>
+		<select id="input_maritalStatus" name="maritalStatus" rf.validation="required" rf.source="/forms/quote-example/resources/maritalStatus.txt" rf.preselectFirstOption="false"></select>
+	</div>
+	
+	<div class="field">
+		<label for="input_ukResident">UK resident</label>
+		<input id="input_ukResidentMoreThan5Years" type="checkbox" name="ukResidentMoreThan5Years"/>
+		<label for="input_ukResidentMoreThan5Years">More than 5 years</label>
+		
+		<select id="input_ukResidentSinceMonth" name="ukResidentSinceMonth" rf.includeIf="{ fields.ukResidentMoreThan5Years.value == false }" rf.source="/forms/quote-example/resources/months.txt" rf.preselectFirstOption="false"></select>
+		<select id="input_ukResidentSinceYear" name="ukResidentSinceYear" rf.includeIf="{ fields.ukResidentMoreThan5Years.value == false }" rf.rangeStart="new Date().getFullYear()" rf.rangeEnd="new Date().getFullYear() - 5" rf.preselectFirstOption="false"></select>
 	</div>
 	
 	<button action="next">Next</button>

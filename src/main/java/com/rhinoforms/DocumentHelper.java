@@ -38,12 +38,42 @@ public class DocumentHelper {
 		this.xPathFactory = XPathFactory.newInstance();
 	}
 
-	public void persistFormData(List<InputPojo> inputPOJOs, String documentBasePath, Document dataDocument) throws DocumentHelperException {
+	public void persistFormData(List<InputPojo> inputPOJOs, String docBase, Document dataDocument) throws DocumentHelperException {
 		for (InputPojo inputPojo : inputPOJOs) {
-			String xPathString = documentBasePath + "/" + inputPojo.getName().replaceAll("\\.", "/");
+			String xPathString = getXPathStringForInput(docBase, inputPojo);
 			Node node = lookupOrCreateNode(dataDocument, xPathString);
 			node.setTextContent(inputPojo.getValue());
 		}
+	}
+
+	public void clearFormData(List<InputPojo> inputsToClear, String docBase, Document dataDocument) throws DocumentHelperException {
+		try {
+			for (InputPojo inputPojo : inputsToClear) {
+				String xPathString = getXPathStringForInput(docBase, inputPojo);
+				XPathExpression xPath = newXPath(xPathString);
+				NodeList nodeList = lookup(dataDocument, xPath);
+				if (nodeList.getLength() > 0) {
+					Node item = nodeList.item(0);
+					Node parentNode = item.getParentNode();
+					parentNode.removeChild(item);
+					bottomUpRecursiveDeleteIfEmpty(parentNode);
+				}
+			}
+		} catch (XPathExpressionException e) {
+			throw new DocumentHelperException(e);
+		}
+	}
+	
+	private void bottomUpRecursiveDeleteIfEmpty(Node node) {
+		Node parentNode = node.getParentNode();
+		if (!node.hasChildNodes() && parentNode != null && parentNode.getParentNode() != null) {
+			parentNode.removeChild(node);
+			bottomUpRecursiveDeleteIfEmpty(parentNode);
+		}
+	}
+	
+	private String getXPathStringForInput(String documentBasePath, InputPojo inputPojo) {
+		return documentBasePath + "/" + inputPojo.getName().replaceAll("\\.", "/");
 	}
 	
 	public String resolveXPathIndexesForAction(String xpath, Map<String, String> actionParams, Document document) throws DocumentHelperException {
