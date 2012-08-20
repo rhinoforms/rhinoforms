@@ -1,15 +1,11 @@
 package com.rhinoforms;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
+import static com.rhinoforms.TestUtil.createDocument;
+import static com.rhinoforms.TestUtil.readFileContents;
+
 import java.io.ByteArrayOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import junit.framework.Assert;
 
@@ -41,15 +37,6 @@ public class FormParserTest {
 		} finally {
 			Context.exit();
 		}
-	}
-
-	@Test
-	public void testRecuringEntityOutput() throws Exception {
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		formParser.parseForm(readFileContents("src/test/resources/fishes.html"), formFlow, new PrintWriter(outputStream), masterScope);
-		String actual = new String(outputStream.toByteArray());
-		Assert.assertTrue(actual.contains("<span index=\"1\">One</span>"));
-		Assert.assertTrue(actual.contains("<span index=\"2\">Two</span>"));
 	}
 
 	@Test
@@ -98,19 +85,4 @@ public class FormParserTest {
 		Assert.assertEquals(null, formParser.lookupValueByFieldName(createDocument, "address.line1", "/myData/customer"));
 	}
 	
-	private String readFileContents(String filePath) throws IOException {
-		StringBuilder builder = new StringBuilder();
-		BufferedReader reader = new BufferedReader(new FileReader(filePath));
-		while (reader.ready()) {
-			builder.append(reader.readLine());
-			builder.append("\n");
-		}
-		return builder.toString();
-	}
-	
-	private Document createDocument(String dataDocumentString) throws Exception {
-		DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-		return documentBuilder.parse(new ByteArrayInputStream(dataDocumentString.getBytes()));
-	}
-
 }

@@ -2,12 +2,12 @@
 <h4>Drivers</h4>
 <form rhinoforms="true">
 	<div class="drivers">
-		<rf.forEach select="drivers/driver">
+		<rf.forEach select="drivers/driver" as="d">
 			<div class="driver">
 				<span>
-					{driver.driverName}
-					<a href="#" action="editDriver?index={driver.index}">Edit</a> 
-					<a href="#" action="deleteDriver?index={driver.index}">Delete</a>
+					{d.driverName}
+					<a href="#" action="editDriver?index={d.index}">Edit</a> 
+					<a href="#" action="deleteDriver?index={d.index}">Delete</a>
 				</span>
 			</div>
 		</rf.forEach>

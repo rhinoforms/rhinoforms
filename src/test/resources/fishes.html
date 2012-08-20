@@ -1,12 +1,13 @@
 <form rhinoforms="true">
 	<button action="back">Back</button>
+	<span class="ocean">{name}</span>
 	<div class="fishes">
-		<rf.forEach select="fishes/fish">
+		<rf.forEach select="fishes/fish" as="aFish">
+		<div>
 			<div>
-				<div>
-					<span index="{fish.index}">{fish.name}</span>
-				</div>
+				<span index="{aFish.index}">{aFish.name}</span>
 			</div>
+		</div>
 		</rf.forEach>
 	</div>
 	<button action="addFish">Add Fish</button>

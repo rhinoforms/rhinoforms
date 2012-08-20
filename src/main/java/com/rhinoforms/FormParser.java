@@ -6,15 +6,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 
-import org.apache.commons.io.output.StringBuilderWriter;
 import org.htmlcleaner.ContentNode;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.SimpleHtmlSerializer;
@@ -35,53 +31,33 @@ import com.rhinoforms.serverside.InputPojo;
 public class FormParser {
 
 	private static final FieldPathHelper fieldPathHelper = new FieldPathHelper();
-	private static final XPathFactory xPathFactory = XPathFactory.newInstance();
-	private static final Pattern CURLY_BRACKET_CONTENTS_PATTERN = Pattern.compile(".*?\\{([^}]+)\\}.*", Pattern.DOTALL);
 	final Logger logger = LoggerFactory.getLogger(FormParser.class);
 
 	private SelectOptionHelper selectOptionHelper;
 	private ProxyFactory proxyFactory;
+	private ValueInjector valueInjector;
+	private HtmlCleaner htmlCleaner;
 
 	public FormParser(ResourceLoader resourceLoader) {
 		this.selectOptionHelper = new SelectOptionHelper(resourceLoader);
 		this.proxyFactory = new ProxyFactory();
+		this.valueInjector = new ValueInjector();
+		this.htmlCleaner = new HtmlCleaner();
 	}
 
 	public void parseForm(String formContents, FormFlow formFlow, PrintWriter writer, JSMasterScope masterScope) throws XPatherException,
 			XPathExpressionException, IOException, ResourceLoaderException {
 
-		HtmlCleaner cleaner = new HtmlCleaner();
-		TagNode documentNode = cleaner.clean(formContents);
+		TagNode formHtml = htmlCleaner.clean(formContents);
 
 		Document dataDocument = formFlow.getDataDocument();
 		String docBase = formFlow.getDocBase();
 		String currentPath = formFlow.getCurrentPath();
 
 		// Process rf.forEach statements
-		Object[] forEachNodes = documentNode.evaluateXPath("//rf.forEach");
-		for (Object forEachNodeO : forEachNodes) {
-			TagNode forEachNode = (TagNode) forEachNodeO;
-			TagNode parent = forEachNode.getParent();
-			String selectPath = forEachNode.getAttributeByName("select");
+		valueInjector.processForEachStatements(formHtml, dataDocument, docBase);
 
-			XPathExpression selectExpression = xPathFactory.newXPath().compile(docBase + "/" + selectPath);
-			NodeList dataNodeList = (NodeList) selectExpression.evaluate(dataDocument, XPathConstants.NODESET);
-			for (int dataNodeindex = 0; dataNodeindex < dataNodeList.getLength(); dataNodeindex++) {
-				Node dataNode = dataNodeList.item(dataNodeindex);
-				StringBuilderWriter forEachNodeWriter = new StringBuilderWriter();
-				new SimpleHtmlSerializer(cleaner.getProperties()).write(forEachNode, forEachNodeWriter, "utf-8");
-				StringBuilder forEachNodeContents = forEachNodeWriter.getBuilder();
-				replaceCurlyBrackets(forEachNodeContents, dataNode, dataNodeindex + 1);
-				TagNode htmlTagNode = cleaner.clean(forEachNodeContents.toString());
-				TagNode body = (TagNode) htmlTagNode.getChildren().get(1);
-				TagNode processedForEachNode = body.findElementByName("rf.forEach", false);
-				parent.addChildren(processedForEachNode.getChildren());
-			}
-
-			parent.removeChild(forEachNode);
-		}
-
-		Object[] rfFormNodes = documentNode.evaluateXPath("//form[@" + Constants.RHINOFORMS_FLAG + "='true']");
+		Object[] rfFormNodes = formHtml.evaluateXPath("//form[@" + Constants.RHINOFORMS_FLAG + "='true']");
 		if (rfFormNodes.length > 0) {
 			logger.debug("{} forms found.", rfFormNodes.length);
 			TagNode formNode = (TagNode) rfFormNodes[0];
@@ -246,7 +222,7 @@ public class FormParser {
 		}
 
 		// Write out processed document
-		new SimpleHtmlSerializer(cleaner.getProperties()).write(documentNode, writer, "utf-8");
+		new SimpleHtmlSerializer(htmlCleaner.getProperties()).write(formHtml, writer, "utf-8");
 	}
 
 	String lookupValueByFieldName(Node document, String name, String docBase) throws XPathExpressionException {
@@ -260,51 +236,6 @@ public class FormParser {
 					+ "'. No value will be pushed into the form and there may be submission problems.", docBase, name);
 		}
 		return inputValue;
-	}
-
-	private void replaceCurlyBrackets(StringBuilder builder, Node node, int dataNodeindex) throws XPathExpressionException {
-		StringBuffer completedText = new StringBuffer();
-
-		String nodeName = node.getNodeName();
-		Matcher matcher = CURLY_BRACKET_CONTENTS_PATTERN.matcher(builder);
-		while (matcher.matches()) {
-			// get brackets contents
-			String group = matcher.group(1);
-			if (group.startsWith(nodeName + ".")) {
-
-				String value = null;
-				if (group.equals(nodeName + ".index")) {
-					value = "" + dataNodeindex;
-				} else {
-					// lookup value from current node
-					String xpath = group.substring(nodeName.length() + 1).replaceAll("\\.", "/");
-					XPathExpression expression = XPathFactory.newInstance().newXPath().compile(xpath);
-					NodeList nodeList = (NodeList) expression.evaluate(node, XPathConstants.NODESET);
-					if (nodeList != null && nodeList.getLength() > 0) {
-						Node item = nodeList.item(0);
-						value = item.getTextContent();
-					}
-				}
-
-				int groupStart = builder.indexOf("{" + group + "}");
-				int groupEnd = groupStart + group.length() + 2;
-
-				int end;
-				if (value != null) {
-					builder.replace(groupStart, groupEnd, value);
-					end = groupStart + value.length();
-				} else {
-					end = groupEnd;
-				}
-				completedText.append(builder.subSequence(0, end));
-				builder.delete(0, end);
-			}
-			matcher = CURLY_BRACKET_CONTENTS_PATTERN.matcher(builder);
-		}
-
-		completedText.append(builder);
-		builder.delete(0, builder.length());
-		builder.append(completedText);
 	}
 
 }
