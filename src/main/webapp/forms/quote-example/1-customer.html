@@ -1,3 +1,4 @@
+<script type='text/javascript' src='forms/quote-example/js/address-lookup.js' ></script>
 <h3>Quote Example - work in progress</h3>
 <h4>Customer Details</h4>
 <form rhinoforms="true">
@@ -56,6 +57,57 @@
 		<select id="input_ukResidentSinceMonth" name="ukResidentSinceMonth" rf.includeIf="{ fields.ukResidentMoreThan5Years.value == false }" rf.source="/forms/quote-example/resources/months.txt" rf.preselectFirstOption="false"></select>
 		<select id="input_ukResidentSinceYear" name="ukResidentSinceYear" rf.includeIf="{ fields.ukResidentMoreThan5Years.value == false }" rf.rangeStart="new Date().getFullYear()" rf.rangeEnd="new Date().getFullYear() - 5" rf.preselectFirstOption="false"></select>
 	</div>
+
+	<div class="field findAddress">
+		<input id="findAddressProxy" type="proxy" style="display:none" rf.source="http://integration.osldev.net/itb-quotes/postcodeLookup" />
+		<label for="input_addressLine1">House number or name</label>
+		<input class="findAddressHouse" id="input_addressLine1" type="text"/><br/>
+		<label for="input_postcode">Postcode</label>
+		<input class="findAddressPostcode" id="input_postcode" type="text"/>
+		<button class="findAddressButton" onclick="return false;">Find address</button>
+		<div class="addressList" style="display: none;">
+			Here are all the addresses we've found for your postcode:
+			<select class="addressListSelect">
+			</select>
+		</div>
+	</div>
+	<div class="field addressFound" style="display: none;">
+		<input type="hidden" name="address.line1"/>
+		<input type="hidden" name="address.line2"/>
+		<input type="hidden" name="address.line3"/>
+		<input type="hidden" name="address.line4"/>
+		<input type="hidden" name="address.postcode"/>
+		
+		<label for="input_address">Your address</label>
+		<span name="address.line1"></span>
+		<span name="address.line2"></span>
+		<span name="address.line3"></span>
+		<span name="address.line4"></span>
+		<span name="address.postcode"></span>
+		
+		<button class="changeAddressButton" onclick="return false;">Change address</button>
+	</div>
+	
+	<div class="field">
+		<label>Do you own your own home</label>
+		<input id="input_ownHome_yes" type="radio" name="ownHome" value="yes"/>
+		<label for="input_ownHome_yes">Yes</label>
+		<input id="input_ownHome_no" type="radio" name="ownHome" value="no"/>
+		<label for="input_ownHome_no">No</label>
+	</div>
+	
+	<div class="field">
+		<label for="input_referrer">How did you hear about us?</label>
+		<select id="input_referrer" name="referrer" rf.validation="required" rf.source="/forms/quote-example/resources/referrer.txt" rf.preselectFirstOption="false"></select>
+	</div>
+	
 	
 	<button action="next">Next</button>
-</form>		
+</form>
+<script>
+	var addressLookupProxyUrl = $("#findAddressProxy").attr("rf.source") + "?rf.flowId=" + $("[name='rf.flowId']").val();
+	var inputErrorCallback = function() {
+		alert("Please provide a valid postcode");
+	}
+	new AddressLookup().init(addressLookupProxyUrl, inputErrorCallback);
+</script>

@@ -43,7 +43,7 @@ function Rhinoforms() {
 			if (value) {
 				var dateRegex = new RegExp(/([0-9]{2})\/([0-9]{2})\/([0-9]{4})/g);
 				if (!dateRegex.exec(value)) {
-					return name + " should match the format dd/mm/yyyy, got '" + value + "', regex '" + dateRegex + "'";
+					return name + " should match the format dd/mm/yyyy.";
 				}
 			}
 		});

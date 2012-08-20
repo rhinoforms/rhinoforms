@@ -3,6 +3,7 @@ package com.rhinoforms;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -67,9 +68,22 @@ public class FormServlet extends HttpServlet {
 				String proxyPath = pathInfo.substring(proxyPathPrefix.length());
 				FormFlow formFlow = getFlow(request);
 				FieldSourceProxy fieldSourceProxy = formFlow.getFieldSourceProxy(proxyPath);
-				String valueParam = request.getParameter("value");
+				
+				@SuppressWarnings("unchecked")
+				Map<String, String[]> parameterMapMultiValue = request.getParameterMap();
+				Map<String, String> parameterMap = servletHelper.mapOfArraysToMapOfFirstValues(parameterMapMultiValue);
+				Set<String> paramsToRemove = new HashSet<String>();
+				// remove rf.xx values
+				for (String paramName : parameterMap.keySet()) {
+					if (paramName.startsWith("rf.")) {
+						paramsToRemove.add(paramName);
+					}
+				}
+				for (String paramToRemove : paramsToRemove) {
+					parameterMap.remove(paramToRemove);
+				}
 				try {
-					fieldSourceProxy.makeRequest(valueParam, response);
+					fieldSourceProxy.makeRequest(parameterMap, response);
 				} catch (FieldSourceProxyException e) {
 					response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to perform proxy request.");
 				}
@@ -84,9 +98,11 @@ public class FormServlet extends HttpServlet {
 				String realFormFlowPath = getServletContext().getRealPath(formFlowPath);
 				FormFlow newFormFlow = formFlowFactory.createFlow(realFormFlowPath, jsContext, initData);
 				SessionHelper.addFlow(newFormFlow, session);
-				String formUrl = newFormFlow.navigateToFirstForm();
+				String formUrl = newFormFlow.navigateToFirstForm(documentHelper);
 				forwardToAndParseForm(request, response, newFormFlow, formUrl);
 			} catch (FormFlowFactoryException e) {
+				throw new ServletException(e.getMessage(), e);
+			} catch (ActionError e) {
 				throw new ServletException(e.getMessage(), e);
 			} finally {
 				Context.exit();

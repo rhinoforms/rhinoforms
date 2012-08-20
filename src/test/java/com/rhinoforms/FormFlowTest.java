@@ -30,12 +30,12 @@ public class FormFlowTest {
 	
 	@Test
 	public void testNavFirstForm() throws Exception {
-		Assert.assertEquals("one.html", formFlow.navigateToFirstForm());
+		Assert.assertEquals("one.html", formFlow.navigateToFirstForm(documentHelper));
 	}
 	
 	@Test
 	public void testNavNextBack() throws Exception {
-		Assert.assertEquals("one.html", formFlow.navigateToFirstForm());
+		Assert.assertEquals("one.html", formFlow.navigateToFirstForm(documentHelper));
 		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams, documentHelper));
 		Assert.assertEquals("one.html", formFlow.doAction("back", actionParams, documentHelper));
 		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams, documentHelper));
@@ -50,7 +50,7 @@ public class FormFlowTest {
 	
 	@Test
 	public void testNavSideways() throws Exception {
-		Assert.assertEquals("one.html", formFlow.navigateToFirstForm());
+		Assert.assertEquals("one.html", formFlow.navigateToFirstForm(documentHelper));
 		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams, documentHelper));
 		Assert.assertEquals("addSomething.html", formFlow.doAction("add", actionParams, documentHelper));
 		Assert.assertEquals("two.html", formFlow.doAction("cancel", actionParams, documentHelper));
@@ -61,7 +61,7 @@ public class FormFlowTest {
 	
 	@Test
 	public void testNavDocBaseWithNext() throws Exception {
-		Assert.assertEquals("one.html", formFlow.navigateToFirstForm());
+		Assert.assertEquals("one.html", formFlow.navigateToFirstForm(documentHelper));
 		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams, documentHelper));
 		Assert.assertEquals("three.html", formFlow.doAction("next", actionParams, documentHelper));
 		
@@ -72,7 +72,7 @@ public class FormFlowTest {
 	
 	@Test
 	public void testNavDocBaseWithIndex() throws Exception {
-		Assert.assertEquals("one.html", formFlow.navigateToFirstForm());
+		Assert.assertEquals("one.html", formFlow.navigateToFirstForm(documentHelper));
 		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams, documentHelper));
 		Assert.assertEquals("three.html", formFlow.doAction("next", actionParams, documentHelper));
 		

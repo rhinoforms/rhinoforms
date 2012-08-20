@@ -37,9 +37,10 @@ public class FormFlow {
 		this.fieldSourceProxies = new HashMap<String, FieldSourceProxy>();
 	}
 
-	public String navigateToFirstForm() {
+	public String navigateToFirstForm(DocumentHelper documentHelper) throws ActionError {
 		this.currentFormList = formLists.get("main");
 		this.currentForm = currentFormList.iterator().next();
+		updateDocBase(documentHelper, new HashMap<String, String>());
 		return currentForm.getPath();
 	}
 
@@ -85,6 +86,11 @@ public class FormFlow {
 				}
 			}
 		}
+		updateDocBase(documentHelper, actionParams);
+		return currentForm.getPath();
+	}
+
+	private void updateDocBase(DocumentHelper documentHelper, Map<String, String> actionParams) throws ActionError {
 		String currentFormDocBase = currentForm.getDocBase();
 		if (currentFormDocBase != null) {
 			try {
@@ -95,7 +101,6 @@ public class FormFlow {
 		} else {
 			setDocBase(getFlowDocBase());
 		}
-		return currentForm.getPath();
 	}
 
 	private void clearFormSpecificResources() {

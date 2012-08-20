@@ -1,19 +1,22 @@
 package com.rhinoforms;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import junit.framework.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
+import org.w3c.dom.Document;
 
 import com.rhinoforms.serverside.InputPojo;
 
@@ -22,13 +25,15 @@ public class FormParserTest {
 	private FormParser formParser;
 	private FormFlow formFlow;
 	private JSMasterScope masterScope;
+	private DocumentHelper documentHelper;
 
 	@Before
 	public void setup() throws Exception {
 		TestResourceLoader resourceLoader = new TestResourceLoader();
 		this.formParser = new FormParser(resourceLoader);
 		this.formFlow = new FormFlowFactory().createFlow("src/test/resources/test-flow1.js", Context.enter(), "<myData><fishes><fish><name>One</name></fish><fish><name>Two</name></fish></fishes></myData>");
-		this.formFlow.navigateToFirstForm();
+		this.documentHelper = new DocumentHelper();
+		this.formFlow.navigateToFirstForm(documentHelper);
 		
 		Context jsContext = Context.enter();
 		try {
@@ -43,15 +48,20 @@ public class FormParserTest {
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		formParser.parseForm(readFileContents("src/test/resources/fishes.html"), formFlow, new PrintWriter(outputStream), masterScope);
 		String actual = new String(outputStream.toByteArray());
-		System.out.println(actual);
 		Assert.assertTrue(actual.contains("<span index=\"1\">One</span>"));
 		Assert.assertTrue(actual.contains("<span index=\"2\">Two</span>"));
 	}
 
 	@Test
+	public void testIgnoreFieldsWithNoName() throws Exception {
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		formParser.parseForm(readFileContents("src/test/resources/fields-with-no-name.html"), formFlow, new PrintWriter(outputStream), masterScope);
+	}
+
+	@Test
 	public void testAllInputTypes() throws Exception {
 		this.formFlow = new FormFlowFactory().createFlow("src/test/resources/test-flow1.js", Context.enter(), "<myData><terms>disagree</terms><title>Miss</title><canWalkOnHands>true</canWalkOnHands></myData>");
-		this.formFlow.navigateToFirstForm();
+		this.formFlow.navigateToFirstForm(documentHelper);
 		
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 		formParser.parseForm(readFileContents("src/test/resources/all-input-types.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope);
@@ -79,6 +89,15 @@ public class FormParserTest {
 		Assert.assertEquals(6, split.length);
 	}
 	
+	@Test
+	public void testlookupValueByFieldName() throws Exception {
+		Document createDocument = createDocument("<myData><customer>One</customer></myData>");
+		Assert.assertEquals("One", formParser.lookupValueByFieldName(createDocument, "customer", "/myData"));
+		Assert.assertEquals(null, formParser.lookupValueByFieldName(createDocument, "customer.address", "/myData"));
+		Assert.assertEquals(null, formParser.lookupValueByFieldName(createDocument, "customer.address.line1", "/myData"));
+		Assert.assertEquals(null, formParser.lookupValueByFieldName(createDocument, "address.line1", "/myData/customer"));
+	}
+	
 	private String readFileContents(String filePath) throws IOException {
 		StringBuilder builder = new StringBuilder();
 		BufferedReader reader = new BufferedReader(new FileReader(filePath));
@@ -87,6 +106,11 @@ public class FormParserTest {
 			builder.append("\n");
 		}
 		return builder.toString();
+	}
+	
+	private Document createDocument(String dataDocumentString) throws Exception {
+		DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+		return documentBuilder.parse(new ByteArrayInputStream(dataDocumentString.getBytes()));
 	}
 
 }

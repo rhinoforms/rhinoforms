@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -31,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rhinoforms.util.StreamUtils;
+import com.rhinoforms.util.URIUtil;
 
 public class FieldSourceProxy {
 
@@ -38,6 +40,7 @@ public class FieldSourceProxy {
 	private String proxyPath;
 	
 	private static StreamUtils streamUtils = new StreamUtils();
+	private static URIUtil uriUtil = new URIUtil();
 
 	final Logger logger = LoggerFactory.getLogger(FieldSourceProxy.class);
 
@@ -45,7 +48,7 @@ public class FieldSourceProxy {
 		this.proxyPath = proxyPath;
 		this.url = url;
 	}
-
+	
 	public String getUrl() {
 		return url;
 	}
@@ -54,8 +57,27 @@ public class FieldSourceProxy {
 		return proxyPath;
 	}
 
-	public void makeRequest(String value, HttpServletResponse response) throws FieldSourceProxyException {
-		String thisUrl = url.replace("{value}", value);
+	public void makeRequest(Map<String, String> parameterMap, HttpServletResponse response) throws FieldSourceProxyException {
+		String thisUrl = url;
+		
+		// If present inject input value into URL
+		String value = parameterMap.get("value");
+		if (value != null) {
+			thisUrl = thisUrl.replace("{value}", value);
+			parameterMap.remove("value");
+		}
+		
+		// Add params from this request.
+		String paramsFromProxyCall = uriUtil.paramsMapToString(parameterMap);
+		if (!paramsFromProxyCall.isEmpty()) {
+			if (!thisUrl.contains("?")) {
+				thisUrl += "?";
+			} else {
+				thisUrl += "&";
+			}
+			thisUrl += paramsFromProxyCall;
+		}
+		
 		logger.debug("Proxying url {}", thisUrl);
 		
 		DefaultHttpClientConnection conn = null;
@@ -150,11 +172,6 @@ public class FieldSourceProxy {
 				}
 			}
 		}
-	}
-
-	public static void main(String[] args) throws FieldSourceProxyException {
-		String url = "http://www.bigggg.com/resource-manager/REST/files/itb-resources-test2/lists/_itbLists-occupationSheet.xml?transformer=xslt&xslt=/itb-resources-test2/lists/occupationLookupTransformJSONmin.xsl&contentType=application/json&occupation={value}";
-		new FieldSourceProxy("123", url).makeRequest("Bri", null);
 	}
 
 }

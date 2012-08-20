@@ -120,10 +120,13 @@ public class FormParser {
 					boolean rangeStartValid = rangeStart != null && !rangeStart.isEmpty();
 					boolean rangeEndValid = rangeEnd != null && !rangeEnd.isEmpty();
 					if (rangeStartValid && rangeEndValid) {
-						Object rangeStartResult = context.evaluateString(workingScope, "{" + rangeStart + "}", Constants.SELECT_RANGE_START_ATTR, 1, null);
-						Object rangeEndResult = context.evaluateString(workingScope, "{" + rangeEnd + "}", Constants.SELECT_RANGE_END_ATTR, 1, null);
-						logger.debug("RangeSelectNode name:{}, rangeStartResult:{}, rangeEndResult:{}", new Object[] { name, rangeStartResult, rangeEndResult });
-						
+						Object rangeStartResult = context.evaluateString(workingScope, "{" + rangeStart + "}",
+								Constants.SELECT_RANGE_START_ATTR, 1, null);
+						Object rangeEndResult = context.evaluateString(workingScope, "{" + rangeEnd + "}", Constants.SELECT_RANGE_END_ATTR,
+								1, null);
+						logger.debug("RangeSelectNode name:{}, rangeStartResult:{}, rangeEndResult:{}", new Object[] { name,
+								rangeStartResult, rangeEndResult });
+
 						double rangeStartResultNumber = Context.toNumber(rangeStartResult);
 						double rangeEndResultNumber = Context.toNumber(rangeEndResult);
 						String comparator;
@@ -135,12 +138,13 @@ public class FormParser {
 							comparator = ">";
 							incrementor = "--";
 						}
-						
-						String rangeStatement = "{ var range = []; for( var i = " + rangeStartResult + "; i " + comparator + " " + rangeEndResult + "; i" + incrementor + ") { range.push(i); }; '' + range; }";
+
+						String rangeStatement = "{ var range = []; for( var i = " + rangeStartResult + "; i " + comparator + " "
+								+ rangeEndResult + "; i" + incrementor + ") { range.push(i); }; '' + range; }";
 						logger.debug("RangeSelectNode name:{}, rangeStatement:{}", name, rangeStatement);
 						String rangeResult = (String) context.evaluateString(workingScope, rangeStatement, "Calculate range", 1, null);
 						logger.debug("RangeSelectNode name:{}, rangeResult:{}", name, rangeResult);
-						
+
 						for (String item : rangeResult.split(",")) {
 							TagNode optionNode = new TagNode("option");
 							optionNode.addChild(new ContentNode(item));
@@ -165,49 +169,51 @@ public class FormParser {
 			inputs.addAll(selects);
 			for (TagNode inputTagNode : inputs) {
 				String name = inputTagNode.getAttributeByName(Constants.NAME_ATTR);
-				String type;
+				if (name != null) {
+					String type;
 
-				if (inputTagNode.getName().equals("select")) {
-					type = "select";
-				} else {
-					type = inputTagNode.getAttributeByName(Constants.TYPE_ATTR);
-				}
-
-				if (!(type.equals("radio") && inputPojosMap.containsKey(name))) {
-
-					// Collect all rf.xxx attributes
-					Map<String, String> rfAttributes = new HashMap<String, String>();
-					Map<String, String> attributes = inputTagNode.getAttributes();
-					for (String attName : attributes.keySet()) {
-						if (attName.startsWith("rf.")) {
-							rfAttributes.put(attName, attributes.get(attName));
-						}
+					if (inputTagNode.getName().equals("select")) {
+						type = "select";
+					} else {
+						type = inputTagNode.getAttributeByName(Constants.TYPE_ATTR);
 					}
 
-					InputPojo inputPojo = new InputPojo(name, type, rfAttributes);
-					inputPojosMap.put(name, inputPojo);
-					inputPojos.add(inputPojo);
-				}
+					if (!(type.equals("radio") && inputPojosMap.containsKey(name))) {
 
-				// Push values from the dataDocument into the form html.
-				String inputValue = lookupValueByFieldName(dataDocument, name, docBase);
-				if (inputValue != null) {
-					if (type.equals("radio")) {
-						String value = inputTagNode.getAttributeByName(Constants.VALUE_ATTR);
-						if (inputValue.equals(value)) {
-							inputTagNode.setAttribute(Constants.CHECKED_ATTR, Constants.CHECKED_ATTR);
+						// Collect all rf.xxx attributes
+						Map<String, String> rfAttributes = new HashMap<String, String>();
+						Map<String, String> attributes = inputTagNode.getAttributes();
+						for (String attName : attributes.keySet()) {
+							if (attName.startsWith("rf.")) {
+								rfAttributes.put(attName, attributes.get(attName));
+							}
 						}
-					} else if (type.equals("checkbox")) {
-						if (inputValue.equals("true")) {
-							inputTagNode.setAttribute(Constants.CHECKED_ATTR, Constants.CHECKED_ATTR);
+
+						InputPojo inputPojo = new InputPojo(name, type, rfAttributes);
+						inputPojosMap.put(name, inputPojo);
+						inputPojos.add(inputPojo);
+					}
+
+					// Push values from the dataDocument into the form html.
+					String inputValue = lookupValueByFieldName(dataDocument, name, docBase);
+					if (inputValue != null) {
+						if (type.equals("radio")) {
+							String value = inputTagNode.getAttributeByName(Constants.VALUE_ATTR);
+							if (inputValue.equals(value)) {
+								inputTagNode.setAttribute(Constants.CHECKED_ATTR, Constants.CHECKED_ATTR);
+							}
+						} else if (type.equals("checkbox")) {
+							if (inputValue.equals("true")) {
+								inputTagNode.setAttribute(Constants.CHECKED_ATTR, Constants.CHECKED_ATTR);
+							}
+						} else if (type.equals("select")) {
+							Object[] node = inputTagNode.evaluateXPath("option[text()=\"" + inputValue + "\"]");
+							if (node.length > 0) {
+								((TagNode) node[0]).setAttribute(Constants.SELECTED_ATTR, "selected");
+							}
+						} else {
+							inputTagNode.setAttribute("value", inputValue);
 						}
-					} else if (type.equals("select")) {
-						Object[] node = inputTagNode.evaluateXPath("option[text()=\"" + inputValue + "\"]");
-						if (node.length > 0) {
-							((TagNode) node[0]).setAttribute(Constants.SELECTED_ATTR, "selected");
-						}
-					} else {
-						inputTagNode.setAttribute("value", inputValue);
 					}
 				}
 			}
@@ -239,31 +245,11 @@ public class FormParser {
 			logger.warn("No forms found");
 		}
 
-/*	Don't need to do this at the moment.	
-		// Evaluate javascript on the page
-		Context jsContext = Context.enter();
-		try {
-			Scriptable scope = jsContext.newObject(masterScope);
-			String script = Constants.RHINOFORM_SCRIPT;
-			jsContext.evaluateReader(scope, new InputStreamReader(resourceLoader.getResourceAsStream(script)), script, 1, null);
-
-			Object[] rfScriptNodes = documentNode.evaluateXPath("//script[@" + Constants.RHINOFORMS_FLAG + "='true']");
-			TagNode rfScriptNode = null;
-			for (Object rfScriptNodeObject : rfScriptNodes) {
-				rfScriptNode = (TagNode) rfScriptNodeObject;
-				StringBuffer rfScriptNodeScript = rfScriptNode.getText();
-				String rfScriptNodeScriptText = rfScriptNodeScript.toString();
-				jsContext.evaluateString(scope, rfScriptNodeScriptText, "<cmd>", 1, null);
-			}
-		} finally {
-			Context.exit();
-		}
-*/
 		// Write out processed document
 		new SimpleHtmlSerializer(cleaner.getProperties()).write(documentNode, writer, "utf-8");
 	}
 
-	private String lookupValueByFieldName(Node document, String name, String docBase) throws XPathExpressionException {
+	String lookupValueByFieldName(Node document, String name, String docBase) throws XPathExpressionException {
 		String inputValue = null;
 		XPathExpression xPathExpression = fieldPathHelper.fieldToXPathExpression(docBase, name);
 		NodeList nodeList = (NodeList) xPathExpression.evaluate(document, XPathConstants.NODESET);
