@@ -9,20 +9,14 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.xpath.XPathExpressionException;
-
-import org.htmlcleaner.XPatherException;
 
 import com.rhinoforms.resourceloader.ResourceLoader;
-import com.rhinoforms.resourceloader.ResourceLoaderException;
 
 public class FormResponseWrapper extends HttpServletResponseWrapper {
 
 	private CharArrayWriter charArrayWriter;
 	private PrintWriter printWriter;
 	private PrintWriterOutputStream printWriterOutputStream;
-	private int contentLength;
 	private FormParser formParser;
 
 	public FormResponseWrapper(HttpServletResponse response, ResourceLoader resourceLoader) {
@@ -39,22 +33,20 @@ public class FormResponseWrapper extends HttpServletResponseWrapper {
 		response.setHeader("Pragma", "no-cache");
 	}
 
-	public void parseResponseAndWrite(ServletContext servletContext, FormFlow formFlow, JSMasterScope masterScope)
-			throws IOException, XPatherException, TransformerConfigurationException, XPathExpressionException, ResourceLoaderException {
-
-		printWriterOutputStream.flush();
-		printWriterOutputStream.close();
-		printWriter.flush();
-		printWriter.close();
-
-		PrintWriter writer = super.getWriter();
-		char[] charArray = charArrayWriter.toCharArray();
-
-		if (formFlow != null) {
+	public void parseResponseAndWrite(ServletContext servletContext, FormFlow formFlow, JSMasterScope masterScope) throws FormResponseWrapperException {
+		try {
+			printWriterOutputStream.flush();
+			printWriterOutputStream.close();
+			printWriter.flush();
+			printWriter.close();
+	
+			PrintWriter writer = super.getWriter();
+			char[] charArray = charArrayWriter.toCharArray();
+	
 			String formContentsString = new String(charArray); // TODO: try to avoid the huge string here.
-			formParser.parseForm(formContentsString, formFlow, writer, masterScope);
-		} else {
-			writer.write(charArray);
+			formParser.parseForm(formContentsString, formFlow, writer, masterScope); // TODO: Record the number of bytes written and use super.setContent(length)
+		} catch (Exception e) {
+			throw new FormResponseWrapperException(e);
 		}
 	}
 
@@ -70,9 +62,9 @@ public class FormResponseWrapper extends HttpServletResponseWrapper {
 
 	@Override
 	public void setContentLength(int len) {
-		this.contentLength = len;
+		// Discard contentLength, it will change when the form is parsed.
 	}
-
+	
 	private static class PrintWriterOutputStream extends ServletOutputStream {
 
 		private PrintWriter printWriter;

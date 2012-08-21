@@ -12,38 +12,38 @@ function Rhinoforms() {
 		this.customTypes = {};
 		
 		// Enable the 'required' validation keyword
-		this.registerValidationKeyword("required", function(name, value) {
+		this.registerValidationKeyword("required", function(value) {
 			if (!value) {
-				return name + " is required.";
+				return "This value is required.";
 			}
 		});
 
 		// Enable the 'email' validation function
-		this.registerValidationKeyword("email", function(name, value) {
+		this.registerValidationKeyword("email", function(value) {
 			if (value) {
 				var regex = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
 				if (regex.test(value) != true) {
-					return name + " is not a valid email address.";
+					return "This doesn't seem to be a valid email address.";
 				}
 			}
 		});
 		
 		// Enable the 'fromSource' validation keyword
 		// This function will be replaced for server-side validation.
-		this.registerValidationKeyword("fromSource", function(name, value, rfAttributes) {
+		this.registerValidationKeyword("fromSource", function(value, rfAttributes) {
 			if (value) {
 				if ("true" != rfAttributes["rf.valueFromSource".toLowerCase()]) {
-					return name + " should be a value from the drop-down list."
+					return "This should be a value from the drop-down list."
 				}
 			}
 		});
 		
 		// Enable the 'date' validation function
-		this.registerValidationKeyword("date", function(name, value) {
+		this.registerValidationKeyword("date", function(value) {
 			if (value) {
 				var dateRegex = new RegExp(/([0-9]{2})\/([0-9]{2})\/([0-9]{4})/g);
 				if (!dateRegex.exec(value)) {
-					return name + " should match the format dd/mm/yyyy.";
+					return "This date should match the format dd/mm/yyyy.";
 				}
 			}
 		});
@@ -165,8 +165,8 @@ function Rhinoforms() {
 						rf.insertForm(data, $container);
 					}
 				},
-				error: function() {
-					alert("Failed to perform action.");
+				error: function(jqXHR, textStatus, errorThrown) {
+					alert("Failed to perform action. " + jqXHR.responseText);
 				}
 			});
 		} else {
@@ -183,25 +183,14 @@ function Rhinoforms() {
 		// Pass map and get list of errors back
 		var errors = this.validateFields(fields);
 		
-		// Build error list
-		var $errorList = $("<ul>").addClass("rfError");
-		for (var a in errors) {
-			$errorList.append($("<li>").attr("name", errors[a].name).html(errors[a].message));
-		}
-		
 		if (errors.length > 0) {
-			// Attach error list to dom
-			var prev = $form.prev();
-			if (prev.hasClass("rfError")) {
-				prev.html($errorList.html());
-			} else {
-				$form.before($errorList);
-			}
-			
 			// Add invalid class to inputs
 			$("input", $form).removeClass("invalid");
+			$(".invalid-message", $form).remove();
 			for (var a in errors) {
-				$("input[name='" + errors[a].name + "']", $form).addClass("invalid");
+				var name = errors[a].name;
+				var message = errors[a].message;
+				$("input[name='" + name + "']", $form).addClass("invalid").after($("<span>").addClass("invalid-message").text(message));
 			}
 			
 			// Focus first invalid field
@@ -291,7 +280,7 @@ function Rhinoforms() {
 			var message = null;
 			
 			if (this.validationKeywords[validation]) {
-				message = this.validationKeywords[validation](name, value, rfAttributes);
+				message = this.validationKeywords[validation](value, rfAttributes);
 				if (message) {
 					return { name: name, message: message };
 				}

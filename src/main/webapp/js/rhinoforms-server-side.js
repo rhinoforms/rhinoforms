@@ -4,7 +4,7 @@
  * 		netUtil - a java object for downloading resources (com.rhinoforms.js.NetUtil)
  */
 
-rf.registerValidationKeyword("fromSource", function(name, value, rfAttributes) {
+rf.registerValidationKeyword("fromSource", function(value, rfAttributes) {
 	var valid = false;
 	if (value && value.length >= 3) {
 		var source = rfAttributes["rf.source"];
@@ -21,7 +21,7 @@ rf.registerValidationKeyword("fromSource", function(name, value, rfAttributes) {
 	}
 	
 	if (valid == false) {
-		return name + " should be a value from the drop-down list."
+		return "This should be a value from the drop-down list."
 	}
 	
 });

@@ -87,10 +87,14 @@ public class FormServlet extends HttpServlet {
 					try {
 						fieldSourceProxy.makeRequest(parameterMap, response);
 					} catch (FieldSourceProxyException e) {
-						response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to perform proxy request.");
+						String message = "Failed to perform proxy request.";
+						logger.debug(message, e);
+						sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 					}
 				} else {
-					response.sendError(HttpServletResponse.SC_FORBIDDEN, "Your session has expired.");
+					String message = "Your session has expired.";
+					logger.debug(message);
+					sendError(HttpServletResponse.SC_FORBIDDEN, message, response);
 				}
 			}
 		} else {
@@ -106,9 +110,13 @@ public class FormServlet extends HttpServlet {
 				String formUrl = newFormFlow.navigateToFirstForm(documentHelper);
 				forwardToAndParseForm(request, response, newFormFlow, formUrl);
 			} catch (FormFlowFactoryException e) {
-				throw new ServletException(e.getMessage(), e);
+				String message = "Failed to create form flow.";
+				logger.error(message, e);
+				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 			} catch (ActionError e) {
-				throw new ServletException(e.getMessage(), e);
+				String message = "Failed to navigate to the first form.";
+				logger.error(message, e);
+				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 			} finally {
 				Context.exit();
 			}
@@ -138,12 +146,7 @@ public class FormServlet extends HttpServlet {
 					// Find next form
 					String nextUrl = null;
 					if (action != null) {
-						try {
-							nextUrl = formFlow.doAction(action, actionParams, documentHelper);
-						} catch (ActionError e) {
-							logger.error(e.getMessage(), e);
-							throw new ServletException(e);
-						}
+						nextUrl = formFlow.doAction(action, actionParams, documentHelper);
 					}
 
 					if (nextUrl != null) {
@@ -153,20 +156,23 @@ public class FormServlet extends HttpServlet {
 						response.setContentType("text/plain");
 						response.setHeader("rf.responseType", "data");
 						PrintWriter writer = response.getWriter();
-						try {
-							documentHelper.documentToWriterPretty(formFlow.getDataDocument(), writer);
-						} catch (TransformerException e) {
-							String message = "Failed to output the underlaying xml data.";
-							logger.error(message, e);
-							response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message);
-						}
+						documentHelper.documentToWriterPretty(formFlow.getDataDocument(), writer);
 					}
 				} else {
-					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Validation error.");
+					sendError(HttpServletResponse.SC_BAD_REQUEST, "Validation error.", response);
 				}
 			} else {
-				response.sendError(HttpServletResponse.SC_FORBIDDEN, "Your session has expired.");
+				sendError(HttpServletResponse.SC_FORBIDDEN, "Your session has expired.", response);
 			}
+		} catch (ActionError e) {
+			String message = "Failed to perform action.";
+			logger.error(message, e);
+			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
+			throw new ServletException(e);
+		} catch (TransformerException e) {
+			String message = "Failed to output the underlaying xml data.";
+			logger.error(message, e);
+			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 		} finally {
 			Context.exit();
 		}
@@ -180,7 +186,7 @@ public class FormServlet extends HttpServlet {
 			FormFlow formFlow = SessionHelper.getFlow(flowId, session);
 			return formFlow;
 		} else {
-			throw new ServletException("Missing " + Constants.FLOW_ID_FIELD_NAME);
+			throw new ServletException("Missing " + Constants.FLOW_ID_FIELD_NAME + ".");
 		}
 	}
 
@@ -194,8 +200,13 @@ public class FormServlet extends HttpServlet {
 		} catch (Exception e) {
 			String message = "Failed to load next form.";
 			logger.error(message, e);
-			throw new ServletException(message);
+			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 		}
+	}
+	
+	private void sendError(int errorCode, String message, HttpServletResponse response) throws IOException {
+		response.setStatus(errorCode);
+		response.getWriter().write(message);
 	}
 
 }
