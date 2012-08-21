@@ -4,7 +4,7 @@ import javax.servlet.http.HttpSession;
 
 public class SessionHelper {
 
-	public static void addFlow(FormFlow formFlow, HttpSession session) {
+	public static void setFlow(FormFlow formFlow, HttpSession session) {
 		session.setAttribute("FormFlow" + formFlow.getId(), formFlow);
 	}
 	

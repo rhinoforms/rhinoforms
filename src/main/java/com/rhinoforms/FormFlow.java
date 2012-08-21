@@ -115,10 +115,14 @@ public class FormFlow implements Serializable {
 		if (actions.containsKey(action)) {
 			return actions.get(action);
 		} else {
-			throw new ActionError("Action not valid for the current form.");
+			StringBuilder builder = new StringBuilder();
+			builder.append("Action not valid for the current form. ");
+			builder.append("Current formId: ").append(currentForm.getId()).append(", ");
+			builder.append("valid actions: ").append(actions.keySet());
+			throw new ActionError(builder.toString());
 		}
 	}
-
+	
 	protected Map<String, String> filterActionParams(Map<String, String> paramsFromFontend, Map<String, String> paramsFromFlowAction) {
 		HashMap<String, String> filteredActionParams = new HashMap<String, String>();
 		if (paramsFromFlowAction != null) {

@@ -106,7 +106,7 @@ public class FormServlet extends HttpServlet {
 			try {
 				String realFormFlowPath = getServletContext().getRealPath(formFlowPath);
 				FormFlow newFormFlow = formFlowFactory.createFlow(realFormFlowPath, jsContext, initData);
-				SessionHelper.addFlow(newFormFlow, session);
+				SessionHelper.setFlow(newFormFlow, session);
 				String formUrl = newFormFlow.navigateToFirstForm(documentHelper);
 				forwardToAndParseForm(request, response, newFormFlow, formUrl);
 			} catch (FormFlowFactoryException e) {
@@ -151,6 +151,7 @@ public class FormServlet extends HttpServlet {
 
 					if (nextUrl != null) {
 						forwardToAndParseForm(request, response, formFlow, nextUrl);
+						SessionHelper.setFlow(formFlow, request.getSession()); // Required for Google AppEngine
 					} else {
 						// End of flow. Spit out XML.
 						response.setContentType("text/plain");
@@ -168,7 +169,6 @@ public class FormServlet extends HttpServlet {
 			String message = "Failed to perform action.";
 			logger.error(message, e);
 			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
-			throw new ServletException(e);
 		} catch (TransformerException e) {
 			String message = "Failed to output the underlaying xml data.";
 			logger.error(message, e);

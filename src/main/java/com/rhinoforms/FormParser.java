@@ -206,7 +206,7 @@ public class FormParser {
 				FieldSourceProxy fieldSourceProxy = proxyFactory.createFlowProxy(currentPath, fieldName, source);
 				formFlow.addFieldSourceProxy(fieldSourceProxy);
 				autoCompleteNode.removeAttribute(Constants.INPUT_SOURCE_ATTR);
-				autoCompleteNode.setAttribute("rf.source", "form/proxy/" + fieldSourceProxy.getProxyPath());
+				autoCompleteNode.setAttribute("rf.source", "rhinoforms/proxy/" + fieldSourceProxy.getProxyPath());
 			}
 
 			// Add flowId as hidden field

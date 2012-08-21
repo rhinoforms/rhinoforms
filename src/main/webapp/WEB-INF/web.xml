@@ -11,11 +11,12 @@
 	<servlet>
 		<servlet-name>FormServlet</servlet-name>
 		<servlet-class>com.rhinoforms.FormServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
 	</servlet>
 
 	<servlet-mapping>
 		<servlet-name>FormServlet</servlet-name>
-		<url-pattern>/form/*</url-pattern>
+		<url-pattern>/rhinoforms/*</url-pattern>
 	</servlet-mapping>
 	
 	<distributable/>
