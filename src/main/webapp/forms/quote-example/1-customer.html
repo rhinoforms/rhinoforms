@@ -64,7 +64,7 @@
 		<input class="findAddressHouse" id="input_addressLine1" type="text"/><br/>
 		<label for="input_postcode">Postcode</label>
 		<input class="findAddressPostcode" id="input_postcode" type="text"/>
-		<button class="findAddressButton" onclick="return false;">Find address</button>
+		<input type="button" class="findAddressButton" onclick="return false;" value="Find address"/>
 		<div class="addressList" style="display: none;">
 			Here are all the addresses we've found for your postcode:
 			<select class="addressListSelect">
@@ -85,7 +85,7 @@
 		<span name="address.line4">{address.line4}</span>
 		<span name="address.postcode">{address.postcode}</span>
 		
-		<button class="changeAddressButton" onclick="return false;">Change address</button>
+		<input type="button" class="changeAddressButton" onclick="return false;" value="Change address"/>
 	</div>
 	
 	<div class="field">
@@ -102,7 +102,7 @@
 	</div>
 	
 	
-	<button action="next">Next</button>
+	<input type="submit" value="Next" action="next"/>
 </form>
 <script>
 	var addressLookupProxyUrl = $("#findAddressProxy").attr("rf.source") + "?rf.flowId=" + $("[name='rf.flowId']").val();

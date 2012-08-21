@@ -126,7 +126,7 @@ function Rhinoforms() {
 		});
 		
 		// Give first input focus
-		$("input[type!='hidden']", $container).first().focus();
+		$("input[type!='hidden'][action!='back']", $container).first().focus();
 	}
 	
 	this.processIncludeIf = function($container) {
