@@ -43,7 +43,7 @@ public class FieldSourceProxy {
 		// If present inject input value into URL
 		String value = parameterMap.get("value");
 		if (value != null) {
-			thisUrl = thisUrl.replace("{value}", value);
+			thisUrl = thisUrl.replace("[value]", value);
 			parameterMap.remove("value");
 		}
 

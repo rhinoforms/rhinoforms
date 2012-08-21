@@ -51,7 +51,8 @@ public class FormResponseWrapper extends HttpServletResponseWrapper {
 		char[] charArray = charArrayWriter.toCharArray();
 
 		if (formFlow != null) {
-			formParser.parseForm(new String(charArray), formFlow, writer, masterScope);
+			String formContentsString = new String(charArray); // TODO: try to avoid the huge string here.
+			formParser.parseForm(formContentsString, formFlow, writer, masterScope);
 		} else {
 			writer.write(charArray);
 		}

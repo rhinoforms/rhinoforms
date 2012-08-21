@@ -56,6 +56,7 @@ public class FormParser {
 
 		// Process rf.forEach statements
 		valueInjector.processForEachStatements(formHtml, dataDocument, docBase);
+		valueInjector.processRemainingCurlyBrackets(formHtml, dataDocument, docBase);
 
 		Object[] rfFormNodes = formHtml.evaluateXPath("//form[@" + Constants.RHINOFORMS_FLAG + "='true']");
 		if (rfFormNodes.length > 0) {

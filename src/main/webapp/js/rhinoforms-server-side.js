@@ -8,7 +8,7 @@ rf.registerValidationKeyword("fromSource", function(name, value, rfAttributes) {
 	var valid = false;
 	if (value && value.length >= 3) {
 		var source = rfAttributes["rf.source"];
-		source = source.replace("{value}", value.toLowerCase().substring(0, 3));
+		source = source.replace("[value]", value.toLowerCase().substring(0, 3));
 		var array = netUtil.httpGetJsObject(source);
 		if (array) {
 			for (var i in array) {

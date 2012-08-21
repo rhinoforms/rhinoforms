@@ -55,10 +55,12 @@ input[type='radio']+label {
 	padding: 0;
 	height: 9em;
 	overflow-y: scroll;
+	border: 1px solid lightGrey;
 }
 
 .rf-dropdown li {
 	list-style-type: none;
+	background-color: white;
 }
 
 .rf-dropdown li.over {

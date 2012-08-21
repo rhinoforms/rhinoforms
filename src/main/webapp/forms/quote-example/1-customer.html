@@ -41,7 +41,7 @@
 	
 	<div class="field">
 		<label for="input_occupation">Primary occupation</label>
-		<input id="input_occupation" type="text" name="occupation" rf.validation="required fromSource" rf.customType="auto-complete-select" rf.source="http://integration.osldev.net/resource-manager/REST/files/itb-resources-test2/lists/_itbLists-occupationSheet.xml?transformer=xslt&xslt=/itb-resources-test2/lists/occupationLookupTransformJSONmin.xsl&contentType=application%2Fjson&occupation={value}" />
+		<input id="input_occupation" type="text" name="occupation" rf.validation="required fromSource" rf.customType="auto-complete-select" rf.source="http://integration.osldev.net/resource-manager/REST/files/itb-resources-test2/lists/_itbLists-occupationSheet.xml?transformer=xslt&xslt=/itb-resources-test2/lists/occupationLookupTransformJSONmin.xsl&contentType=application%2Fjson&occupation=[value]" />
 	</div>
 
 	<div class="field">
@@ -79,11 +79,11 @@
 		<input type="hidden" name="address.postcode"/>
 		
 		<label for="input_address">Your address</label>
-		<span name="address.line1"></span>
-		<span name="address.line2"></span>
-		<span name="address.line3"></span>
-		<span name="address.line4"></span>
-		<span name="address.postcode"></span>
+		<span name="address.line1">{address.line1}</span>
+		<span name="address.line2">{address.line2}</span>
+		<span name="address.line3">{address.line3}</span>
+		<span name="address.line4">{address.line4}</span>
+		<span name="address.postcode">{address.postcode}</span>
 		
 		<button class="changeAddressButton" onclick="return false;">Change address</button>
 	</div>

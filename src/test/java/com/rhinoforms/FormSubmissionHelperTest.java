@@ -97,7 +97,7 @@ public class FormSubmissionHelperTest {
 		
 		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
 		HashMap<String, String> rfAttributes = new HashMap<String, String>();
-		rfAttributes.put(Constants.SELECT_SOURCE_ATTR, "http://somewhere/something?value={value}");
+		rfAttributes.put(Constants.SELECT_SOURCE_ATTR, "http://somewhere/something?value=[value]");
 		rfAttributes.put(Constants.VALIDATION_ATTR, "fromSource");
 		InputPojo occupation = new InputPojo("occupation", "text", rfAttributes);
 		inputs.add(occupation);

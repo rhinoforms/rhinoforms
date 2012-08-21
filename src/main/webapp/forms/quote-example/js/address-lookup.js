@@ -21,6 +21,10 @@ function AddressLookup() {
 		$(".changeAddressButton").click(function() {
 			changeAddressButtonClick($(this));
 		})
+		
+		if ($("[name='address.line1']").val()) {
+			displayMode();
+		}
 	}
 
 	function findAddressButtonClick($button) {
@@ -127,12 +131,12 @@ function AddressLookup() {
 		var postcode = addressXml.getElementsByTagName("Postcode")[0].childNodes[0].nodeValue;
 		
 		setAddress(addressLine1, addressLine2, town, county, postcode);
+		$("[name='address.verified']").val("true");
 		
 		$findAddressHouse.val("");
 		$findAddressPostcode.val("");
 		
-		$(".findAddress").hide();
-		$(".addressFound").show();
+		displayMode();
 	}
 	
 	function setAddress(addressLine1, addressLine2, town, county, postcode) {
@@ -145,8 +149,17 @@ function AddressLookup() {
 	
 	function changeAddressButtonClick() {
 		setAddress("", "", "", "", "");
-		$(".addressFound").hide();
+		lookupMode();
+	}
+	
+	function lookupMode() {
 		$(".findAddress").show();
+		$(".addressFound").hide();
+	}
+	
+	function displayMode() {
+		$(".addressFound").show();
+		$(".findAddress").hide();
 	}
 	
 }

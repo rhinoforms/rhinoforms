@@ -1,7 +1,8 @@
 package com.rhinoforms;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.List;
+import java.io.OutputStreamWriter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,9 +45,9 @@ public class ValueInjector {
 				Node dataNode = dataNodeList.item(dataNodeindex);
 
 				StringBuilder forEachNodeContents = nodeToStringBuilder(forEachNode);
-				replaceCurlyBrackets(forEachNodeContents, dataDocument,  dataNode, selectAsName, dataNodeindex + 1);
+				replaceCurlyBrackets(forEachNodeContents, dataDocument, dataNode, selectAsName, dataNodeindex + 1);
 				TagNode processedForEachNode = stringBuilderToNode(forEachNodeContents);
-				
+
 				parent.addChildren(processedForEachNode.getChildren());
 			}
 
@@ -54,36 +55,11 @@ public class ValueInjector {
 		}
 	}
 
-	private StringBuilder nodeToStringBuilder(TagNode forEachNode) throws IOException {
-		StringBuilderWriter forEachNodeWriter = new StringBuilderWriter();
-		new SimpleHtmlSerializer(htmlCleaner.getProperties()).write(forEachNode, forEachNodeWriter, "utf-8");
-		StringBuilder forEachNodeContents = forEachNodeWriter.getBuilder();
-		return forEachNodeContents;
-	}
-
-	private TagNode stringBuilderToNode(StringBuilder forEachNodeContents) throws IOException {
-		TagNode newHtmlDoc = htmlCleaner.clean(forEachNodeContents.toString());
-		TagNode newHtmlBody = (TagNode) newHtmlDoc.getChildren().get(1);
-		List<?> children = newHtmlBody.getChildren();
-		TagNode childToBeReturned = null;
-		for (Object child : children) {
-			if (child instanceof TagNode) {
-				childToBeReturned = (TagNode) child;
-			}
-		}
-		
-		if (childToBeReturned != null) {
-			return childToBeReturned;
-		} else {
-			throw new IOException("No serialised node found");
-		}
-	}
-	
 	public void processRemainingCurlyBrackets(TagNode formHtml, Document dataDocument, String docBase) throws IOException,
 			XPathExpressionException {
 		XPathExpression selectExpression = xPathFactory.newXPath().compile(docBase);
 		Node dataDocAtDocBase = (Node) selectExpression.evaluate(dataDocument, XPathConstants.NODE);
-		
+
 		TagNode[] bodyElements = formHtml.getElementsByName("body", false);
 		if (bodyElements.length > 0) {
 			TagNode bodyElement = bodyElements[0];
@@ -92,12 +68,12 @@ public class ValueInjector {
 			TagNode processedBodyElement = stringBuilderToNode(builder);
 			TagNode parent = bodyElement.getParent();
 			parent.removeChild(bodyElement);
-			parent.addChild(processedBodyElement);
+			parent.addChildren(processedBodyElement.getChildren());
 		}
-
 	}
 
-	private void replaceCurlyBrackets(StringBuilder builder, Node dataDocument, Node contextNode, String contextName, Integer contextindex) throws XPathExpressionException {
+	private void replaceCurlyBrackets(StringBuilder builder, Node dataDocument, Node contextNode, String contextName, Integer contextindex)
+			throws XPathExpressionException {
 		StringBuffer completedText = new StringBuffer();
 
 		Matcher matcher = CURLY_BRACKET_CONTENTS_PATTERN.matcher(builder);
@@ -147,6 +123,25 @@ public class ValueInjector {
 		} else {
 			return "";
 		}
+	}
+
+	private StringBuilder nodeToStringBuilder(TagNode forEachNode) throws IOException {
+		StringBuilderWriter forEachNodeWriter = new StringBuilderWriter();
+		new SimpleHtmlSerializer(htmlCleaner.getProperties()).write(forEachNode, forEachNodeWriter, "utf-8");
+		StringBuilder forEachNodeContents = forEachNodeWriter.getBuilder();
+		return forEachNodeContents;
+	}
+
+	private TagNode stringBuilderToNode(StringBuilder nodeContents) throws IOException {
+		TagNode newHtmlDoc = htmlCleaner.clean(nodeContents.toString());
+		return (TagNode) newHtmlDoc.getChildren().get(1);
+	}
+	
+	public String serialiseNode(TagNode node) throws IOException {
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		new SimpleHtmlSerializer(new HtmlCleaner().getProperties()).write(node, new OutputStreamWriter(outputStream), "utf-8");
+		String actual = new String(outputStream.toByteArray());
+		return actual;
 	}
 
 }
