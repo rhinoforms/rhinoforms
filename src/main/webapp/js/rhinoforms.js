@@ -61,7 +61,8 @@ function Rhinoforms() {
 	this.loadFlow = function(flowPath, $container, initData, callback) {
 		var rf = this;
 		$.ajax({
-			url: "form",
+			url: "form/",
+			cache: false,
 			data: {
 				"rf.flowPath": flowPath,
 				"rf.initData": initData
@@ -152,7 +153,7 @@ function Rhinoforms() {
 		var rf = this;
 		if (action == "back" || action == "cancel" || this.validateForm($form) == true) {
 			var jqXHR = $.ajax({
-				url: "form",
+				url: "form/",
 				data: $form.serialize() + "&rf.action=" + action,
 				type: "POST",
 				success: function(data) {

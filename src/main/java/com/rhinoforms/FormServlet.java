@@ -67,25 +67,30 @@ public class FormServlet extends HttpServlet {
 				// Proxy request
 				String proxyPath = pathInfo.substring(proxyPathPrefix.length());
 				FormFlow formFlow = getFlow(request);
-				FieldSourceProxy fieldSourceProxy = formFlow.getFieldSourceProxy(proxyPath);
-				
-				@SuppressWarnings("unchecked")
-				Map<String, String[]> parameterMapMultiValue = request.getParameterMap();
-				Map<String, String> parameterMap = servletHelper.mapOfArraysToMapOfFirstValues(parameterMapMultiValue);
-				Set<String> paramsToRemove = new HashSet<String>();
-				// remove rf.xx values
-				for (String paramName : parameterMap.keySet()) {
-					if (paramName.startsWith("rf.")) {
-						paramsToRemove.add(paramName);
+				if (formFlow != null) {
+
+					FieldSourceProxy fieldSourceProxy = formFlow.getFieldSourceProxy(proxyPath);
+
+					@SuppressWarnings("unchecked")
+					Map<String, String[]> parameterMapMultiValue = request.getParameterMap();
+					Map<String, String> parameterMap = servletHelper.mapOfArraysToMapOfFirstValues(parameterMapMultiValue);
+					Set<String> paramsToRemove = new HashSet<String>();
+					// remove rf.xx values
+					for (String paramName : parameterMap.keySet()) {
+						if (paramName.startsWith("rf.")) {
+							paramsToRemove.add(paramName);
+						}
 					}
-				}
-				for (String paramToRemove : paramsToRemove) {
-					parameterMap.remove(paramToRemove);
-				}
-				try {
-					fieldSourceProxy.makeRequest(parameterMap, response);
-				} catch (FieldSourceProxyException e) {
-					response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to perform proxy request.");
+					for (String paramToRemove : paramsToRemove) {
+						parameterMap.remove(paramToRemove);
+					}
+					try {
+						fieldSourceProxy.makeRequest(parameterMap, response);
+					} catch (FieldSourceProxyException e) {
+						response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to perform proxy request.");
+					}
+				} else {
+					response.sendError(HttpServletResponse.SC_FORBIDDEN, "Your session has expired.");
 				}
 			}
 		} else {

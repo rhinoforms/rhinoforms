@@ -21,6 +21,9 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 		this.lookupLoading = "";
 		this.mouseDown = false;
 		
+		// Disable browser-autocomplete
+		this.$input.attr("autocomplete", "off");
+		
 		this.$input.on("input textInput propertychange paste cut keydown drop focus", function() {
 			var $input = $(this);
 			var value = $input.val();

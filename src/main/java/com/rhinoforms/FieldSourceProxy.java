@@ -2,32 +2,12 @@ package com.rhinoforms;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.Socket;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpException;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
-import org.apache.http.impl.DefaultHttpClientConnection;
-import org.apache.http.message.BasicHttpRequest;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.BasicHttpProcessor;
-import org.apache.http.protocol.ExecutionContext;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.protocol.HttpRequestExecutor;
-import org.apache.http.protocol.RequestConnControl;
-import org.apache.http.protocol.RequestContent;
-import org.apache.http.protocol.RequestExpectContinue;
-import org.apache.http.protocol.RequestTargetHost;
-import org.apache.http.protocol.RequestUserAgent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,9 +16,9 @@ import com.rhinoforms.util.URIUtil;
 
 public class FieldSourceProxy {
 
-	private String url;
+	private String urlString;
 	private String proxyPath;
-	
+
 	private static StreamUtils streamUtils = new StreamUtils();
 	private static URIUtil uriUtil = new URIUtil();
 
@@ -46,11 +26,11 @@ public class FieldSourceProxy {
 
 	public FieldSourceProxy(String proxyPath, String url) {
 		this.proxyPath = proxyPath;
-		this.url = url;
+		this.urlString = url;
 	}
-	
+
 	public String getUrl() {
-		return url;
+		return urlString;
 	}
 
 	public String getProxyPath() {
@@ -58,15 +38,15 @@ public class FieldSourceProxy {
 	}
 
 	public void makeRequest(Map<String, String> parameterMap, HttpServletResponse response) throws FieldSourceProxyException {
-		String thisUrl = url;
-		
+		String thisUrl = urlString;
+
 		// If present inject input value into URL
 		String value = parameterMap.get("value");
 		if (value != null) {
 			thisUrl = thisUrl.replace("{value}", value);
 			parameterMap.remove("value");
 		}
-		
+
 		// Add params from this request.
 		String paramsFromProxyCall = uriUtil.paramsMapToString(parameterMap);
 		if (!paramsFromProxyCall.isEmpty()) {
@@ -77,99 +57,39 @@ public class FieldSourceProxy {
 			}
 			thisUrl += paramsFromProxyCall;
 		}
-		
+
 		logger.debug("Proxying url {}", thisUrl);
-		
-		DefaultHttpClientConnection conn = null;
+
+		connectViaUrlConnection(thisUrl, response);
+	}
+
+	private void connectViaUrlConnection(String thisUrl, HttpServletResponse response) throws FieldSourceProxyException {
+		HttpURLConnection connection = null;
+		InputStream inputStream = null;
 		try {
-			URI targetURI = new URI(thisUrl);
-			
-			HttpHost targetHost = new HttpHost(targetURI.getHost(), targetURI.getPort());
-	
-			String path = thisUrl;
-			if (path.contains("//")) {
-				path = path.substring(path.indexOf("//") + 2);
+			connection = (HttpURLConnection) new URL(thisUrl).openConnection();
+			int responseCode = connection.getResponseCode();
+			if (responseCode == 200) {
+				response.setContentLength(connection.getContentLength());
+				response.setContentType(connection.getContentType());
+				inputStream = connection.getInputStream();
+				streamUtils.copyInputStreamToOutputStream(inputStream, response.getOutputStream());
+			} else {
+				response.sendError(responseCode, connection.getResponseMessage());
 			}
-			if (path.contains("/")) {
-				path = path.replace(path.split("/")[0], "");
-			}
-			
-			BasicHttpRequest httpget = new BasicHttpRequest("GET", path);
-			BasicHttpParams params = new BasicHttpParams();
-			httpget.setParams(params);
-	
-			HttpRequestExecutor httpexecutor = new HttpRequestExecutor();
-			BasicHttpProcessor httpproc = new BasicHttpProcessor();
-			// Required protocol interceptors
-			httpproc.addInterceptor(new RequestContent());
-			httpproc.addInterceptor(new RequestTargetHost());
-			// Recommended protocol interceptors
-			httpproc.addInterceptor(new RequestConnControl());
-			httpproc.addInterceptor(new RequestUserAgent());
-			httpproc.addInterceptor(new RequestExpectContinue());
-	
-			HttpContext context = new BasicHttpContext();
-	
-			conn = new DefaultHttpClientConnection();
-			Socket socket = new Socket(targetHost.getHostName(), targetHost.getPort() > 0 ? targetHost.getPort() : 80);
-			conn.bind(socket, params);
-	
-			context.setAttribute(ExecutionContext.HTTP_CONNECTION, conn);
-			context.setAttribute(ExecutionContext.HTTP_TARGET_HOST, targetHost);
-	
-			httpexecutor.preProcess(httpget, httpproc, context);
-			HttpResponse proxyResponse = httpexecutor.execute(httpget, conn, context);
-			httpexecutor.postProcess(proxyResponse, httpproc, context);
-	
-			HttpEntity entity = proxyResponse.getEntity();
-			if (entity != null) {
-				
-				long contentLength = entity.getContentLength();
-				if (contentLength > 0 && contentLength <= Integer.MAX_VALUE) {
-					response.setContentLength((int) contentLength);
-				}
-				
-				Header contentType = entity.getContentType();
-				if (contentType != null) {
-					response.setHeader(contentType.getName(), contentType.getValue());
-				}
-				
-				Header contentEncoding = entity.getContentEncoding();
-				if (contentEncoding != null) {
-					response.setHeader(contentEncoding.getName(), contentEncoding.getValue());
-				}
-				
-				InputStream inputStream = entity.getContent();
-				try {
-					streamUtils.copyInputStreamToOutputStream(inputStream, response.getOutputStream());
-				} catch (IOException ex) {
-					conn.shutdown();
-				} finally {
-					inputStream.close();
-				}
-			}
-		} catch (IllegalArgumentException e) {
-			logger.error("Proxy URL problem '{}'", thisUrl, e);
-			throw new FieldSourceProxyException();
-		} catch (URISyntaxException e) {
-			logger.error("Proxy URL problem '{}'", thisUrl, e);
-			throw new FieldSourceProxyException();
-		} catch (UnknownHostException e) {
-			logger.error("Proxy URL problem '{}'", thisUrl, e);
-			throw new FieldSourceProxyException();
 		} catch (IOException e) {
 			logger.error("Proxy URL problem '{}'", thisUrl, e);
 			throw new FieldSourceProxyException();
-		} catch (HttpException e) {
-			logger.error("Proxy URL problem '{}'", thisUrl, e);
-			throw new FieldSourceProxyException();
 		} finally {
-			if (conn != null) {
+			if (inputStream != null) {
 				try {
-					conn.close();
+					inputStream.close();
 				} catch (IOException e) {
 					logger.error("Failed to close connection to proxy url.", e);
 				}
+			}
+			if (connection != null) {
+				connection.disconnect();
 			}
 		}
 	}
