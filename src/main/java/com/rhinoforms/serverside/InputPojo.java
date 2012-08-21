@@ -1,15 +1,17 @@
 package com.rhinoforms.serverside;
 
+import java.io.Serializable;
 import java.util.Map;
 
 import com.rhinoforms.Constants;
 
-public class InputPojo {
-
+public class InputPojo implements Serializable {
+	
 	private String name;
 	private String type;
 	private String value;
 	private Map<String, String> rfAttributes;
+	private static final long serialVersionUID = 2624278870180689188L;
 
 	public InputPojo(String name, String type, Map<String, String> rfAttributes) {
 		this.name = name;

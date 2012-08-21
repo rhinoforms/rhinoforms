@@ -1,13 +1,15 @@
 package com.rhinoforms;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FlowAction {
-
+public class FlowAction implements Serializable {
+	
 	private String name;
 	private String target;
 	private Map<String, String> params;
+	private static final long serialVersionUID = -7126508228396096955L;
 
 	public FlowAction(String name, String target) {
 		this.name = name;

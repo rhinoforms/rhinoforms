@@ -17,5 +17,7 @@
 		<servlet-name>FormServlet</servlet-name>
 		<url-pattern>/form/*</url-pattern>
 	</servlet-mapping>
+	
+	<distributable/>
 
 </web-app>

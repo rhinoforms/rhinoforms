@@ -1,5 +1,6 @@
 package com.rhinoforms;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +13,7 @@ import org.w3c.dom.Document;
 
 import com.rhinoforms.serverside.InputPojo;
 
-public class FormFlow {
+public class FormFlow implements Serializable {
 
 	private int id;
 	private List<InputPojo> currentInputPojos;
@@ -29,7 +30,8 @@ public class FormFlow {
 	public static final String CANCEL_ACTION = "cancel";
 	public static final String FINISH_ACTION = "finish";
 
-	final Logger logger = LoggerFactory.getLogger(FormFlow.class);
+	private static final Logger logger = LoggerFactory.getLogger(FormFlow.class);
+	private static final long serialVersionUID = -5683469121328756822L;
 
 	public FormFlow() {
 		this.id = (int) (Math.random() * 100000000f);

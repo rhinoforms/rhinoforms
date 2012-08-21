@@ -2,6 +2,7 @@ package com.rhinoforms;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
@@ -14,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import com.rhinoforms.util.StreamUtils;
 import com.rhinoforms.util.URIUtil;
 
-public class FieldSourceProxy {
+public class FieldSourceProxy implements Serializable {
 
 	private String urlString;
 	private String proxyPath;
@@ -22,7 +23,8 @@ public class FieldSourceProxy {
 	private static StreamUtils streamUtils = new StreamUtils();
 	private static URIUtil uriUtil = new URIUtil();
 
-	final Logger logger = LoggerFactory.getLogger(FieldSourceProxy.class);
+	private static final Logger logger = LoggerFactory.getLogger(FieldSourceProxy.class);
+	private static final long serialVersionUID = 969432155789038606L;
 
 	public FieldSourceProxy(String proxyPath, String url) {
 		this.proxyPath = proxyPath;

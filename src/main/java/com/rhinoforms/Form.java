@@ -1,14 +1,16 @@
 package com.rhinoforms;
 
+import java.io.Serializable;
 import java.util.Map;
 
-public class Form {
-
+public class Form implements Serializable {
+	
 	private String id;
 	private String path;
 	private Map<String, FlowAction> actions;
 	private String docBase;
 	private int indexInList;
+	private static final long serialVersionUID = 4473864389096510334L;
 
 	public Form(String id, String path, Map<String, FlowAction> actions, int indexInList) {
 		super();
