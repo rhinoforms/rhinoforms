@@ -9,14 +9,10 @@ import java.io.InputStreamReader;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathFactory;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
 import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 public class FormFlowFactory {
@@ -81,23 +77,6 @@ public class FormFlowFactory {
 		} else {
 			throw new FormFlowFactoryException("Please specify a form-flow docBase.");
 		}
-	}
-
-	// Hack method
-	public static void main(String[] args) throws Exception {
-		Document document = DocumentBuilderFactory
-				.newInstance()
-				.newDocumentBuilder()
-				.parse(new ByteArrayInputStream("<customer><name>Kai</name><driver>one</driver><driver>two</driver></customer>".getBytes()));
-		XPathFactory xPathFactory = XPathFactory.newInstance();
-		NodeList customerNodeList = (NodeList) xPathFactory.newXPath().compile("/customer").evaluate(document, XPathConstants.NODESET);
-		System.out.println(customerNodeList.getLength());
-		Node customer = customerNodeList.item(0);
-		System.out.println(customer);
-		NodeList nameNodeList = (NodeList) xPathFactory.newXPath().compile("name").evaluate(customer, XPathConstants.NODESET);
-		System.out.println(nameNodeList.getLength());
-		NodeList driverNodeList = (NodeList) xPathFactory.newXPath().compile("driver[0]").evaluate(customer, XPathConstants.NODESET);
-		System.out.println(driverNodeList.getLength());
 	}
 
 }

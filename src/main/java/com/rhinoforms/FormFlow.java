@@ -30,7 +30,7 @@ public class FormFlow {
 	public static final String FINISH_ACTION = "finish";
 
 	final Logger logger = LoggerFactory.getLogger(FormFlow.class);
-	
+
 	public FormFlow() {
 		this.id = (int) (Math.random() * 100000000f);
 		this.formLists = new HashMap<String, List<Form>>();
@@ -46,7 +46,7 @@ public class FormFlow {
 
 	public String doAction(String action, Map<String, String> paramsFromFontend, DocumentHelper documentHelper) throws ActionError {
 		clearFormSpecificResources();
-		
+
 		FlowAction flowAction = getAction(action);
 		Map<String, String> actionParams = filterActionParams(paramsFromFontend, flowAction.getParams());
 		String actionName = flowAction.getName();
@@ -92,14 +92,15 @@ public class FormFlow {
 
 	private void updateDocBase(DocumentHelper documentHelper, Map<String, String> actionParams) throws ActionError {
 		String currentFormDocBase = currentForm.getDocBase();
-		if (currentFormDocBase != null) {
-			try {
+		try {
+			if (currentFormDocBase != null) {
 				setDocBase(documentHelper.resolveXPathIndexesForAction(currentFormDocBase, actionParams, dataDocument));
-			} catch (DocumentHelperException e) {
-				throw new ActionError("Problem with docBase index alias.", e);
+			} else {
+				setDocBase(getFlowDocBase());
 			}
-		} else {
-			setDocBase(getFlowDocBase());
+			documentHelper.createNodeIfNotThere(dataDocument, getDocBase());
+		} catch (DocumentHelperException e) {
+			throw new ActionError("Problem with docBase index alias.", e);
 		}
 	}
 
@@ -129,7 +130,7 @@ public class FormFlow {
 		}
 		return filteredActionParams;
 	}
-	
+
 	public String getCurrentPath() {
 		return currentForm.getPath();
 	}
@@ -141,11 +142,11 @@ public class FormFlow {
 	public void addFieldSourceProxy(FieldSourceProxy fieldSourceProxy) {
 		fieldSourceProxies.put(fieldSourceProxy.getProxyPath(), fieldSourceProxy);
 	}
-	
+
 	public FieldSourceProxy getFieldSourceProxy(String proxyPath) {
 		return fieldSourceProxies.get(proxyPath);
 	}
-	
+
 	public void clearFieldSourceProxies() {
 		fieldSourceProxies.clear();
 	}
