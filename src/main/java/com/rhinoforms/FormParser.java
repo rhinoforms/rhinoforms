@@ -73,9 +73,13 @@ public class FormParser {
 				logger.debug("Found dynamicSelectNode name:{}, source:{}", name, source);
 
 				List<SelectOptionPojo> options = selectOptionHelper.loadOptions(source);
-				options.add(0, new SelectOptionPojo("-- Please Select --"));
+				options.add(0, new SelectOptionPojo("-- Please Select --", ""));
 				for (SelectOptionPojo selectOptionPojo : options) {
 					TagNode optionNode = new TagNode("option");
+					String value = selectOptionPojo.getValue();
+					if (value != null) {
+						optionNode.setAttribute("value", value);
+					}
 					optionNode.addChild(new ContentNode(selectOptionPojo.getText()));
 					dynamicSelectNode.addChild(optionNode);
 				}

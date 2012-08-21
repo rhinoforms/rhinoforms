@@ -5,9 +5,9 @@
 
 	<div class="field">
 		<label>Do you agree to all of the above?</label>
-		<input id="input_terms" type="radio" name="terms" value="agree" rf.validation="required"/>
+		<input id="input_terms_agree" type="radio" name="terms" value="agree" rf.validation="required"/>
 		<label for="input_terms_agree" class="forRadio">I agree</label>
-		<input id="input_terms" type="radio" name="terms" value="disagree"/>
+		<input id="input_terms_disagree" type="radio" name="terms" value="disagree"/>
 		<label for="input_terms_disagree">I don't agree</label>
 	</div>
 	
@@ -27,15 +27,15 @@
 	</div>
 
 	<div class="field">
-		<label for="input_dateOfBirthDay">Date of birth (dd/mm/yyyy)</label>
+		<label for="input_dateOfBirth">Date of birth (dd/mm/yyyy)</label>
 		<input id="input_dateOfBirth" type="text" name="dateOfBirth" rf.validation="required date"/>
 	</div>
 	
 	<div class="field">
 		<label>Gender</label>
-		<input id="input_gender" type="radio" name="gender" value="Male" rf.validation="required"/>
+		<input id="input_gender_male" type="radio" name="gender" value="Male" rf.validation="required"/>
 		<label for="input_gender_male" class="forRadio">Male</label>
-		<input id="input_gender" type="radio" name="gender" value="Female"/>
+		<input id="input_gender_female" type="radio" name="gender" value="Female"/>
 		<label for="input_gender_female">Female</label>
 	</div>
 	
@@ -90,7 +90,7 @@
 	
 	<div class="field">
 		<label>Do you own your own home</label>
-		<input id="input_ownHome_yes" type="radio" name="ownHome" value="yes"/>
+		<input id="input_ownHome_yes" type="radio" name="ownHome" value="yes" rf.validation="required"/>
 		<label for="input_ownHome_yes">Yes</label>
 		<input id="input_ownHome_no" type="radio" name="ownHome" value="no"/>
 		<label for="input_ownHome_no">No</label>

@@ -62,3 +62,7 @@ input[type='radio']+label {
 .rf-dropdown li.over {
 	background-color: lightblue;
 }
+
+.invalid-message {
+	margin: 0 5px;
+}

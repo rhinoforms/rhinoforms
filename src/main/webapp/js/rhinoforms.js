@@ -187,16 +187,33 @@ function Rhinoforms() {
 		
 		if (errors.length > 0) {
 			// Add invalid class to inputs
-			$("input", $form).removeClass("invalid");
+			$(":input", $form).removeClass("invalid");
 			$(".invalid-message", $form).remove();
 			for (var a in errors) {
 				var name = errors[a].name;
 				var message = errors[a].message;
-				$("input[name='" + name + "']", $form).addClass("invalid").after($("<span>").addClass("invalid-message").text(message));
+				var $input = $(":input[name='" + name + "']", $form).addClass("invalid");
+				
+				// Add error message against input.
+				var $errorMessageAfterElement = $input;
+				// Only against the last radio element of a set
+				if ($input.attr("type") == "radio") {
+					$errorMessageAfterElement = $("[name='" + $input.attr("name") + "']", $form).last();
+				}
+				// Only once for each name
+				if ($("[forname='" + name + "']", $form).size() == 0) {
+					// After the label if the label is next in the DOM
+					var $label = $errorMessageAfterElement.nextAll("label[for='" + $errorMessageAfterElement.attr("id") + "']").first();
+					if ($label.size() != 0) {
+						$errorMessageAfterElement = $label;
+					}
+
+					$errorMessageAfterElement.after($("<span>").addClass("invalid-message").attr("forname", name).text(message));
+				}
 			}
 			
 			// Focus first invalid field
-			$("input.invalid", $form).first().focus();
+			$(":input.invalid", $form).first().focus();
 			return false;
 		} else {
 			// return true if no errors, otherwise false
