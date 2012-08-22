@@ -1,4 +1,4 @@
-rhino-forms
+Rhinoforms
 ===========
 
-A simple forms framework with JavaScript validation methods run client and server-side, fields are bound to XML.
+Welcome to Rhinoforms. See the wiki for more info: https://github.com/kaicode/rhinoforms/wiki
