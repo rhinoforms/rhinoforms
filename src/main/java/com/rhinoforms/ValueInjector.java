@@ -12,6 +12,7 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.io.output.StringBuilderWriter;
+import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.SimpleHtmlSerializer;
 import org.htmlcleaner.TagNode;
@@ -25,9 +26,13 @@ public class ValueInjector {
 	private static final Pattern CURLY_BRACKET_CONTENTS_PATTERN = Pattern.compile(".*?\\{([^} ]+)\\}.*", Pattern.DOTALL);
 	private static final XPathFactory xPathFactory = XPathFactory.newInstance();
 	private HtmlCleaner htmlCleaner;
+	private SimpleHtmlSerializer simpleHtmlSerializer;
 
 	public ValueInjector() {
-		this.htmlCleaner = new HtmlCleaner();
+		htmlCleaner = new HtmlCleaner();
+		CleanerProperties properties = htmlCleaner.getProperties();
+		properties.setOmitXmlDeclaration(true);
+		simpleHtmlSerializer = new SimpleHtmlSerializer(properties);
 	}
 
 	public void processForEachStatements(TagNode formHtml, Document dataDocument, String docBase) throws XPatherException,
@@ -65,10 +70,9 @@ public class ValueInjector {
 			TagNode bodyElement = bodyElements[0];
 			StringBuilder builder = nodeToStringBuilder(bodyElement);
 			replaceCurlyBrackets(builder, dataDocAtDocBase, null, null, null);
-			TagNode processedBodyElement = stringBuilderToNode(builder);
+			TagNode processedBodyElement = stringBuilderBodyToNode(builder);
 			TagNode parent = bodyElement.getParent();
-			parent.removeChild(bodyElement);
-			parent.addChildren(processedBodyElement.getChildren());
+			parent.replaceChild(bodyElement, processedBodyElement);
 		}
 	}
 
@@ -125,21 +129,24 @@ public class ValueInjector {
 		}
 	}
 
-	private StringBuilder nodeToStringBuilder(TagNode forEachNode) throws IOException {
+	StringBuilder nodeToStringBuilder(TagNode forEachNode) throws IOException {
 		StringBuilderWriter forEachNodeWriter = new StringBuilderWriter();
-		new SimpleHtmlSerializer(htmlCleaner.getProperties()).write(forEachNode, forEachNodeWriter, "utf-8");
+		simpleHtmlSerializer.write(forEachNode, forEachNodeWriter, "utf-8");
 		StringBuilder forEachNodeContents = forEachNodeWriter.getBuilder();
 		return forEachNodeContents;
 	}
 
-	private TagNode stringBuilderToNode(StringBuilder nodeContents) throws IOException {
-		TagNode newHtmlDoc = htmlCleaner.clean(nodeContents.toString());
-		return (TagNode) newHtmlDoc.getChildren().get(1);
+	TagNode stringBuilderBodyToNode(StringBuilder nodeContents) throws IOException {
+		return (TagNode) htmlCleaner.clean(nodeContents.toString()).getChildren().get(1);
+	}
+	
+	TagNode stringBuilderToNode(StringBuilder nodeContents) throws IOException {
+		return (TagNode) stringBuilderBodyToNode(nodeContents).getChildren().get(0);
 	}
 	
 	public String serialiseNode(TagNode node) throws IOException {
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		new SimpleHtmlSerializer(new HtmlCleaner().getProperties()).write(node, new OutputStreamWriter(outputStream), "utf-8");
+		simpleHtmlSerializer.write(node, new OutputStreamWriter(outputStream), "utf-8");
 		String actual = new String(outputStream.toByteArray());
 		return actual;
 	}

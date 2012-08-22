@@ -61,19 +61,30 @@ public class FormParserTest {
 		Assert.assertEquals("canWalkOnHands", inputPojos.get(2).getName());
 		Assert.assertEquals("title", inputPojos.get(3).getName());
 		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
-		System.out.println(parsedFormHtml);
 		Assert.assertTrue(parsedFormHtml.contains("type=\"radio\" name=\"terms\" value=\"disagree\" checked=\"checked\""));
 		Assert.assertTrue(parsedFormHtml.contains("<option selected=\"selected\">Miss</option>"));
 		Assert.assertTrue(parsedFormHtml.contains("type=\"checkbox\" name=\"canWalkOnHands\" checked=\"checked\""));
 	}
 	
 	@Test
-	public void testSelectRange() throws Exception {
+	public void testSelectRangePreselectFirstOptionDefaultFalse() throws Exception {
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 		formParser.parseForm(readFileContents("src/test/resources/select-range.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope);
 		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
-		String[] split = parsedFormHtml.split("<option>\\d\\d\\d\\d");
-		Assert.assertEquals(6, split.length);
+		String[] split = parsedFormHtml.split("<option[^<]*");
+		Assert.assertEquals(8, split.length);
+		System.out.println(parsedFormHtml);
+		Assert.assertTrue(parsedFormHtml.contains("<option value=\"\">-- Please Select --</option>"));
+	}
+	
+	@Test
+	public void testSelectRangePreselectFirstOptionTrue() throws Exception {
+		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+		formParser.parseForm(readFileContents("src/test/resources/select-range-preselect-true.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope);
+		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
+		String[] split = parsedFormHtml.split("<option[^<]*");
+		Assert.assertEquals(7, split.length);
+		Assert.assertFalse(parsedFormHtml.contains("Please Select"));
 	}
 	
 	@Test

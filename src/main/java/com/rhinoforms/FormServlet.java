@@ -206,6 +206,7 @@ public class FormServlet extends HttpServlet {
 	
 	private void sendError(int errorCode, String message, HttpServletResponse response) throws IOException {
 		response.setStatus(errorCode);
+		response.setContentType("text/plain");
 		response.getWriter().write(message);
 	}
 

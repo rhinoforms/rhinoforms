@@ -69,11 +69,15 @@ public class FormParser {
 				TagNode dynamicSelectNode = (TagNode) dynamicSelectNodeO;
 				String name = dynamicSelectNode.getAttributeByName(Constants.NAME_ATTR);
 				String source = dynamicSelectNode.getAttributeByName(Constants.SELECT_SOURCE_ATTR);
+				String preselectFirstOption = dynamicSelectNode.getAttributeByName(Constants.SELECT_PRESELECT_FIRST_OPTION_ATTR);
 				dynamicSelectNode.removeAttribute(Constants.SELECT_SOURCE_ATTR);
+				dynamicSelectNode.removeAttribute(Constants.SELECT_PRESELECT_FIRST_OPTION_ATTR);
 				logger.debug("Found dynamicSelectNode name:{}, source:{}", name, source);
 
 				List<SelectOptionPojo> options = selectOptionHelper.loadOptions(source);
-				options.add(0, new SelectOptionPojo("-- Please Select --", ""));
+				if (!"true".equals(preselectFirstOption)) {
+					options.add(0, new SelectOptionPojo("-- Please Select --", ""));
+				}
 				for (SelectOptionPojo selectOptionPojo : options) {
 					TagNode optionNode = new TagNode("option");
 					String value = selectOptionPojo.getValue();
@@ -95,8 +99,11 @@ public class FormParser {
 					String name = rangeSelectNode.getAttributeByName(Constants.NAME_ATTR);
 					String rangeStart = rangeSelectNode.getAttributeByName(Constants.SELECT_RANGE_START_ATTR);
 					String rangeEnd = rangeSelectNode.getAttributeByName(Constants.SELECT_RANGE_END_ATTR);
+					String preselectFirstOption = rangeSelectNode.getAttributeByName(Constants.SELECT_PRESELECT_FIRST_OPTION_ATTR);
 					rangeSelectNode.removeAttribute(Constants.SELECT_RANGE_START_ATTR);
 					rangeSelectNode.removeAttribute(Constants.SELECT_RANGE_END_ATTR);
+					rangeSelectNode.removeAttribute(Constants.SELECT_PRESELECT_FIRST_OPTION_ATTR);
+					
 					logger.debug("Found rangeSelectNode name:{}, rangeStart:{}, rangeEnd:{}", new String[] { name, rangeStart, rangeEnd });
 					boolean rangeStartValid = rangeStart != null && !rangeStart.isEmpty();
 					boolean rangeEndValid = rangeEnd != null && !rangeEnd.isEmpty();
@@ -113,10 +120,10 @@ public class FormParser {
 						String comparator;
 						String incrementor;
 						if (rangeStartResultNumber < rangeEndResultNumber) {
-							comparator = "<";
+							comparator = "<=";
 							incrementor = "++";
 						} else {
-							comparator = ">";
+							comparator = ">=";
 							incrementor = "--";
 						}
 
@@ -125,6 +132,13 @@ public class FormParser {
 						logger.debug("RangeSelectNode name:{}, rangeStatement:{}", name, rangeStatement);
 						String rangeResult = (String) context.evaluateString(workingScope, rangeStatement, "Calculate range", 1, null);
 						logger.debug("RangeSelectNode name:{}, rangeResult:{}", name, rangeResult);
+						
+						if (!"true".equals(preselectFirstOption)) {
+							TagNode optionNode = new TagNode("option");
+							optionNode.setAttribute("value", "");
+							optionNode.addChild(new ContentNode("-- Please Select --"));
+							rangeSelectNode.addChild(optionNode);
+						}
 
 						for (String item : rangeResult.split(",")) {
 							TagNode optionNode = new TagNode("option");

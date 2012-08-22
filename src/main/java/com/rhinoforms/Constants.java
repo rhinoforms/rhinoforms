@@ -23,6 +23,7 @@ public interface Constants {
 	String SELECT_SOURCE_ATTR = "rf.source";
 	String SELECT_RANGE_START_ATTR = "rf.rangestart";
 	String SELECT_RANGE_END_ATTR = "rf.rangeend";
+	String SELECT_PRESELECT_FIRST_OPTION_ATTR = "rf.preselectFirstOption";
 	String INPUT_SOURCE_ATTR = SELECT_SOURCE_ATTR;
 	String INCLUDE_IF_ATTR = "rf.includeif";
 	

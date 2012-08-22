@@ -10,6 +10,7 @@ import java.io.OutputStreamWriter;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.SimpleHtmlSerializer;
 import org.htmlcleaner.TagNode;
@@ -37,7 +38,9 @@ public class TestUtil {
 	
 	public static String serialiseNode(TagNode node) throws IOException {
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		new SimpleHtmlSerializer(new HtmlCleaner().getProperties()).write(node, new OutputStreamWriter(outputStream), "utf-8");
+		CleanerProperties properties = new HtmlCleaner().getProperties();
+		properties.setOmitXmlDeclaration(true);
+		new SimpleHtmlSerializer(properties).write(node, new OutputStreamWriter(outputStream), "utf-8");
 		String actual = new String(outputStream.toByteArray());
 		return actual;
 	}

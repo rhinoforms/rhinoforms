@@ -42,7 +42,7 @@ public class FormFlow implements Serializable {
 	public String navigateToFirstForm(DocumentHelper documentHelper) throws ActionError {
 		this.currentFormList = formLists.get("main");
 		this.currentForm = currentFormList.iterator().next();
-		updateDocBase(documentHelper, new HashMap<String, String>());
+		updateDocBase(documentHelper, new HashMap<String, String>(), null);
 		return currentForm.getPath();
 	}
 
@@ -53,6 +53,7 @@ public class FormFlow implements Serializable {
 		Map<String, String> actionParams = filterActionParams(paramsFromFontend, flowAction.getParams());
 		String actionName = flowAction.getName();
 		String actionTarget = flowAction.getTarget();
+		String lastDocBase = getDocBase();
 		if (actionTarget.isEmpty()) {
 			if (actionName.equals(NEXT_ACTION)) {
 				currentForm = currentFormList.get(currentForm.getIndexInList() + 1);
@@ -88,17 +89,20 @@ public class FormFlow implements Serializable {
 				}
 			}
 		}
-		updateDocBase(documentHelper, actionParams);
+		updateDocBase(documentHelper, actionParams, lastDocBase);
 		return currentForm.getPath();
 	}
 
-	private void updateDocBase(DocumentHelper documentHelper, Map<String, String> actionParams) throws ActionError {
+	private void updateDocBase(DocumentHelper documentHelper, Map<String, String> actionParams, String lastDocBase) throws ActionError {
 		String currentFormDocBase = currentForm.getDocBase();
 		try {
 			if (currentFormDocBase != null) {
 				setDocBase(documentHelper.resolveXPathIndexesForAction(currentFormDocBase, actionParams, dataDocument));
 			} else {
 				setDocBase(getFlowDocBase());
+			}
+			if (lastDocBase != null && !lastDocBase.equals(getDocBase())) {
+				documentHelper.deleteNodeIfEmptyRecurseUp(dataDocument, lastDocBase);
 			}
 			documentHelper.createNodeIfNotThere(dataDocument, getDocBase());
 		} catch (DocumentHelperException e) {

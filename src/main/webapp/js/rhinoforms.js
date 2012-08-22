@@ -86,8 +86,9 @@ function Rhinoforms() {
 	this.insertForm = function(html, $container) {
 		var rf = this;
 		
-		// Insert html
+		// Replace container contents with single form
 		$container.html(html);
+		var $form = $("form", $container);
 		
 		this.flowId = $("[name='rf.flowId']").val();
 		
@@ -101,6 +102,21 @@ function Rhinoforms() {
 		$(":input", $container).on("change", function() {
 			rf.processIncludeIf($container);
 		});
+		
+		// Process initialvalue fields
+		$("input[rf\\.initialvalue]", $container).each(function() {
+			var input = this;
+			var $input = $(input);
+			if (!$input.val()) {
+				var initialvalue = $input.attr("rf.initialvalue");
+				var fields = rf.getFieldsMap($form, true);
+				var result = null;
+				{
+					result = eval(initialvalue);
+				}
+				$input.val(result);
+			}
+		})
 		
 		// Process customTypes
 		$("input[rf\\.customType]", $container).each(function() {
@@ -116,19 +132,15 @@ function Rhinoforms() {
 		})
 		
 		// Wire action buttons
-		$("form", $container).each(function() {
-			var $form = $(this);
-			
-			$form.attr("action", "javascript: void(0)");
-			$("[action]", $form).click(function() {
-				var action = $(this).attr("action");
-				rf.doAction(action, $form, $container);
-				return false;
-			});
+		$form.attr("action", "javascript: void(0)");
+		$("[action]", $form).click(function() {
+			var action = $(this).attr("action");
+			rf.doAction(action, $form, $container);
+			return false;
 		});
 		
 		// Give first input focus
-		$("input[type!='hidden'][action!='back']", $container).first().focus();
+		$(":input[type!='hidden'][action!='back']", $container).first().focus();
 	}
 	
 	this.processIncludeIf = function($container) {
@@ -168,7 +180,13 @@ function Rhinoforms() {
 					}
 				},
 				error: function(jqXHR, textStatus, errorThrown) {
-					alert("Failed to perform action. " + jqXHR.responseText);
+					var message = "Failed to perform action.";
+					if ("text/plain" == jqXHR.getResponseHeader("Content-Type")) {
+						message += " " + jqXHR.responseText;
+					} else {
+						message += " " + errorThrown + ".";
+					}
+					alert(message);
 				}
 			});
 		} else {

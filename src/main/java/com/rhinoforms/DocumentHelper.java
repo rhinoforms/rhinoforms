@@ -56,7 +56,7 @@ public class DocumentHelper {
 					Node item = nodeList.item(0);
 					Node parentNode = item.getParentNode();
 					parentNode.removeChild(item);
-					bottomUpRecursiveDeleteIfEmpty(parentNode);
+					deleteNodeIfEmptyRecurseUp(parentNode);
 				}
 			}
 		} catch (XPathExpressionException e) {
@@ -64,11 +64,11 @@ public class DocumentHelper {
 		}
 	}
 	
-	private void bottomUpRecursiveDeleteIfEmpty(Node node) {
+	private void deleteNodeIfEmptyRecurseUp(Node node) {
 		Node parentNode = node.getParentNode();
 		if (!node.hasChildNodes() && parentNode != null && parentNode.getParentNode() != null) {
 			parentNode.removeChild(node);
-			bottomUpRecursiveDeleteIfEmpty(parentNode);
+			deleteNodeIfEmptyRecurseUp(parentNode);
 		}
 	}
 	
@@ -199,6 +199,16 @@ public class DocumentHelper {
 		for (int i = 0; i < nodesToDelete.getLength(); i++) {
 			Node nodeToDelete = nodesToDelete.item(i);
 			nodeToDelete.getParentNode().removeChild(nodeToDelete);
+		}
+	}
+
+	public void deleteNodeIfEmptyRecurseUp(Document dataDocument, String xpath) throws DocumentHelperException {
+		try {
+			XPathExpression expression = newXPath(xpath);
+			Node nodeToDelete = (Node) expression.evaluate(dataDocument, XPathConstants.NODE);
+			deleteNodeIfEmptyRecurseUp(nodeToDelete);
+		} catch (XPathExpressionException e) {
+			throw new DocumentHelperException(e);
 		}
 	}
 

@@ -97,6 +97,11 @@
 	</div>
 	
 	<div class="field">
+		<label for="input_insuranceStartDate">When do you want your insurance to start? (dd/mm/yyyy)</label>
+		<input id="input_insuranceStartDate" type="text" name="insuranceStartDate" rf.validation="required date" rf.initialvalue="{ if (!fields.insuranceStartDate.value) { new Date().format('dd/mm/yyyy') } }"/>
+	</div>
+	
+	<div class="field">
 		<label for="input_referrer">How did you hear about us?</label>
 		<select id="input_referrer" name="referrer" rf.validation="required" rf.source="/forms/quote-example/resources/referrer.txt" rf.preselectFirstOption="false"></select>
 	</div>
