@@ -1,8 +1,10 @@
 package com.rhinoforms;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +15,7 @@ import javax.xml.xpath.XPathExpressionException;
 
 import org.htmlcleaner.ContentNode;
 import org.htmlcleaner.HtmlCleaner;
+import org.htmlcleaner.HtmlNode;
 import org.htmlcleaner.SimpleHtmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPatherException;
@@ -30,15 +33,18 @@ import com.rhinoforms.serverside.InputPojo;
 
 public class FormParser {
 
-	private static final FieldPathHelper fieldPathHelper = new FieldPathHelper();
-	final Logger logger = LoggerFactory.getLogger(FormParser.class);
-
+	private ResourceLoader resourceLoader;
 	private SelectOptionHelper selectOptionHelper;
 	private ProxyFactory proxyFactory;
 	private ValueInjector valueInjector;
 	private HtmlCleaner htmlCleaner;
+	
+	private static final FieldPathHelper fieldPathHelper = new FieldPathHelper();
+	private static final int processIncludesMaxDepth = 10;
+	final Logger logger = LoggerFactory.getLogger(FormParser.class);
 
 	public FormParser(ResourceLoader resourceLoader) {
+		this.resourceLoader = resourceLoader;
 		this.selectOptionHelper = new SelectOptionHelper(resourceLoader);
 		this.proxyFactory = new ProxyFactory();
 		this.valueInjector = new ValueInjector();
@@ -46,13 +52,16 @@ public class FormParser {
 	}
 
 	public void parseForm(String formContents, FormFlow formFlow, PrintWriter writer, JSMasterScope masterScope) throws XPatherException,
-			XPathExpressionException, IOException, ResourceLoaderException {
+			XPathExpressionException, IOException, ResourceLoaderException, FormParserException {
 
 		TagNode formHtml = htmlCleaner.clean(formContents);
 
 		Document dataDocument = formFlow.getDataDocument();
-		String docBase = formFlow.getDocBase();
+		String docBase = formFlow.getCurrentDocBase();
 		String currentPath = formFlow.getCurrentPath();
+		
+		// Process rf.include
+		processIncludes(formHtml);
 
 		// Process rf.forEach statements
 		valueInjector.processForEachStatements(formHtml, dataDocument, docBase);
@@ -242,6 +251,39 @@ public class FormParser {
 
 		// Write out processed document
 		new SimpleHtmlSerializer(htmlCleaner.getProperties()).write(formHtml, writer, "utf-8");
+	}
+
+	void processIncludes(TagNode html) throws IOException, FormParserException {
+		doProcessIncludes(html, 0);
+	}
+	
+	private void doProcessIncludes(TagNode html, int depth) throws IOException, FormParserException {
+		if (depth < processIncludesMaxDepth) {
+			@SuppressWarnings("unchecked")
+			List<TagNode> includeNodes = html.getElementListByName(Constants.INCLUDE_ELEMENT, true);
+			for (TagNode includeNode : includeNodes) {
+				String srcAttribute = includeNode.getAttributeByName("src");
+				InputStream resourceAsStream = resourceLoader.getResourceAsStream(srcAttribute);
+				if (resourceAsStream != null) {
+					TagNode includeHtml = htmlCleaner.clean(resourceAsStream);
+					TagNode body = includeHtml.findElementByName("body", false);
+					doProcessIncludes(body, depth + 1);
+					
+					@SuppressWarnings("unchecked")
+					List<HtmlNode> bodyChildren = body.getChildren();
+					Collections.reverse(bodyChildren);
+					TagNode includeParent = includeNode.getParent();
+					for (HtmlNode bodyChild : bodyChildren) {
+						includeParent.insertChildAfter(includeNode, bodyChild);
+					}
+					includeParent.removeChild(includeNode);
+				} else {
+					throw new FormParserException("Include file not found. Path:'" + srcAttribute + "'");
+				}
+			}
+		} else {
+			throw new FormParserException("Exceeded maximum nested " + Constants.INCLUDE_ELEMENT + " depth of " + processIncludesMaxDepth);
+		}
 	}
 
 	String lookupValueByFieldName(Node document, String name, String docBase) throws XPathExpressionException {

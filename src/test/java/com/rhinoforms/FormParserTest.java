@@ -2,13 +2,18 @@ package com.rhinoforms;
 
 import static com.rhinoforms.TestUtil.createDocument;
 import static com.rhinoforms.TestUtil.readFileContents;
+import static com.rhinoforms.TestUtil.serialiseNode;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.List;
 
 import junit.framework.Assert;
 
+import org.htmlcleaner.HtmlCleaner;
+import org.htmlcleaner.TagNode;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
@@ -22,6 +27,7 @@ public class FormParserTest {
 	private FormFlow formFlow;
 	private JSMasterScope masterScope;
 	private DocumentHelper documentHelper;
+	private HtmlCleaner htmlCleaner;
 
 	@Before
 	public void setup() throws Exception {
@@ -30,6 +36,7 @@ public class FormParserTest {
 		this.formFlow = new FormFlowFactory().createFlow("src/test/resources/test-flow1.js", Context.enter(), "<myData><fishes><fish><name>One</name></fish><fish><name>Two</name></fish></fishes></myData>");
 		this.documentHelper = new DocumentHelper();
 		this.formFlow.navigateToFirstForm(documentHelper);
+		this.htmlCleaner = new HtmlCleaner();
 		
 		Context jsContext = Context.enter();
 		try {
@@ -96,4 +103,28 @@ public class FormParserTest {
 		Assert.assertEquals(null, formParser.lookupValueByFieldName(createDocument, "address.line1", "/myData/customer"));
 	}
 	
+	@Test
+	public void testProcessIncludes() throws Exception {
+		InputStream resourceAsStream = new FileInputStream("src/test/resources/include-test.html");
+		TagNode html = htmlCleaner.clean(resourceAsStream);
+		
+		// Pre-assertions
+		Assert.assertTrue("firstName input does not yet exist", html.findElementByAttValue("name", "firstName", true, true) == null);
+		Assert.assertTrue("canWalkOnHands input does not yet exist", html.findElementByAttValue("name", "canWalkOnHands", true, true) == null);
+		Assert.assertTrue("Next button already exists", html.findElementByAttValue("action", "next", true, true) != null);
+		
+		// Run method we are testing
+		formParser.processIncludes(html);
+
+		// Post-assertions
+		String processedHtml = serialiseNode(html);
+		Assert.assertTrue("firstName input has now been included", html.findElementByAttValue("name", "firstName", true, true) != null);
+		Assert.assertTrue("canWalkOnHands input has now been included", html.findElementByAttValue("name", "canWalkOnHands", true, true) != null);
+		Assert.assertTrue("Next button is still there", html.findElementByAttValue("action", "next", true, true) != null);
+		
+		int nameIndex = processedHtml.indexOf("name=\"firstName\"");
+		int handsIndex = processedHtml.indexOf("name=\"canWalkOnHands\"");
+		Assert.assertTrue("firstName element comes before canWalkOnHands element in the html", nameIndex < handsIndex);
+	}
+
 }

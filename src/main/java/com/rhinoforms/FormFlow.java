@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 import javax.xml.xpath.XPathExpressionException;
 
@@ -16,18 +17,28 @@ import com.rhinoforms.serverside.InputPojo;
 public class FormFlow implements Serializable {
 
 	private int id;
-	private List<InputPojo> currentInputPojos;
-	private Map<String, List<Form>> formLists;
-	private Form currentForm;
-	private List<Form> currentFormList;
 	private Document dataDocument;
-	private String docBase;
 	private String flowDocBase;
+	private Map<String, List<Form>> formLists;
+	
+	/**
+	 * TODO: use navigationStack to keep track of where we are in nested flow. Editing a new
+	 * additional driver > new claim I have lost the driver index. Would also be good to
+	 * be able to just call next, cancel or back at the ends of a sub-list and be
+	 * dropped back into the right place without giving an actionTarget.
+	 */
+	private Stack<NavigationStackItem> navigationStack;
+	
+	private List<Form> currentFormList;
+	private Form currentForm;
+	private String currentDocBase;
+	private List<InputPojo> currentInputPojos;
 	private Map<String, FieldSourceProxy> fieldSourceProxies;
 
 	public static final String NEXT_ACTION = "next";
 	public static final String BACK_ACTION = "back";
 	public static final String CANCEL_ACTION = "cancel";
+	public static final String DELETE_ACTION = "_delete";
 	public static final String FINISH_ACTION = "finish";
 
 	private static final Logger logger = LoggerFactory.getLogger(FormFlow.class);
@@ -36,6 +47,7 @@ public class FormFlow implements Serializable {
 	public FormFlow() {
 		this.id = (int) (Math.random() * 100000000f);
 		this.formLists = new HashMap<String, List<Form>>();
+		this.navigationStack = new Stack<NavigationStackItem>();
 		this.fieldSourceProxies = new HashMap<String, FieldSourceProxy>();
 	}
 
@@ -53,20 +65,36 @@ public class FormFlow implements Serializable {
 		Map<String, String> actionParams = filterActionParams(paramsFromFontend, flowAction.getParams());
 		String actionName = flowAction.getName();
 		String actionTarget = flowAction.getTarget();
-		String lastDocBase = getDocBase();
+		String lastDocBase = getCurrentDocBase();
 		if (actionTarget.isEmpty()) {
 			if (actionName.equals(NEXT_ACTION)) {
-				currentForm = currentFormList.get(currentForm.getIndexInList() + 1);
+				int nextIndex = currentForm.getIndexInList() + 1;
+				if (nextIndex < currentFormList.size()) {
+					currentForm = currentFormList.get(nextIndex);
+				} else {
+					throw new ActionError(
+							"Can not do 'next', end of current form list reached. Specify an action-target to change form lists within this flow.");
+				}
 			} else if (actionName.equals(BACK_ACTION)) {
-				currentForm = currentFormList.get(currentForm.getIndexInList() - 1);
+				int nextIndex = currentForm.getIndexInList() - 1;
+				if (nextIndex >= 0) {
+					currentForm = currentFormList.get(nextIndex);
+				} else {
+					// If the author intended to jump to another flow list they should specify an action-target
+					throw new ActionError(
+							"Can not do 'back', start of current form list reached. Specify an action-target to change form lists within this flow.");
+				}
 			} else {
 				if (actionName.equals(FINISH_ACTION)) {
 					return null;
 				}
 			}
-		} else if (actionTarget.equals("_delete")) {
+		} else if (actionTarget.equals(DELETE_ACTION)) {
 			String xpath = actionParams.get("xpath");
 			try {
+				if (!xpath.startsWith("/")) {
+					xpath = getCurrentDocBase() + "/" + xpath;
+				}
 				xpath = documentHelper.resolveXPathIndexesForAction(xpath, actionParams, dataDocument);
 				documentHelper.deleteNodes(xpath, dataDocument);
 			} catch (DocumentHelperException e) {
@@ -97,14 +125,22 @@ public class FormFlow implements Serializable {
 		String currentFormDocBase = currentForm.getDocBase();
 		try {
 			if (currentFormDocBase != null) {
-				setDocBase(documentHelper.resolveXPathIndexesForAction(currentFormDocBase, actionParams, dataDocument));
+				if (currentFormDocBase.charAt(0) != '/') {
+					// docBase is relative to that of the previous form
+					if (lastDocBase != null) {
+						currentFormDocBase = lastDocBase + "/" + currentFormDocBase;
+					} else {
+						throw new ActionError("Can not use relative docBase on first form loaded.");
+					}
+				}
+				setCurrentDocBase(documentHelper.resolveXPathIndexesForAction(currentFormDocBase, actionParams, dataDocument));
 			} else {
-				setDocBase(getFlowDocBase());
+				setCurrentDocBase(getFlowDocBase());
 			}
-			if (lastDocBase != null && !lastDocBase.equals(getDocBase())) {
+			if (lastDocBase != null && !lastDocBase.equals(getCurrentDocBase())) {
 				documentHelper.deleteNodeIfEmptyRecurseUp(dataDocument, lastDocBase);
 			}
-			documentHelper.createNodeIfNotThere(dataDocument, getDocBase());
+			documentHelper.createNodeIfNotThere(dataDocument, getCurrentDocBase());
 		} catch (DocumentHelperException e) {
 			throw new ActionError("Problem with docBase index alias.", e);
 		}
@@ -126,7 +162,7 @@ public class FormFlow implements Serializable {
 			throw new ActionError(builder.toString());
 		}
 	}
-	
+
 	protected Map<String, String> filterActionParams(Map<String, String> paramsFromFontend, Map<String, String> paramsFromFlowAction) {
 		HashMap<String, String> filteredActionParams = new HashMap<String, String>();
 		if (paramsFromFlowAction != null) {
@@ -189,15 +225,15 @@ public class FormFlow implements Serializable {
 		this.dataDocument = dataDocument;
 	}
 
-	public String getDocBase() {
-		return docBase;
+	public String getCurrentDocBase() {
+		return currentDocBase;
 	}
 
-	public void setDocBase(String docBase) {
-		if (!docBase.equals(this.docBase)) {
+	public void setCurrentDocBase(String docBase) {
+		if (!docBase.equals(this.currentDocBase)) {
 			logger.debug("New doc base: {}", docBase);
 		}
-		this.docBase = docBase;
+		this.currentDocBase = docBase;
 	}
 
 	public String getFlowDocBase() {
@@ -206,7 +242,7 @@ public class FormFlow implements Serializable {
 
 	public void setFlowDocBase(String flowDocBase) {
 		this.flowDocBase = flowDocBase;
-		setDocBase(flowDocBase);
+		setCurrentDocBase(flowDocBase);
 	}
 
 }

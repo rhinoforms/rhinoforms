@@ -84,7 +84,7 @@ public class FormSubmissionHelper {
 
 		if (fieldsInError.isEmpty()) {
 			// Persist collected form data
-			String docBase = formFlow.getDocBase();
+			String docBase = formFlow.getCurrentDocBase();
 			try {
 				documentHelper.persistFormData(inputPOJOs, docBase, formFlow.getDataDocument());
 				documentHelper.clearFormData(includeFalseInputs, docBase, formFlow.getDataDocument());

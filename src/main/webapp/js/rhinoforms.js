@@ -77,10 +77,19 @@ function Rhinoforms() {
 					}
 				}
 			},
-			failure: function() {
-				alert("Failed to load form");
+			error: function(jqXHR, textStatus, errorThrown) {
+				ajaxError("Failed to load form", jqXHR, textStatus, errorThrown);
 			}
 		})
+	}
+	
+	function ajaxError(message, jqXHR, textStatus, errorThrown) {
+		if ("text/plain" == jqXHR.getResponseHeader("Content-Type")) {
+			message += ": " + jqXHR.responseText;
+		} else {
+			message += ": " + errorThrown + ".";
+		}
+		alert(message);
 	}
 	
 	this.insertForm = function(html, $container) {
@@ -180,13 +189,7 @@ function Rhinoforms() {
 					}
 				},
 				error: function(jqXHR, textStatus, errorThrown) {
-					var message = "Failed to perform action.";
-					if ("text/plain" == jqXHR.getResponseHeader("Content-Type")) {
-						message += " " + jqXHR.responseText;
-					} else {
-						message += " " + errorThrown + ".";
-					}
-					alert(message);
+					ajaxError("Failed to perform action", jqXHR, textStatus, errorThrown);
 				}
 			});
 		} else {

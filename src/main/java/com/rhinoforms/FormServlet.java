@@ -125,13 +125,15 @@ public class FormServlet extends HttpServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		HttpSession session = request.getSession();
 		Context.enter();
+		FormFlow formFlow = null;
 		try {
 			@SuppressWarnings("unchecked")
 			Map<String, String[]> parameterMapMultiValue = request.getParameterMap();
 			Map<String, String> parameterMap = servletHelper.mapOfArraysToMapOfFirstValues(parameterMapMultiValue);
 
-			FormFlow formFlow = getFlow(request);
+			formFlow = getFlow(request);
 
 			if (formFlow != null) {
 				Map<String, String> actionParams = new HashMap<String, String>();
@@ -151,7 +153,7 @@ public class FormServlet extends HttpServlet {
 
 					if (nextUrl != null) {
 						forwardToAndParseForm(request, response, formFlow, nextUrl);
-						SessionHelper.setFlow(formFlow, request.getSession()); // Required for Google AppEngine
+						SessionHelper.setFlow(formFlow, session); // Required for Google AppEngine
 					} else {
 						// End of flow. Spit out XML.
 						response.setContentType("text/plain");
@@ -166,7 +168,8 @@ public class FormServlet extends HttpServlet {
 				sendError(HttpServletResponse.SC_FORBIDDEN, "Your session has expired.", response);
 			}
 		} catch (ActionError e) {
-			String message = "Failed to perform action.";
+			SessionHelper.removeFlow(formFlow, session);
+			String message = "Failed to perform action, form session suspended.";
 			logger.error(message, e);
 			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 		} catch (TransformerException e) {

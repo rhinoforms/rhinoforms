@@ -25,7 +25,7 @@ public class FormFlowFactoryTest {
 	@Test
 	public void testCreateFlow() throws Exception {
 		FormFlow formFlow = formFlowFactory.createFlow("src/test/resources/test-flow1.js", jsContext, null);
-		Assert.assertEquals("/myData", formFlow.getDocBase());
+		Assert.assertEquals("/myData", formFlow.getCurrentDocBase());
 		Map<String, List<Form>> formLists = formFlow.getFormLists();
 		Assert.assertEquals(2, formLists.keySet().size());
 		List<Form> list = formLists.get("main");

@@ -3,18 +3,62 @@
 	formLists: {
 		main: [
 			{ id: "customer", docBase: "/quote/customer", url: "/forms/quote-example/1-customer.html", actions: [ "next" ] },
-			{ id: "driver", url: "/forms/quote-example/2-driver.html",
+			{ id: "driver", docBase: "/quote/customer", url: "/forms/quote-example/2-driver.html",
+				actions: [
+					"back",
+					
+					"addConviction:conviction.editConviction(index=next)",
+					"editConviction:conviction.editConviction(index=?)",
+					"deleteConviction:_delete(xpath=convictions/conviction[index], index=?)",
+					
+					"addClaim:claim.editClaim(index=next)",
+					"editClaim:claim.editClaim(index=?)",
+					"deleteClaim:_delete(xpath=claims/claim[index], index=?)",
+					
+					"next"
+				]
+			},
+			{ id: "drivers", url: "/forms/quote-example/5-drivers.html", 
 				actions: [
 					"back", 
-					"addConviction:conviction.editConviction(index=next)", 
-					"editConviction:conviction.editConviction(index=?)",
-					"deleteConviction:_delete(xpath=/quote/convictions/conviction[index], index=?)",
+
+					"addAdditionalDriver:additionalDriver.editAdditionalDriver(index=next)",
+					"editAdditionalDriver:additionalDriver.editAdditionalDriver(index=?)",
+					"deleteAdditionalDriver:_delete(xpath=additionalDrivers/driver[index], index=?)",
+
 					"next"
-				] },
-			{ id: "quote", url: "/forms/quote-example/5-quote.html", actions: [ "back", "finish" ] }
+				]
+			},
+			{ id: "quote", url: "/forms/quote-example/7-quote.html", actions: [ "back", "finish" ] }
 		],
 		conviction: [
-			{ id: "editConviction", docBase: "/quote/convictions/conviction[index]", url: "/forms/quote-example/3-edit-conviction.html", actions: [ "cancel:main.driver", "next:main.driver" ] }
-		]
+			{ id: "editConviction", docBase: "convictions/conviction[index]", url: "/forms/quote-example/3-edit-conviction.html", actions: [ "cancel:main.driver", "next:main.driver" ] }
+		],
+		claim: [
+			{ id: "editClaim", docBase: "claims/claim[index]", url: "/forms/quote-example/4-edit-claim.html", actions: [ "cancel:main.driver", "next:main.driver" ] }
+		],
+		additionalDriver: [
+			{ id: "editAdditionalDriver", docBase: "/quote/additionalDrivers/driver[index]", url: "/forms/quote-example/6-edit-additional-driver.html", 
+				actions: [
+					"cancel:main.drivers",
+					
+					"addConviction:additionalDriverConviction.editConviction(index=next,driverIndex=?)",
+					"editConviction:additionalDriverConviction.editConviction(index=?,driverIndex=?)",
+					"deleteConviction:_delete(xpath=convictions/conviction[index], index=?)",
+					
+					"addClaim:additionalDriverClaim.editClaim(index=next)",
+					"editClaim:additionalDriverClaim.editClaim(index=?)",
+					"deleteClaim:_delete(xpath=claims/claim[index], index=?)",
+					
+					"next:main.drivers"
+				]
+			},
+		],
+		additionalDriverConviction: [
+			{ id: "editConviction", docBase: "convictions/conviction[index]", url: "/forms/quote-example/3-edit-conviction.html", actions: [ "cancel:additionalDriver.editAdditionalDriver(index=?)", "next:additionalDriver.editAdditionalDriver(index=?)" ] }
+		],
+		additionalDriverClaim: [
+			{ id: "editClaim", docBase: "claims/claim[index]", url: "/forms/quote-example/4-edit-claim.html", actions: [ "cancel:additionalDriver.editAdditionalDriver(index=?)", "next:additionalDriver.editAdditionalDriver(index=?)" ] }
+		],
 	}
 }

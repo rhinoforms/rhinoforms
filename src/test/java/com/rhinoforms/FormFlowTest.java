@@ -65,9 +65,9 @@ public class FormFlowTest {
 		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams, documentHelper));
 		Assert.assertEquals("three.html", formFlow.doAction("next", actionParams, documentHelper));
 		
-		Assert.assertEquals("/myData", formFlow.getDocBase());
+		Assert.assertEquals("/myData", formFlow.getCurrentDocBase());
 		Assert.assertEquals("editFish.html", formFlow.doAction("add", actionParams, documentHelper));
-		Assert.assertEquals("/myData/fishes/fish[1]", formFlow.getDocBase());
+		Assert.assertEquals("/myData/fishes/fish[1]", formFlow.getCurrentDocBase());
 	}
 	
 	@Test
@@ -76,10 +76,10 @@ public class FormFlowTest {
 		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams, documentHelper));
 		Assert.assertEquals("three.html", formFlow.doAction("next", actionParams, documentHelper));
 		
-		Assert.assertEquals("/myData", formFlow.getDocBase());
+		Assert.assertEquals("/myData", formFlow.getCurrentDocBase());
 		actionParams.put("index", "2");
 		Assert.assertEquals("editFish.html", formFlow.doAction("edit", actionParams, documentHelper));
-		Assert.assertEquals("/myData/fishes/fish[2]", formFlow.getDocBase());
+		Assert.assertEquals("/myData/fishes/fish[2]", formFlow.getCurrentDocBase());
 	}
 	
 	@Test

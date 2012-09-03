@@ -37,7 +37,7 @@ public class ValueInjector {
 
 	public void processForEachStatements(TagNode formHtml, Document dataDocument, String docBase) throws XPatherException,
 			XPathExpressionException, IOException {
-		Object[] forEachNodes = formHtml.evaluateXPath("//rf.forEach");
+		Object[] forEachNodes = formHtml.evaluateXPath("//" + Constants.FOR_EACH_ELEMENT);
 		for (Object forEachNodeO : forEachNodes) {
 			TagNode forEachNode = (TagNode) forEachNodeO;
 			TagNode parent = forEachNode.getParent();
