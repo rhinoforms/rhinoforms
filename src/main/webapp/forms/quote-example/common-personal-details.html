@@ -1,0 +1,94 @@
+
+	<div class="field">
+		<label for="input_title">Title</label>
+		<select id="input_title" name="title" rf.validation="required" rf.source="/forms/quote-example/resources/titles.txt" rf.preselectFirstOption="false"></select>
+	</div>
+	
+	<div class="field">
+		<label for="input_firstName">First name</label>
+		<input id="input_firstName" type="text" name="firstName" rf.validation="required"/>
+	</div>
+	
+	<div class="field">
+		<label for="input_surname">Surname</label>
+		<input id="input_surname" type="text" name="surname" rf.validation="required"/>
+	</div>
+
+	<div class="field">
+		<label for="input_dateOfBirth">Date of birth (dd/mm/yyyy)</label>
+		<input id="input_dateOfBirth" type="text" name="dateOfBirth" rf.validation="required date"/>
+	</div>
+	
+	<div class="field">
+		<label>Gender</label>
+		<input id="input_gender_male" type="radio" name="gender" value="Male" rf.validation="required"/>
+		<label for="input_gender_male" class="forRadio">Male</label>
+		<input id="input_gender_female" type="radio" name="gender" value="Female"/>
+		<label for="input_gender_female">Female</label>
+	</div>
+	
+	<div class="field">
+		<label for="input_occupation">Primary occupation</label>
+		<input id="input_occupation" type="text" name="occupation" rf.validation="required fromSource" rf.customType="auto-complete-select" rf.source="http://integration.osldev.net/resource-manager/REST/files/itb-resources-test2/lists/_itbLists-occupationSheet.xml?transformer=xslt&xslt=/itb-resources-test2/lists/occupationLookupTransformJSONmin.xsl&contentType=application%2Fjson&occupation=[value]" />
+	</div>
+
+	<div class="field">
+		<label for="input_maritalStatus">Marital status</label>
+		<select id="input_maritalStatus" name="maritalStatus" rf.validation="required" rf.source="/forms/quote-example/resources/maritalStatus.txt" rf.preselectFirstOption="false"></select>
+	</div>
+	
+	<div class="field">
+		<label for="input_ukResident">UK resident</label>
+		<input id="input_ukResidentMoreThan5Years" type="checkbox" name="ukResidentMoreThan5Years"/>
+		<label for="input_ukResidentMoreThan5Years">More than 5 years</label>
+		
+		<select id="input_ukResidentSinceMonth" name="ukResidentSinceMonth" rf.includeIf="{ fields.ukResidentMoreThan5Years.value == false }" rf.source="/forms/quote-example/resources/months.txt" rf.preselectFirstOption="false"></select>
+		<select id="input_ukResidentSinceYear" name="ukResidentSinceYear" rf.includeIf="{ fields.ukResidentMoreThan5Years.value == false }" rf.rangeStart="new Date().getFullYear()" rf.rangeEnd="new Date().getFullYear() - 5" rf.preselectFirstOption="false"></select>
+	</div>
+
+	<div class="field findAddress">
+		<input id="findAddressProxy" type="proxy" style="display:none" rf.source="http://integration.osldev.net/itb-quotes/postcodeLookup" />
+		<label for="input_addressLine1">House number or name</label>
+		<input class="findAddressHouse" id="input_addressLine1" type="text"/><br/>
+		<label for="input_postcode">Postcode</label>
+		<input class="findAddressPostcode" id="input_postcode" type="text"/>
+		<input type="button" class="findAddressButton" onclick="return false;" value="Find address"/>
+		<div class="addressList" style="display: none;">
+			Here are all the addresses we've found for your postcode:
+			<select class="addressListSelect">
+			</select>
+		</div>
+	</div>
+	<div class="field addressFound" style="display: none;">
+		<input type="hidden" name="address.line1"/>
+		<input type="hidden" name="address.line2"/>
+		<input type="hidden" name="address.line3"/>
+		<input type="hidden" name="address.line4"/>
+		<input type="hidden" name="address.postcode"/>
+		
+		<label for="input_address">Your address</label>
+		<span name="address.line1">{address.line1}</span>
+		<span name="address.line2">{address.line2}</span>
+		<span name="address.line3">{address.line3}</span>
+		<span name="address.line4">{address.line4}</span>
+		<span name="address.postcode">{address.postcode}</span>
+		
+		<input type="button" class="changeAddressButton" onclick="return false;" value="Change address"/>
+	</div>
+	
+	<div class="field">
+		<label>Do you own your own home</label>
+		<input id="input_ownHome_yes" type="radio" name="ownHome" value="yes" rf.validation="required"/>
+		<label for="input_ownHome_yes">Yes</label>
+		<input id="input_ownHome_no" type="radio" name="ownHome" value="no"/>
+		<label for="input_ownHome_no">No</label>
+	</div>
+	
+<script type='text/javascript' src='forms/quote-example/js/address-lookup.js' ></script>
+<script>
+	var addressLookupProxyUrl = $("#findAddressProxy").attr("rf.source") + "?rf.flowId=" + $("[name='rf.flowId']").val();
+	var inputErrorCallback = function() {
+		alert("Please provide a valid postcode");
+	}
+	new AddressLookup().init(addressLookupProxyUrl, inputErrorCallback);
+</script>

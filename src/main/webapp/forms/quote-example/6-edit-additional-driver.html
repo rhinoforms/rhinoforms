@@ -1,0 +1,16 @@
+<h3>Quote Example</h3>
+<h4>Driver Details</h4>
+<form rhinoforms="true">
+
+	<rf.include src="/forms/quote-example/common-personal-details.html" ></rf.include>
+
+	<div class="field">
+		<label for="input_relationshipToPolicyholder">Relationship to the Policyholder?</label>
+		<select id="input_relationshipToPolicyholder" name="relationshipToPolicyholder" rf.validation="required" rf.source="/forms/quote-example/resources/relationshipToPolicyholder.txt"></select>
+	</div>
+	
+	<rf.include src="/forms/quote-example/common-driving-details.html" ></rf.include>
+	
+	<input type="button" action="back" value="Back"/>
+	<input type="submit" action="next" value="Next"/>
+</form>		
