@@ -32,33 +32,27 @@
 			{ id: "quote", url: "/forms/quote-example/7-quote.html", actions: [ "back", "finish" ] }
 		],
 		conviction: [
-			{ id: "editConviction", docBase: "convictions/conviction[index]", url: "/forms/quote-example/3-edit-conviction.html", actions: [ "cancel:main.driver", "next:main.driver" ] }
+			{ id: "editConviction", docBase: "convictions/conviction[index]", url: "/forms/quote-example/3-edit-conviction.html", actions: [ "cancel", "next" ] }
 		],
 		claim: [
-			{ id: "editClaim", docBase: "claims/claim[index]", url: "/forms/quote-example/4-edit-claim.html", actions: [ "cancel:main.driver", "next:main.driver" ] }
+			{ id: "editClaim", docBase: "claims/claim[index]", url: "/forms/quote-example/4-edit-claim.html", actions: [ "cancel", "next" ] }
 		],
 		additionalDriver: [
 			{ id: "editAdditionalDriver", docBase: "/quote/additionalDrivers/driver[index]", url: "/forms/quote-example/6-edit-additional-driver.html", 
 				actions: [
-					"cancel:main.drivers",
+					"back",
 					
-					"addConviction:additionalDriverConviction.editConviction(index=next,driverIndex=?)",
-					"editConviction:additionalDriverConviction.editConviction(index=?,driverIndex=?)",
+					"addConviction:conviction.editConviction(index=next)",
+					"editConviction:conviction.editConviction(index=?)",
 					"deleteConviction:_delete(xpath=convictions/conviction[index], index=?)",
 					
-					"addClaim:additionalDriverClaim.editClaim(index=next)",
-					"editClaim:additionalDriverClaim.editClaim(index=?)",
+					"addClaim:claim.editClaim(index=next)",
+					"editClaim:claim.editClaim(index=?)",
 					"deleteClaim:_delete(xpath=claims/claim[index], index=?)",
 					
-					"next:main.drivers"
+					"next"
 				]
 			},
-		],
-		additionalDriverConviction: [
-			{ id: "editConviction", docBase: "convictions/conviction[index]", url: "/forms/quote-example/3-edit-conviction.html", actions: [ "cancel:additionalDriver.editAdditionalDriver(index=?)", "next:additionalDriver.editAdditionalDriver(index=?)" ] }
-		],
-		additionalDriverClaim: [
-			{ id: "editClaim", docBase: "claims/claim[index]", url: "/forms/quote-example/4-edit-claim.html", actions: [ "cancel:additionalDriver.editAdditionalDriver(index=?)", "next:additionalDriver.editAdditionalDriver(index=?)" ] }
-		],
+		]
 	}
 }

@@ -2,7 +2,7 @@ package com.rhinoforms;
 
 import static com.rhinoforms.TestUtil.createDocument;
 import static com.rhinoforms.TestUtil.readFileContents;
-import static com.rhinoforms.TestUtil.serialiseNode;
+import static com.rhinoforms.TestUtil.serialiseHtmlCleanerNode;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -117,7 +117,7 @@ public class FormParserTest {
 		formParser.processIncludes(html);
 
 		// Post-assertions
-		String processedHtml = serialiseNode(html);
+		String processedHtml = serialiseHtmlCleanerNode(html);
 		Assert.assertTrue("firstName input has now been included", html.findElementByAttValue("name", "firstName", true, true) != null);
 		Assert.assertTrue("canWalkOnHands input has now been included", html.findElementByAttValue("name", "canWalkOnHands", true, true) != null);
 		Assert.assertTrue("Next button is still there", html.findElementByAttValue("action", "next", true, true) != null);

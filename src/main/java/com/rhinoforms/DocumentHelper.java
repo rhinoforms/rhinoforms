@@ -206,7 +206,9 @@ public class DocumentHelper {
 		try {
 			XPathExpression expression = newXPath(xpath);
 			Node nodeToDelete = (Node) expression.evaluate(dataDocument, XPathConstants.NODE);
-			deleteNodeIfEmptyRecurseUp(nodeToDelete);
+			if (nodeToDelete != null) {
+				deleteNodeIfEmptyRecurseUp(nodeToDelete);
+			}
 		} catch (XPathExpressionException e) {
 			throw new DocumentHelperException(e);
 		}

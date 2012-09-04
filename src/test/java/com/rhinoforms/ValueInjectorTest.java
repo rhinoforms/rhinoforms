@@ -1,7 +1,7 @@
 package com.rhinoforms;
 
 import static com.rhinoforms.TestUtil.createDocument;
-import static com.rhinoforms.TestUtil.serialiseNode;
+import static com.rhinoforms.TestUtil.serialiseHtmlCleanerNode;
 
 import java.io.FileInputStream;
 
@@ -34,7 +34,7 @@ public class ValueInjectorTest {
 
 		valueInjector.processForEachStatements(formHtml, dataDocument, "/myData/ocean");
 
-		String actual = serialiseNode(formHtml);
+		String actual = serialiseHtmlCleanerNode(formHtml);
 		Assert.assertFalse(actual.contains("foreach"));
 		Assert.assertTrue(actual.contains("<span index=\"1\">One</span>"));
 		Assert.assertTrue(actual.contains("<span index=\"2\">Two</span>"));
@@ -43,11 +43,11 @@ public class ValueInjectorTest {
 
 	@Test
 	public void testProcessRemainingCurlyBrackets() throws Exception {
-		Assert.assertTrue("Placeholder present.", serialiseNode(formHtml).contains("<span class=\"ocean\">{name}</span>"));
+		Assert.assertTrue("Placeholder present.", serialiseHtmlCleanerNode(formHtml).contains("<span class=\"ocean\">{name}</span>"));
 
 		valueInjector.processRemainingCurlyBrackets(formHtml, dataDocument, "/myData/ocean");
 
-		String serialiseNode = serialiseNode(formHtml);
+		String serialiseNode = serialiseHtmlCleanerNode(formHtml);
 		Assert.assertTrue("Placeholder replaced with dataDocument content.", serialiseNode.contains("<span class=\"ocean\">Pacific</span>"));
 	}
 	
@@ -55,7 +55,7 @@ public class ValueInjectorTest {
 	public void testStringBuilderToNode() throws Exception {
 		String html = "<div><span>one</span><span>two</span></div>";
 		TagNode node = valueInjector.stringBuilderToNode(new StringBuilder(html));
-		String actual = serialiseNode(node);
+		String actual = serialiseHtmlCleanerNode(node);
 		Assert.assertEquals(html, actual);
 	}
 	
@@ -63,7 +63,7 @@ public class ValueInjectorTest {
 	public void testStringBuilderBodyToNode() throws Exception {
 		String html = "<body><span>one</span><span>two</span></body>";
 		TagNode node = valueInjector.stringBuilderBodyToNode(new StringBuilder(html));
-		String actual = serialiseNode(node);
+		String actual = serialiseHtmlCleanerNode(node);
 		Assert.assertEquals(html, actual);
 	}
 	

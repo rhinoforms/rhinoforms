@@ -8,81 +8,77 @@ import java.util.Stack;
 
 import javax.xml.xpath.XPathExpressionException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
 import com.rhinoforms.serverside.InputPojo;
 
 public class FormFlow implements Serializable {
 
-	private int id;
-	private Document dataDocument;
+	private int flowId;
 	private String flowDocBase;
 	private Map<String, List<Form>> formLists;
+	private Document dataDocument;
 	
-	/**
-	 * TODO: use navigationStack to keep track of where we are in nested flow. Editing a new
-	 * additional driver > new claim I have lost the driver index. Would also be good to
-	 * be able to just call next, cancel or back at the ends of a sub-list and be
-	 * dropped back into the right place without giving an actionTarget.
-	 */
-	private Stack<NavigationStackItem> navigationStack;
-	
-	private List<Form> currentFormList;
-	private Form currentForm;
-	private String currentDocBase;
+	private Stack<FlowNavigationLevel> navigationStack;
 	private List<InputPojo> currentInputPojos;
 	private Map<String, FieldSourceProxy> fieldSourceProxies;
 
+	public static final String FIRST_ACTION = "first";
 	public static final String NEXT_ACTION = "next";
 	public static final String BACK_ACTION = "back";
 	public static final String CANCEL_ACTION = "cancel";
 	public static final String DELETE_ACTION = "_delete";
 	public static final String FINISH_ACTION = "finish";
 
-	private static final Logger logger = LoggerFactory.getLogger(FormFlow.class);
 	private static final long serialVersionUID = -5683469121328756822L;
 
 	public FormFlow() {
-		this.id = (int) (Math.random() * 100000000f);
+		this.flowId = (int) (Math.random() * 100000000f);
 		this.formLists = new HashMap<String, List<Form>>();
-		this.navigationStack = new Stack<NavigationStackItem>();
+		this.navigationStack = new Stack<FlowNavigationLevel>();
 		this.fieldSourceProxies = new HashMap<String, FieldSourceProxy>();
 	}
 
 	public String navigateToFirstForm(DocumentHelper documentHelper) throws ActionError {
-		this.currentFormList = formLists.get("main");
-		this.currentForm = currentFormList.iterator().next();
-		updateDocBase(documentHelper, new HashMap<String, String>(), null);
-		return currentForm.getPath();
+		String listId = "main";
+		List<Form> formList = formLists.get(listId);
+		FlowNavigationLevel currentNavigationLevel = new FlowNavigationLevel(formList, formList.iterator().next());
+		navigationStack.push(currentNavigationLevel);
+		String newDocBase = resolveNewDocBase(currentNavigationLevel.getCurrentForm().getDocBase(), null, null, documentHelper);
+		currentNavigationLevel.setDocBase(newDocBase);
+		return currentNavigationLevel.getCurrentForm().getPath();
 	}
 
 	public String doAction(String action, Map<String, String> paramsFromFontend, DocumentHelper documentHelper) throws ActionError {
-		clearFormSpecificResources();
+		clearPreviousFormResources();
 
 		FlowAction flowAction = getAction(action);
 		Map<String, String> actionParams = filterActionParams(paramsFromFontend, flowAction.getParams());
 		String actionName = flowAction.getName();
 		String actionTarget = flowAction.getTarget();
 		String lastDocBase = getCurrentDocBase();
+		boolean movedUpNavStack = false;
+		
+		FlowNavigationLevel currentNavigationLevel = getCurrentNavigationLevel();
 		if (actionTarget.isEmpty()) {
-			if (actionName.equals(NEXT_ACTION)) {
-				int nextIndex = currentForm.getIndexInList() + 1;
-				if (nextIndex < currentFormList.size()) {
-					currentForm = currentFormList.get(nextIndex);
+			if (actionName.equals(NEXT_ACTION) || actionName.equals(BACK_ACTION) || actionName.equals(CANCEL_ACTION)) {
+				// Moving forward or back in list. May pop up to next level if end of current list.
+				int currentFormIndexInList = currentNavigationLevel.getCurrentForm().getIndexInList();
+				int nextIndex;
+				if (actionName.equals(NEXT_ACTION)) {
+					nextIndex = currentFormIndexInList + 1;
 				} else {
-					throw new ActionError(
-							"Can not do 'next', end of current form list reached. Specify an action-target to change form lists within this flow.");
+					nextIndex = currentFormIndexInList - 1;
 				}
-			} else if (actionName.equals(BACK_ACTION)) {
-				int nextIndex = currentForm.getIndexInList() - 1;
-				if (nextIndex >= 0) {
-					currentForm = currentFormList.get(nextIndex);
+				if (isValidIndex(nextIndex, currentNavigationLevel.getCurrentFormList().size())) {
+					changeFormInCurrentList(nextIndex);
 				} else {
-					// If the author intended to jump to another flow list they should specify an action-target
-					throw new ActionError(
-							"Can not do 'back', start of current form list reached. Specify an action-target to change form lists within this flow.");
+					if (navigationStack.size() > 1) {
+						currentNavigationLevel = moveUpNavStack();
+						movedUpNavStack = true;
+					} else {
+						throw new ActionError("Can not perform action, there are no more forms in the current list and no more levels on the stack.");
+					}
 				}
 			} else {
 				if (actionName.equals(FINISH_ACTION)) {
@@ -103,26 +99,57 @@ public class FormFlow implements Serializable {
 				throw new ActionError("Problem deleting nodes.", e);
 			}
 		} else {
+			// Moving to a named form
+			List<Form> formList = currentNavigationLevel.getCurrentFormList();
 			String actionTargetFormId;
 			if (actionTarget.contains(".")) {
+				// Navigating to another form list
 				String[] actionTargetParts = actionTarget.split("\\.");
-				currentFormList = formLists.get(actionTargetParts[0]);
+				formList = formLists.get(actionTargetParts[0]);
 				actionTargetFormId = actionTargetParts[1];
+				currentNavigationLevel = new FlowNavigationLevel(formList, null);
+				navigationStack.push(currentNavigationLevel);
 			} else {
 				actionTargetFormId = actionTarget;
 			}
-			for (Form form : currentFormList) {
+			Form nextForm = null;
+			for (Form form : formList) {
 				if (form.getId().equals(actionTargetFormId)) {
-					currentForm = form;
+					nextForm = form;
 				}
 			}
+			if (nextForm != null) {
+				currentNavigationLevel.setCurrentForm(nextForm);
+			} else {
+				throw new ActionError("Did not find form with id '" + actionTargetFormId + "'.");
+			}
 		}
-		updateDocBase(documentHelper, actionParams, lastDocBase);
-		return currentForm.getPath();
+		
+		if (!movedUpNavStack) {
+			String newDocBase = resolveNewDocBase(currentNavigationLevel.getCurrentForm().getDocBase(), actionParams, lastDocBase, documentHelper);
+			currentNavigationLevel.setDocBase(newDocBase);
+		}
+		prepDataDocument(getCurrentDocBase(), lastDocBase, documentHelper);
+		
+		return currentNavigationLevel.getCurrentForm().getPath();
 	}
 
-	private void updateDocBase(DocumentHelper documentHelper, Map<String, String> actionParams, String lastDocBase) throws ActionError {
-		String currentFormDocBase = currentForm.getDocBase();
+	private boolean isValidIndex(int nextIndex, int listSize) {
+		return nextIndex >= 0 && nextIndex < listSize;
+	}
+
+	private void changeFormInCurrentList(int nextIndex) {
+		getCurrentNavigationLevel().setCurrentForm(getCurrentNavigationLevel().getCurrentFormList().get(nextIndex));
+	}
+
+	private FlowNavigationLevel moveUpNavStack() {
+		// Discard top item in stack
+		navigationStack.pop();
+		return getCurrentNavigationLevel();
+	}
+
+	private String resolveNewDocBase(String currentFormDocBase, Map<String, String> actionParams, String lastDocBase, DocumentHelper documentHelper) throws ActionError {
+		String newDocBase;
 		try {
 			if (currentFormDocBase != null) {
 				if (currentFormDocBase.charAt(0) != '/') {
@@ -133,31 +160,40 @@ public class FormFlow implements Serializable {
 						throw new ActionError("Can not use relative docBase on first form loaded.");
 					}
 				}
-				setCurrentDocBase(documentHelper.resolveXPathIndexesForAction(currentFormDocBase, actionParams, dataDocument));
+				newDocBase = documentHelper.resolveXPathIndexesForAction(currentFormDocBase, actionParams, dataDocument);
 			} else {
-				setCurrentDocBase(getFlowDocBase());
+				newDocBase = getFlowDocBase();
 			}
-			if (lastDocBase != null && !lastDocBase.equals(getCurrentDocBase())) {
+			return newDocBase;
+		} catch (DocumentHelperException e) {
+			throw new ActionError("Problem with docBase index alias.", e);
+		}
+	}
+	
+	private void prepDataDocument(String newDocBase, String lastDocBase, DocumentHelper documentHelper) throws ActionError {
+		try {
+			if (lastDocBase != null && !lastDocBase.equals(newDocBase)) {
 				documentHelper.deleteNodeIfEmptyRecurseUp(dataDocument, lastDocBase);
 			}
-			documentHelper.createNodeIfNotThere(dataDocument, getCurrentDocBase());
+			documentHelper.createNodeIfNotThere(dataDocument, newDocBase);
 		} catch (DocumentHelperException e) {
 			throw new ActionError("Problem with docBase index alias.", e);
 		}
 	}
 
-	private void clearFormSpecificResources() {
+
+	private void clearPreviousFormResources() {
 		clearFieldSourceProxies();
 	}
 
 	public FlowAction getAction(String action) throws ActionError {
-		Map<String, FlowAction> actions = currentForm.getActions();
+		Map<String, FlowAction> actions = getCurrentNavigationLevel().getCurrentForm().getActions();
 		if (actions.containsKey(action)) {
 			return actions.get(action);
 		} else {
 			StringBuilder builder = new StringBuilder();
 			builder.append("Action not valid for the current form. ");
-			builder.append("Current formId: ").append(currentForm.getId()).append(", ");
+			builder.append("Current formId: ").append(getCurrentNavigationLevel().getCurrentForm().getId()).append(", ");
 			builder.append("valid actions: ").append(actions.keySet());
 			throw new ActionError(builder.toString());
 		}
@@ -177,8 +213,12 @@ public class FormFlow implements Serializable {
 		return filteredActionParams;
 	}
 
+	private FlowNavigationLevel getCurrentNavigationLevel() {
+		return navigationStack.peek();
+	}
+	
 	public String getCurrentPath() {
-		return currentForm.getPath();
+		return getCurrentNavigationLevel().getCurrentForm().getPath();
 	}
 
 	public void addFormList(String listName, List<Form> formList) {
@@ -198,7 +238,7 @@ public class FormFlow implements Serializable {
 	}
 
 	public int getId() {
-		return id;
+		return flowId;
 	}
 
 	public List<InputPojo> getCurrentInputPojos() {
@@ -226,14 +266,7 @@ public class FormFlow implements Serializable {
 	}
 
 	public String getCurrentDocBase() {
-		return currentDocBase;
-	}
-
-	public void setCurrentDocBase(String docBase) {
-		if (!docBase.equals(this.currentDocBase)) {
-			logger.debug("New doc base: {}", docBase);
-		}
-		this.currentDocBase = docBase;
+		return getCurrentNavigationLevel().getDocBase();
 	}
 
 	public String getFlowDocBase() {
@@ -242,7 +275,6 @@ public class FormFlow implements Serializable {
 
 	public void setFlowDocBase(String flowDocBase) {
 		this.flowDocBase = flowDocBase;
-		setCurrentDocBase(flowDocBase);
 	}
 
 }

@@ -36,7 +36,7 @@ public class TestUtil {
 		return documentBuilder.parse(new ByteArrayInputStream(dataDocumentString.getBytes()));
 	}
 	
-	public static String serialiseNode(TagNode node) throws IOException {
+	public static String serialiseHtmlCleanerNode(TagNode node) throws IOException {
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		CleanerProperties properties = new HtmlCleaner().getProperties();
 		properties.setOmitXmlDeclaration(true);

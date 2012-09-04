@@ -2,10 +2,10 @@
 <h4>Drivers</h4>
 <form rhinoforms="true">
 	<div class="drivers">
-		<rf.forEach select="drivers/driver" as="d">
+		<rf.forEach select="additionalDrivers/driver" as="d">
 			<div class="driver">
 				<span>
-					{d.driverName}
+					{d.firstName} {d.surname}
 					<a href="#" action="editAdditionalDriver?index={d.index}">Edit</a> 
 					<a href="#" action="deleteAdditionalDriver?index={d.index}">Delete</a>
 				</span>
