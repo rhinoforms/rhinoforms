@@ -40,6 +40,7 @@
 		additionalDriver: [
 			{ id: "editAdditionalDriver", docBase: "/quote/additionalDrivers/driver[index]", url: "/forms/quote-example/6-edit-additional-driver.html", 
 				actions: [
+				    "cancel",
 					"back",
 					
 					"addConviction:conviction.editConviction(index=next)",

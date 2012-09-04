@@ -38,17 +38,17 @@ public class ValueInjectorTest {
 		Assert.assertFalse(actual.contains("foreach"));
 		Assert.assertTrue(actual.contains("<span index=\"1\">One</span>"));
 		Assert.assertTrue(actual.contains("<span index=\"2\">Two</span>"));
-		System.out.println(actual);
 	}
 
 	@Test
 	public void testProcessRemainingCurlyBrackets() throws Exception {
-		Assert.assertTrue("Placeholder present.", serialiseHtmlCleanerNode(formHtml).contains("<span class=\"ocean\">{name}</span>"));
+		Assert.assertTrue("Placeholder present.", serialiseHtmlCleanerNode(formHtml).contains("<span class=\"ocean\">{{name}}</span>"));
 
 		valueInjector.processRemainingCurlyBrackets(formHtml, dataDocument, "/myData/ocean");
 
-		String serialiseNode = serialiseHtmlCleanerNode(formHtml);
-		Assert.assertTrue("Placeholder replaced with dataDocument content.", serialiseNode.contains("<span class=\"ocean\">Pacific</span>"));
+		String actual = serialiseHtmlCleanerNode(formHtml);
+		Assert.assertTrue("Placeholder replaced with dataDocument content.", actual.contains("<span class=\"ocean\">Pacific</span>"));
+		Assert.assertTrue(actual.contains("Fish count:2"));
 	}
 	
 	@Test

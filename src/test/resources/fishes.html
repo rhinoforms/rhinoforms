@@ -1,15 +1,16 @@
 <h3>Fishes</h3>
 <form rhinoforms="true">
 	<button action="back">Back</button>
-	<span class="ocean">{name}</span>
+	<span class="ocean">{{name}}</span>
 	<div class="fishes">
 		<rf.forEach select="fishes/fish" as="aFish">
 		<div>
 			<div>
-				<span index="{aFish.index}">{aFish.name}</span>
+				<span index="{{aFish.index}}">{{aFish.name}}</span>
 			</div>
 		</div>
 		</rf.forEach>
+		<span>Fish count:{{count(fishes/fish)}}</span>
 	</div>
 	<input type="button" action="addFish" value="Add Fish"/>
 	<input type="submit" action="next" value="Next"/>

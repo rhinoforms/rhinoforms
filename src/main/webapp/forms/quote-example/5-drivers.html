@@ -5,9 +5,9 @@
 		<rf.forEach select="additionalDrivers/driver" as="d">
 			<div class="driver">
 				<span>
-					{d.firstName} {d.surname}
-					<a href="#" action="editAdditionalDriver?index={d.index}">Edit</a> 
-					<a href="#" action="deleteAdditionalDriver?index={d.index}">Delete</a>
+					{{d.firstName}} {{d.surname}}
+					<a href="#" action="editAdditionalDriver?index={{d.index}}">Edit</a> 
+					<a href="#" action="deleteAdditionalDriver?index={{d.index}}">Delete</a>
 				</span>
 			</div>
 		</rf.forEach>

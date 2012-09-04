@@ -23,7 +23,7 @@ import org.w3c.dom.NodeList;
 
 public class ValueInjector {
 
-	private static final Pattern CURLY_BRACKET_CONTENTS_PATTERN = Pattern.compile(".*?\\{([^} ]+)\\}.*", Pattern.DOTALL);
+	private static final Pattern CURLY_BRACKET_CONTENTS_PATTERN = Pattern.compile(".*?\\{\\{([^} ]+)\\}\\}.*", Pattern.DOTALL);
 	private static final XPathFactory xPathFactory = XPathFactory.newInstance();
 	private HtmlCleaner htmlCleaner;
 	private SimpleHtmlSerializer simpleHtmlSerializer;
@@ -97,8 +97,8 @@ public class ValueInjector {
 				value = lookupValue(dataDocument, group);
 			}
 
-			int groupStart = builder.indexOf("{" + group + "}");
-			int groupEnd = groupStart + group.length() + 2;
+			int groupStart = builder.indexOf("{{" + group + "}}");
+			int groupEnd = groupStart + group.length() + 4;
 
 			int end;
 			if (value != null) {
@@ -120,13 +120,7 @@ public class ValueInjector {
 	private String lookupValue(Node dataNode, String fieldName) throws XPathExpressionException {
 		String xpath = fieldName.replaceAll("\\.", "/");
 		XPathExpression expression = XPathFactory.newInstance().newXPath().compile(xpath);
-		NodeList nodeList = (NodeList) expression.evaluate(dataNode, XPathConstants.NODESET);
-		if (nodeList != null && nodeList.getLength() > 0) {
-			Node item = nodeList.item(0);
-			return item.getTextContent();
-		} else {
-			return "";
-		}
+		return expression.evaluate(dataNode);
 	}
 
 	StringBuilder nodeToStringBuilder(TagNode forEachNode) throws IOException {

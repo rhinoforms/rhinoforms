@@ -11,6 +11,7 @@
 	
 	<rf.include src="/forms/quote-example/common-driving-details.html" ></rf.include>
 	
-	<input type="button" action="back" value="Back"/>
+	<input type="button" action="cancel" value="Cancel" rf.includeIf="{ ({{count(convictions/conviction)}} == 0 && {{count(claims/claim)}} == 0) }"/>
+	<input type="button" action="back" value="Back" rf.includeIf="{ !({{count(convictions/conviction)}} == 0 && {{count(claims/claim)}} == 0) }"/>
 	<input type="submit" action="next" value="Next"/>
 </form>		
