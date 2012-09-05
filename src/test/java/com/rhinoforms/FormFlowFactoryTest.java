@@ -19,12 +19,12 @@ public class FormFlowFactoryTest {
 	@Before
 	public void setup() {
 		this.jsContext = Context.enter();
-		this.formFlowFactory = new FormFlowFactory();
+		this.formFlowFactory = new FormFlowFactory(new TestResourceLoader());
 	}
 	
 	@Test
 	public void testCreateFlow() throws Exception {
-		FormFlow formFlow = formFlowFactory.createFlow("src/test/resources/test-flow1.js", jsContext, null);
+		FormFlow formFlow = formFlowFactory.createFlow("test-flow1.js", jsContext, null);
 		Map<String, List<Form>> formLists = formFlow.getFormLists();
 		Assert.assertEquals(3, formLists.keySet().size());
 		List<Form> list = formLists.get("main");

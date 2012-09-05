@@ -28,12 +28,14 @@ public class FormParserTest {
 	private JSMasterScope masterScope;
 	private DocumentHelper documentHelper;
 	private HtmlCleaner htmlCleaner;
+	private FormFlowFactory formFlowFactory;
 
 	@Before
 	public void setup() throws Exception {
 		TestResourceLoader resourceLoader = new TestResourceLoader();
 		this.formParser = new FormParser(resourceLoader);
-		this.formFlow = new FormFlowFactory().createFlow("src/test/resources/test-flow1.js", Context.enter(), "<myData><fishes><fish><name>One</name></fish><fish><name>Two</name></fish></fishes></myData>");
+		this.formFlowFactory = new FormFlowFactory(new TestResourceLoader());
+		this.formFlow = formFlowFactory.createFlow("test-flow1.js", Context.enter(), "<myData><fishes><fish><name>One</name></fish><fish><name>Two</name></fish></fishes></myData>");
 		this.documentHelper = new DocumentHelper();
 		this.formFlow.navigateToFirstForm(documentHelper);
 		this.htmlCleaner = new HtmlCleaner();
@@ -54,7 +56,7 @@ public class FormParserTest {
 
 	@Test
 	public void testAllInputTypes() throws Exception {
-		this.formFlow = new FormFlowFactory().createFlow("src/test/resources/test-flow1.js", Context.enter(), "<myData><terms>disagree</terms><title>Miss</title><canWalkOnHands>true</canWalkOnHands></myData>");
+		this.formFlow = formFlowFactory.createFlow("test-flow1.js", Context.enter(), "<myData><terms>disagree</terms><title>Miss</title><canWalkOnHands>true</canWalkOnHands></myData>");
 		this.formFlow.navigateToFirstForm(documentHelper);
 		
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -114,7 +116,7 @@ public class FormParserTest {
 		Assert.assertTrue("Next button already exists", html.findElementByAttValue("action", "next", true, true) != null);
 		
 		// Run method we are testing
-		formParser.processIncludes(html);
+		formParser.processIncludes(html, formFlow);
 
 		// Post-assertions
 		String processedHtml = serialiseHtmlCleanerNode(html);

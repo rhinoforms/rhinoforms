@@ -2,7 +2,6 @@ package com.rhinoforms;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -16,22 +15,35 @@ import org.mozilla.javascript.ScriptableObject;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
+import com.rhinoforms.resourceloader.ResourceLoader;
+
 public class FormFlowFactory {
 
+	private ResourceLoader resourceLoader;
 	private DocumentBuilderFactory documentBuilderFactory;
 	private DocumentHelper documentHelper;
 
-	public FormFlowFactory() {
+	public FormFlowFactory(ResourceLoader resourceLoader) {
+		this.resourceLoader = resourceLoader;
 		this.documentBuilderFactory = DocumentBuilderFactory.newInstance();
 		this.documentHelper = new DocumentHelper();
 	}
 
-	public FormFlow createFlow(String realFormFlowPath, Context jsContext, String dataDocumentString) throws IOException,
+	public FormFlow createFlow(String formFlowPath, Context jsContext, String dataDocumentString) throws IOException,
 			FormFlowFactoryException {
 
 		try {
 			ScriptableObject scope = jsContext.initStandardObjects();
 			FormFlow formFlow = new FormFlow();
+			
+			String resourcesBase = "";
+			if (formFlowPath.contains("/")) {
+				resourcesBase = formFlowPath.substring(0, formFlowPath.lastIndexOf("/") + 1);
+			}
+			if (!resourcesBase.isEmpty() && resourcesBase.charAt(0) != '/') {
+				resourcesBase = '/' + resourcesBase;
+			}
+			formFlow.setResourcesBase(resourcesBase);
 
 			Object wrappedFormFlow = Context.javaToJS(formFlow, scope);
 			ScriptableObject.putProperty(scope, "formFlow", wrappedFormFlow);
@@ -39,7 +51,7 @@ public class FormFlowFactory {
 			jsContext.evaluateReader(scope, new InputStreamReader(FormFlowFactory.class.getResourceAsStream(scriptPath)), scriptPath, 1,
 					null);
 
-			InputStreamReader inputStreamReader = new InputStreamReader(new FileInputStream(realFormFlowPath));
+			InputStreamReader inputStreamReader = new InputStreamReader(resourceLoader.getResourceAsStream(formFlowPath));
 			BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.append("loadFlow(");
@@ -49,7 +61,7 @@ public class FormFlowFactory {
 			stringBuilder.append(")");
 
 			String newFlowJsExpresion = stringBuilder.toString();
-			jsContext.evaluateString(scope, newFlowJsExpresion, realFormFlowPath, 1, null);
+			jsContext.evaluateString(scope, newFlowJsExpresion, formFlowPath, 1, null);
 
 			String flowDocBase = formFlow.getFlowDocBase();
 			if (flowDocBase != null) {

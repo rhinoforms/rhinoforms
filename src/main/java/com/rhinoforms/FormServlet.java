@@ -36,9 +36,9 @@ public class FormServlet extends HttpServlet {
 
 	@Override
 	public void init() throws ServletException {
-		this.formFlowFactory = new FormFlowFactory();
-		this.documentHelper = new DocumentHelper();
 		this.resourceLoader = new ServletResourceLoader(getServletContext());
+		this.formFlowFactory = new FormFlowFactory(resourceLoader);
+		this.documentHelper = new DocumentHelper();
 		this.servletHelper = new ServletHelper();
 
 		Context jsContext = Context.enter();
@@ -104,8 +104,7 @@ public class FormServlet extends HttpServlet {
 
 			Context jsContext = Context.enter();
 			try {
-				String realFormFlowPath = getServletContext().getRealPath(formFlowPath);
-				FormFlow newFormFlow = formFlowFactory.createFlow(realFormFlowPath, jsContext, initData);
+				FormFlow newFormFlow = formFlowFactory.createFlow(formFlowPath, jsContext, initData);
 				SessionHelper.setFlow(newFormFlow, session);
 				String formUrl = newFormFlow.navigateToFirstForm(documentHelper);
 				forwardToAndParseForm(request, response, newFormFlow, formUrl);
@@ -195,6 +194,9 @@ public class FormServlet extends HttpServlet {
 
 	private void forwardToAndParseForm(HttpServletRequest request, HttpServletResponse response, FormFlow formFlow, String formUrl)
 			throws ServletException, IOException {
+		
+		formUrl = formFlow.resolvePathIfRelative(formUrl);
+
 		RequestDispatcher requestDispatcher = getServletContext().getRequestDispatcher(formUrl);
 		FormResponseWrapper formResponseWrapper = new FormResponseWrapper(response, resourceLoader);
 		requestDispatcher.forward(request, formResponseWrapper);

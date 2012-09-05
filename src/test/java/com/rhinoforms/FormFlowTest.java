@@ -22,9 +22,9 @@ public class FormFlowTest {
 	@Before
 	public void setup() throws IOException, FormFlowFactoryException {
 		this.jsContext = Context.enter();
-		this.formFlowFactory = new FormFlowFactory();
+		this.formFlowFactory = new FormFlowFactory(new TestResourceLoader());
 		this.actionParams = new HashMap<String, String>();
-		this.formFlow = formFlowFactory.createFlow("src/test/resources/test-flow1.js", jsContext, "<myData/>");
+		this.formFlow = formFlowFactory.createFlow("test-flow1.js", jsContext, "<myData/>");
 		this.documentHelper = new DocumentHelper();
 	}
 
@@ -140,7 +140,7 @@ public class FormFlowTest {
 
 	@Test
 	public void testNavDocBaseWithSecondIndexTwoDeep() throws Exception {
-		this.formFlow = formFlowFactory.createFlow("src/test/resources/test-flow1.js", jsContext, "<myData><fishes><fish><something>existing data</something></fish></fishes></myData>");
+		this.formFlow = formFlowFactory.createFlow("test-flow1.js", jsContext, "<myData><fishes><fish><something>existing data</something></fish></fishes></myData>");
 		Assert.assertEquals("one.html", formFlow.navigateToFirstForm(documentHelper));
 		Assert.assertEquals("<myData><fishes><fish><something>existing data</something></fish></fishes></myData>", documentHelper.documentToString(formFlow.getDataDocument()));
 		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams, documentHelper));

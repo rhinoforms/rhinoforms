@@ -61,7 +61,7 @@ public class FormParser {
 		String currentPath = formFlow.getCurrentPath();
 		
 		// Process rf.include
-		processIncludes(formHtml);
+		processIncludes(formHtml, formFlow);
 
 		// Process rf.forEach statements
 		valueInjector.processForEachStatements(formHtml, dataDocument, docBase);
@@ -78,6 +78,7 @@ public class FormParser {
 				TagNode dynamicSelectNode = (TagNode) dynamicSelectNodeO;
 				String name = dynamicSelectNode.getAttributeByName(Constants.NAME_ATTR);
 				String source = dynamicSelectNode.getAttributeByName(Constants.SELECT_SOURCE_ATTR);
+				source = formFlow.resolvePathIfRelative(source);
 				String preselectFirstOption = dynamicSelectNode.getAttributeByName(Constants.SELECT_PRESELECT_FIRST_OPTION_ATTR);
 				dynamicSelectNode.removeAttribute(Constants.SELECT_SOURCE_ATTR);
 				dynamicSelectNode.removeAttribute(Constants.SELECT_PRESELECT_FIRST_OPTION_ATTR);
@@ -253,21 +254,22 @@ public class FormParser {
 		new SimpleHtmlSerializer(htmlCleaner.getProperties()).write(formHtml, writer, "utf-8");
 	}
 
-	void processIncludes(TagNode html) throws IOException, FormParserException {
-		doProcessIncludes(html, 0);
+	void processIncludes(TagNode html, FormFlow formFlow) throws IOException, FormParserException {
+		doProcessIncludes(html, 0, formFlow);
 	}
 	
-	private void doProcessIncludes(TagNode html, int depth) throws IOException, FormParserException {
+	private void doProcessIncludes(TagNode html, int depth, FormFlow formFlow) throws IOException, FormParserException {
 		if (depth < processIncludesMaxDepth) {
 			@SuppressWarnings("unchecked")
 			List<TagNode> includeNodes = html.getElementListByName(Constants.INCLUDE_ELEMENT, true);
 			for (TagNode includeNode : includeNodes) {
 				String srcAttribute = includeNode.getAttributeByName("src");
+				srcAttribute = formFlow.resolvePathIfRelative(srcAttribute);
 				InputStream resourceAsStream = resourceLoader.getResourceAsStream(srcAttribute);
 				if (resourceAsStream != null) {
 					TagNode includeHtml = htmlCleaner.clean(resourceAsStream);
 					TagNode body = includeHtml.findElementByName("body", false);
-					doProcessIncludes(body, depth + 1);
+					doProcessIncludes(body, depth + 1, formFlow);
 					
 					@SuppressWarnings("unchecked")
 					List<HtmlNode> bodyChildren = body.getChildren();

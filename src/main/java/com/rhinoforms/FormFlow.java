@@ -22,6 +22,7 @@ public class FormFlow implements Serializable {
 	private Stack<FlowNavigationLevel> navigationStack;
 	private List<InputPojo> currentInputPojos;
 	private Map<String, FieldSourceProxy> fieldSourceProxies;
+	private String resourcesBase;
 
 	public static final String FIRST_ACTION = "first";
 	public static final String NEXT_ACTION = "next";
@@ -212,7 +213,15 @@ public class FormFlow implements Serializable {
 		}
 		return filteredActionParams;
 	}
-
+	
+	public String resolvePathIfRelative(String formResourcePath) {
+		// Check for and resolve relative form path
+		if (formResourcePath.charAt(0) != '/') {
+			formResourcePath = resourcesBase + formResourcePath;
+		}
+		return formResourcePath;
+	}
+	
 	private FlowNavigationLevel getCurrentNavigationLevel() {
 		return navigationStack.peek();
 	}
@@ -275,6 +284,10 @@ public class FormFlow implements Serializable {
 
 	public void setFlowDocBase(String flowDocBase) {
 		this.flowDocBase = flowDocBase;
+	}
+
+	public void setResourcesBase(String resourcesBase) {
+		this.resourcesBase = resourcesBase;
 	}
 
 }

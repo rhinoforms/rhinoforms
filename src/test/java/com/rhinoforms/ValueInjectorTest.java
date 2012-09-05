@@ -48,7 +48,9 @@ public class ValueInjectorTest {
 
 		String actual = serialiseHtmlCleanerNode(formHtml);
 		Assert.assertTrue("Placeholder replaced with dataDocument content.", actual.contains("<span class=\"ocean\">Pacific</span>"));
-		Assert.assertTrue(actual.contains("Fish count:2"));
+		Assert.assertTrue(actual.contains("Fish count: 2"));
+		Assert.assertTrue(actual.contains("First fish: One"));
+		System.out.println(actual);
 	}
 	
 	@Test
