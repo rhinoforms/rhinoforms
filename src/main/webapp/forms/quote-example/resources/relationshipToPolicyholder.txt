@@ -1,5 +1,0 @@
-Husband/Wife
-Son/Daughter
-Father/Mother
-Partner
-Other
