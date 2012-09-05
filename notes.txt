@@ -1,2 +1,1 @@
-Next button is first in code so is default submit action (when enter pressed).
-Back button is floated left for more intuative layout.
+Next button should be of type 'submit', other buttons of type 'button'. That way pressing enter will always submit the form.
