@@ -8,6 +8,7 @@ function Rhinoforms() {
 	// For internal use
 	var validationKeywords;
 	var customTypes;
+	var onFormLoadFunctions = [];
 	
 	this.init = function() {
 		validationKeywords = {};
@@ -151,6 +152,22 @@ function Rhinoforms() {
 		// Give first input focus
 		$(":input[type!='hidden'][action!='back']", $container).first().focus();
 		
+		doOnFormLoad();
+	}
+	
+	this.onFormLoad = function(callback) {
+		if (callback instanceof Function) {
+			onFormLoadFunctions.push(callback);
+		} else {
+			throw new TypeError("rhinoforms.onFormLoad() - callback given is not a function.");
+		}
+	}
+	
+	function doOnFormLoad() {
+		var methodToCall;
+		while (methodToCall = onFormLoadFunctions.shift()) {
+			methodToCall();
+		}
 	}
 	
 	function processIncludeIf($container) {
