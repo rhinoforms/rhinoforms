@@ -6,12 +6,12 @@ function Rhinoforms() {
 	this.alertOnSetupError = true;
 	
 	// For internal use
-	this.validationKeywords;
-	this.customTypes;
+	var validationKeywords;
+	var customTypes;
 	
 	this.init = function() {
-		this.validationKeywords = {};
-		this.customTypes = {};
+		validationKeywords = {};
+		customTypes = {};
 		
 		// Enable the 'required' validation keyword
 		this.registerValidationKeyword("required", function(value) {
@@ -53,11 +53,11 @@ function Rhinoforms() {
 	}
 	
 	this.registerValidationKeyword = function(keyword, func) {
-		this.validationKeywords[keyword] = func;
+		validationKeywords[keyword] = func;
 	}
 	
 	this.registerCustomType = function(keyword, func) {
-		this.customTypes[keyword] = func;
+		customTypes[keyword] = func;
 	}
 	
 	this.loadFlow = function(flowPath, $container, initData, callback) {
@@ -70,7 +70,7 @@ function Rhinoforms() {
 				"rf.initData": initData
 				},
 			success: function(html) {
-				rf.insertForm(html, $container);
+				insertForm(html, $container);
 				if (callback) {
 					if (typeof callback === 'function') {
 						callback();
@@ -92,24 +92,24 @@ function Rhinoforms() {
 		alert(message);
 	}
 	
-	this.insertForm = function(html, $container) {
+	function insertForm(html, $container) {
 		var rf = this;
 		
 		// Replace container contents with single form
 		$container.html(html);
 		var $form = $("form", $container);
 		
-		this.flowId = $("[name='rf.flowId']").val();
+		var flowId = $("[name='rf.flowId']").val();
 		
 		// Disable standard form submission
 		$("form", $container).submit(function() {
 			return false;
 		})
 		
-		this.processIncludeIf($container);
+		processIncludeIf($container);
 		
 		$(":input", $container).on("change", function() {
-			rf.processIncludeIf($container);
+			processIncludeIf($container);
 		});
 		
 		// Process initialvalue fields
@@ -118,7 +118,7 @@ function Rhinoforms() {
 			var $input = $(input);
 			if (!$input.val()) {
 				var initialvalue = $input.attr("rf.initialvalue");
-				var fields = rf.getFieldsMap($form, true);
+				var fields = getFieldsMap($form, true);
 				var result = null;
 				{
 					result = eval(initialvalue);
@@ -132,11 +132,11 @@ function Rhinoforms() {
 			var input = this;
 			var $input = $(input);
 			var customType = $input.attr("rf.customType");
-			if (rf.customTypes[customType]) {
-				var customTypeFunction = rf.customTypes[customType];
-				customTypeFunction(input, rf.flowId);
+			if (customTypes[customType]) {
+				var customTypeFunction = customTypes[customType];
+				customTypeFunction(input, flowId);
 			} else {
-				rf.setupError("Input custom-type not found '" + customType + "'.")
+				setupError("Input custom-type not found '" + customType + "'.")
 			}
 		})
 		
@@ -144,15 +144,16 @@ function Rhinoforms() {
 		$form.attr("action", "javascript: void(0)");
 		$("[action]", $form).click(function() {
 			var action = $(this).attr("action");
-			rf.doAction(action, $form, $container);
+			doAction(action, $form, $container);
 			return false;
 		});
 		
 		// Give first input focus
 		$(":input[type!='hidden'][action!='back']", $container).first().focus();
+		
 	}
 	
-	this.processIncludeIf = function($container) {
+	function processIncludeIf($container) {
 		var rf = this;
 		var $form = $("form", $container);
 		var $inputs = $("[rf\\.includeif]", $container);
@@ -161,7 +162,7 @@ function Rhinoforms() {
 			var $input = $(this);
 			var includeIfStatement = $input.attr("rf.includeif");
 			rf_trace("processIncludeIf index:" + index + ", statement:'" + includeIfStatement + "'");
-			var fields = rf.getFieldsMap($form);
+			var fields = getFieldsMap($form);
 			var result = eval(includeIfStatement);
 			rf_trace("processIncludeIf result = " + result + "");
 			if (result) {
@@ -172,9 +173,8 @@ function Rhinoforms() {
 		})
 	}
 	
-	this.doAction = function(action, $form, $container) {
-		var rf = this;
-		if (action == "back" || action == "cancel" || this.validateForm($form) == true) {
+	function doAction(action, $form, $container) {
+		if (action == "back" || action == "cancel" || validateForm($form) == true) {
 			var jqXHR = $.ajax({
 				url: servletUrl,
 				data: $form.serialize() + "&rf.action=" + action,
@@ -185,7 +185,7 @@ function Rhinoforms() {
 						$($form.parents()[0]).html($("<h3>").text("Collected Data:").append("<br/>").append($("<textarea>").attr("style", "width: 700px; height: 350px;").text(data)));
 						break;
 					default:
-						rf.insertForm(data, $container);
+						insertForm(data, $container);
 					}
 				},
 				error: function(jqXHR, textStatus, errorThrown) {
@@ -197,14 +197,13 @@ function Rhinoforms() {
 		}
 	}
 	
-	this.validateForm = function($form) {
-		var simpleForm = this;
+	function validateForm($form) {
 		var submit = true;
 		
 		// Compile map of fields with their values, include validation options and rf fields
-		var fields = this.getFieldsMap($form, true);
+		var fields = getFieldsMap($form, true);
 		// Pass map and get list of errors back
-		var errors = this.validateFields(fields);
+		var errors = rf.validateFields(fields);
 		
 		if (errors.length > 0) {
 			// Add invalid class to inputs
@@ -242,7 +241,7 @@ function Rhinoforms() {
 		}
 	}
 	
-	this.getFieldsMap = function($form, includeValidationAndRfAttributes) {
+	function getFieldsMap($form, includeValidationAndRfAttributes) {
 		var fields = {};
 		$(":input:visible", $form).each(function() {
 			var input = this;
@@ -290,16 +289,16 @@ function Rhinoforms() {
 	// Take a map of fields and validate each returning a list of any errors.
 	// This is also run server-side
 	this.validateFields = function(fields) {
-		var simpleForm = this;
+		var rf = this;
 		var errors = [];
 		for (var a in fields) {
 			var field = fields[a];
 			var error = null;
 			if (field.validation) {
-				error = this.validateField(field.name, field.value, field.rfAttributes, field.validation);
+				error = validateField(field.name, field.value, field.rfAttributes, field.validation);
 			} else if (field.validationFunction) {
 				field.validate = function(validationList) {
-					error = simpleForm.validateField(this.name, this.value, this.rfAttributes, validationList);
+					error = validateField(this.name, this.value, this.rfAttributes, validationList);
 				}
 				field.validationFunctionRun = function() {
 					eval(field.validationFunction);
@@ -313,14 +312,14 @@ function Rhinoforms() {
 		return errors;
 	}
 	
-	this.validateField = function(name, value, rfAttributes, validationList) {
+	function validateField(name, value, rfAttributes, validationList) {
 		var validationArray = validationList.split(" ");
 		for (a in validationArray) {
 			var validation = validationArray[a];
 			var message = null;
 			
-			if (this.validationKeywords[validation]) {
-				message = this.validationKeywords[validation](value, rfAttributes);
+			if (validationKeywords[validation]) {
+				message = validationKeywords[validation](value, rfAttributes);
 				if (message) {
 					return { name: name, message: message };
 				}
@@ -331,21 +330,8 @@ function Rhinoforms() {
 		return null;
 	}
 	
-	this.isString = function(something) {
-		return true;
-	}
-	
-	this.matches = function(actual, expected) {
-		return actual == expected;
-	}
-	
-	this.validateEmail = function(email) {
-		var reg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
-		return reg.test(email);
-	}
-	
-	this.setupError = function(message) {
-		if (this.alertOnSetupError) alert(message);
+	function setupError(message) {
+		if (rf.alertOnSetupError) alert(message);
 		this.trace(message);
 	}
 	
