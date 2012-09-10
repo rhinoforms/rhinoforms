@@ -9,6 +9,7 @@ public class FlowAction implements Serializable {
 	private String name;
 	private String target;
 	private Map<String, String> params;
+	private Submission submission;
 	private static final long serialVersionUID = -7126508228396096955L;
 
 	public FlowAction(String name, String target) {
@@ -47,4 +48,12 @@ public class FlowAction implements Serializable {
 		this.params = params;
 	}
 
+	public Submission getSubmission() {
+		return submission;
+	}
+	
+	public void setSubmission(Submission submission) {
+		this.submission = submission;
+	}
+	
 }

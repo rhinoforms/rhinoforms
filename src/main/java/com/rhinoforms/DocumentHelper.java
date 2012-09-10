@@ -1,5 +1,6 @@
 package com.rhinoforms;
 
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Collections;
@@ -9,6 +10,9 @@ import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -31,11 +35,17 @@ import com.rhinoforms.serverside.InputPojo;
 public class DocumentHelper {
 
 	private XPathFactory xPathFactory;
+	private DocumentBuilder documentBuilder;
 
 	final Logger logger = LoggerFactory.getLogger(DocumentHelper.class);
 
 	public DocumentHelper() {
 		this.xPathFactory = XPathFactory.newInstance();
+		try {
+			documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+		} catch (ParserConfigurationException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public void persistFormData(List<InputPojo> inputPOJOs, String docBase, Document dataDocument) throws DocumentHelperException {
@@ -103,11 +113,11 @@ public class DocumentHelper {
 		}
 	}
 	
-	public void createNodeIfNotThere(Document dataDocument, String xPathString) throws DocumentHelperException {
-		lookupOrCreateNode(dataDocument, xPathString);
+	public Node createNodeIfNotThere(Document dataDocument, String xPathString) throws DocumentHelperException {
+		return lookupOrCreateNode(dataDocument, xPathString);
 	}
 	
-	private Node lookupOrCreateNode(Document dataDocument, String xPathString) throws DocumentHelperException {
+	public Node lookupOrCreateNode(Document dataDocument, String xPathString) throws DocumentHelperException {
 		try {
 			XPathExpression fullXPathExpression = newXPath(xPathString);
 			NodeList fullPathNodeList = lookup(dataDocument, fullXPathExpression);
@@ -212,6 +222,18 @@ public class DocumentHelper {
 		} catch (XPathExpressionException e) {
 			throw new DocumentHelperException(e);
 		}
+	}
+
+	public Document streamToDocument(InputStream inputStream) throws DocumentHelperException {
+		try {
+			return documentBuilder.parse(inputStream);
+		} catch (Exception e) {
+			throw new DocumentHelperException("Failed to parse input stream.", e);
+		}
+	}
+
+	public Document newDocument() {
+		return documentBuilder.newDocument();
 	}
 
 }

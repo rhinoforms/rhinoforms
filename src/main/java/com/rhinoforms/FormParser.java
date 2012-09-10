@@ -78,7 +78,7 @@ public class FormParser {
 				TagNode dynamicSelectNode = (TagNode) dynamicSelectNodeO;
 				String name = dynamicSelectNode.getAttributeByName(Constants.NAME_ATTR);
 				String source = dynamicSelectNode.getAttributeByName(Constants.SELECT_SOURCE_ATTR);
-				source = formFlow.resolvePathIfRelative(source);
+				source = formFlow.resolveResourcePathIfRelative(source);
 				String preselectFirstOption = dynamicSelectNode.getAttributeByName(Constants.SELECT_PRESELECT_FIRST_OPTION_ATTR);
 				dynamicSelectNode.removeAttribute(Constants.SELECT_SOURCE_ATTR);
 				dynamicSelectNode.removeAttribute(Constants.SELECT_PRESELECT_FIRST_OPTION_ATTR);
@@ -264,7 +264,7 @@ public class FormParser {
 			List<TagNode> includeNodes = html.getElementListByName(Constants.INCLUDE_ELEMENT, true);
 			for (TagNode includeNode : includeNodes) {
 				String srcAttribute = includeNode.getAttributeByName("src");
-				srcAttribute = formFlow.resolvePathIfRelative(srcAttribute);
+				srcAttribute = formFlow.resolveResourcePathIfRelative(srcAttribute);
 				InputStream resourceAsStream = resourceLoader.getResourceAsStream(srcAttribute);
 				if (resourceAsStream != null) {
 					TagNode includeHtml = htmlCleaner.clean(resourceAsStream);

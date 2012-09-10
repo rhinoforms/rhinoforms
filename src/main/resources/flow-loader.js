@@ -13,11 +13,24 @@ function loadFlow(flowMap) {
 			var form = formArray[formIndex];
 			var actionsJ = new java.util.HashMap();
 			for (var actionIndex in form.actions) {
-				var actionParts = form.actions[actionIndex].split(':');
-				var actionName = actionParts[0];
+				var action = form.actions[actionIndex];
+				var actionName;
 				var actionTarget = "";
-				if (actionParts.length > 1) {
-					actionTarget = actionParts[1];
+				var actionSubmission = null;
+				if (action instanceof Object) {
+					actionName = action.name;
+					if (action.target) {
+						actionTarget = action.target;
+					}
+					if (action.submission) {
+						actionSubmission = action.submission;
+					}
+				} else {
+					var actionParts = form.actions[actionIndex].split(':');
+					actionName = actionParts[0];
+					if (actionParts.length > 1) {
+						actionTarget = actionParts[1];
+					}
 				}
 				var actionTargetParamsIndex = actionTarget.indexOf("(");
 				var actionTargetParamsParts;
@@ -26,11 +39,19 @@ function loadFlow(flowMap) {
 					actionTargetParamsParts = actionTargetParamsString.split(",");
 					actionTarget = actionTarget.substring(0, actionTargetParamsIndex);
 				}
+				
 				var flowActionJ = new com.rhinoforms.FlowAction(actionName, actionTarget);
 				for (var actionTargetParamsPartIndex in actionTargetParamsParts) {
 					var param = actionTargetParamsParts[actionTargetParamsPartIndex];
 					var paramParts = param.split("=");
 					flowActionJ.addParam(this.trim(paramParts[0]), this.trim(paramParts[1]));
+				}
+				if (actionSubmission) {
+					var submissionJ = new com.rhinoforms.Submission(actionSubmission.url);
+					submissionJ.setResultInsertPoint(actionSubmission.resultInsertPoint);
+					submissionJ.setPreTransform(formFlow.resolveResourcePathIfRelative(actionSubmission.preTransform));
+					submissionJ.setPostTransform(formFlow.resolveResourcePathIfRelative(actionSubmission.postTransform));
+					flowActionJ.setSubmission(submissionJ);
 				}
 				actionsJ.put(actionName, flowActionJ);
 			}

@@ -10,6 +10,7 @@ import javax.xml.xpath.XPathExpressionException;
 
 import org.w3c.dom.Document;
 
+import com.rhinoforms.resourceloader.ResourceLoader;
 import com.rhinoforms.serverside.InputPojo;
 
 public class FormFlow implements Serializable {
@@ -23,6 +24,7 @@ public class FormFlow implements Serializable {
 	private List<InputPojo> currentInputPojos;
 	private Map<String, FieldSourceProxy> fieldSourceProxies;
 	private String resourcesBase;
+	private RemoteSubmissionHelper remoteSubmissionHelper;
 
 	public static final String FIRST_ACTION = "first";
 	public static final String NEXT_ACTION = "next";
@@ -33,11 +35,12 @@ public class FormFlow implements Serializable {
 
 	private static final long serialVersionUID = -5683469121328756822L;
 
-	public FormFlow() {
+	public FormFlow(ResourceLoader resourceLoader) {
 		this.flowId = (int) (Math.random() * 100000000f);
 		this.formLists = new HashMap<String, List<Form>>();
 		this.navigationStack = new Stack<FlowNavigationLevel>();
 		this.fieldSourceProxies = new HashMap<String, FieldSourceProxy>();
+		this.remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader);
 	}
 
 	public String navigateToFirstForm(DocumentHelper documentHelper) throws ActionError {
@@ -61,6 +64,16 @@ public class FormFlow implements Serializable {
 		boolean movedUpNavStack = false;
 		
 		FlowNavigationLevel currentNavigationLevel = getCurrentNavigationLevel();
+		
+		Submission submission = flowAction.getSubmission();
+		if (submission != null) {
+			try {
+				remoteSubmissionHelper.handleSubmission(submission, dataDocument);
+			} catch (RemoteSubmissionHelperException e) {
+				throw new ActionError("Remote submission failed.", e);
+			}
+		}
+		
 		if (actionTarget.isEmpty()) {
 			if (actionName.equals(NEXT_ACTION) || actionName.equals(BACK_ACTION) || actionName.equals(CANCEL_ACTION)) {
 				// Moving forward or back in list. May pop up to next level if end of current list.
@@ -214,7 +227,7 @@ public class FormFlow implements Serializable {
 		return filteredActionParams;
 	}
 	
-	public String resolvePathIfRelative(String formResourcePath) {
+	public String resolveResourcePathIfRelative(String formResourcePath) {
 		// Check for and resolve relative form path
 		if (formResourcePath.charAt(0) != '/') {
 			formResourcePath = resourcesBase + formResourcePath;

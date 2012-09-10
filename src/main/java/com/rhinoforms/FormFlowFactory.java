@@ -5,27 +5,20 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.ScriptableObject;
 import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 
 import com.rhinoforms.resourceloader.ResourceLoader;
 
 public class FormFlowFactory {
 
 	private ResourceLoader resourceLoader;
-	private DocumentBuilderFactory documentBuilderFactory;
 	private DocumentHelper documentHelper;
 
 	public FormFlowFactory(ResourceLoader resourceLoader) {
 		this.resourceLoader = resourceLoader;
-		this.documentBuilderFactory = DocumentBuilderFactory.newInstance();
 		this.documentHelper = new DocumentHelper();
 	}
 
@@ -34,7 +27,7 @@ public class FormFlowFactory {
 
 		try {
 			ScriptableObject scope = jsContext.initStandardObjects();
-			FormFlow formFlow = new FormFlow();
+			FormFlow formFlow = new FormFlow(resourceLoader);
 			
 			String resourcesBase = "";
 			if (formFlowPath.contains("/")) {
@@ -67,12 +60,15 @@ public class FormFlowFactory {
 			if (flowDocBase != null) {
 
 				// Parse or create initial document. Make sure flow docBase node is there.
-				DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
 				Document dataDocument = null;
 				if (dataDocumentString != null && !dataDocumentString.isEmpty()) {
-					dataDocument = documentBuilder.parse(new ByteArrayInputStream(dataDocumentString.getBytes()));
+					try {
+						dataDocument = documentHelper.streamToDocument(new ByteArrayInputStream(dataDocumentString.getBytes()));
+					} catch (DocumentHelperException e) {
+						throw new FormFlowFactoryException("Error parsing initial data document", e);
+					}
 				} else {
-					dataDocument = documentBuilder.newDocument();
+					dataDocument = documentHelper.newDocument();
 				}
 
 				documentHelper.createNodeIfNotThere(dataDocument, flowDocBase);
@@ -85,10 +81,6 @@ public class FormFlowFactory {
 			}
 		} catch (EvaluatorException e) {
 			throw new FormFlowFactoryException("Error parsing flow js file.", e);
-		} catch (ParserConfigurationException e) {
-			throw new FormFlowFactoryException("Error parsing initial data document.", e);
-		} catch (SAXException e) {
-			throw new FormFlowFactoryException("Error parsing initial data document.", e);
 		} catch (DocumentHelperException e) {
 			throw new FormFlowFactoryException("Error creating base node in data document using flow docBase.", e);
 		}

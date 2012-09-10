@@ -4,7 +4,14 @@
 		main: [
 				{ id: "one", url: "one.html", actions: [ "next" ] },
 				{ id: "two", url: "two.html", actions: [ "back", "add:anotherList.editFish(fishIndex=next)", "edit:anotherList.editFish(fishIndex=?)", "next" ] },
-				{ id: "three", url: "three.html", actions: [ "back", "finish" ] }
+				{ id: "three", url: "three.html",
+					actions: [ "back", "finish",
+						{
+							name: "sendToMyServer",
+							submission: { preTransform: "xslt/toServerFormat.xsl", url: "http://localhost/dummy-url", postTransform: "xslt/fromServerFormat.xsl", resultInsertPoint: "/myData/submissionResult" }
+						}
+					]
+				}
 		],
 		anotherList: [
 			{ id: "editFish", docBase: "fishes/fish[fishIndex]", url: "editFish.html", actions: [ "cancel", "addGill:gills.editGill(gillIndex=next)", "next" ] }

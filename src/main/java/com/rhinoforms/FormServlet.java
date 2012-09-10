@@ -195,7 +195,7 @@ public class FormServlet extends HttpServlet {
 	private void forwardToAndParseForm(HttpServletRequest request, HttpServletResponse response, FormFlow formFlow, String formUrl)
 			throws ServletException, IOException {
 		
-		formUrl = formFlow.resolvePathIfRelative(formUrl);
+		formUrl = formFlow.resolveResourcePathIfRelative(formUrl);
 
 		RequestDispatcher requestDispatcher = getServletContext().getRequestDispatcher(formUrl);
 		FormResponseWrapper formResponseWrapper = new FormResponseWrapper(response, resourceLoader);
