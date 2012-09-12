@@ -15,7 +15,7 @@ import com.rhinoforms.resourceloader.ResourceLoader;
 public class RhinoFormsMasterScopeFactory {
 
 	public JSMasterScope createMasterScope(Context jsContext, ResourceLoader resourceLoader) throws IOException {
-		ScriptableObject sharedScope = jsContext.initStandardObjects(null, true);
+		ScriptableObject sharedScope = jsContext.initStandardObjects(null, false);
 
 		// Load main javascript library into shared scope
 		loadScript(Constants.RHINOFORMS_SCRIPT, sharedScope, jsContext, resourceLoader);
@@ -34,7 +34,7 @@ public class RhinoFormsMasterScopeFactory {
 		ScriptableObject.putProperty(sharedScope, "netUtil", wrappedNetUtil);
 
 		// It would be good to seal the sharedScope here but we can't because of a bug when xerces or xalan is on the classpath.
-		//sharedScope.sealObject();
+//		sharedScope.sealObject();
 
 		return masterScope;
 	}

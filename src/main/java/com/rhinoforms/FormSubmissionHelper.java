@@ -83,6 +83,10 @@ public class FormSubmissionHelper {
 		}
 
 		if (fieldsInError.isEmpty()) {
+			
+			// Process calculated fields
+			// TODO rf.calculated
+			
 			// Persist collected form data
 			String docBase = formFlow.getCurrentDocBase();
 			try {
@@ -145,11 +149,11 @@ public class FormSubmissionHelper {
 				fieldsInError.add(errorFieldName);
 			}
 		} catch (EcmaError e) {
-			String message = "EcmaError error while calling Javascript function rf.validateFields.";
+			String message = "EcmaError error while calling JavaScript function rf.validateFields.";
 			logger.error(message, e);
 			throw new ServletException(message, e);
 		} catch (WrappedException e) {
-			String message = "WrappedException error while calling Javascript function rf.validateFields.";
+			String message = "WrappedException error while calling JavaScript function rf.validateFields.";
 			logger.error(message, e);
 			throw new ServletException(message, e);
 		}

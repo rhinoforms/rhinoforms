@@ -25,3 +25,6 @@ rf.registerValidationKeyword("fromSource", function(value, rfAttributes) {
 	}
 	
 });
+rf.setupError = function(message) {
+	throw new Error(message);
+}
