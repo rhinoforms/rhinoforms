@@ -1,4 +1,4 @@
-rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
+rf.registerCustomType("auto-complete-select", function(inputElement, flowId, args) {
 	
 	this.$input = $(inputElement);
 	this.flowId = flowId;
@@ -10,6 +10,8 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 	this.$list;
 	this.$ul;
 	this.mouseDown;
+	var codeFieldName = args.codeFieldName;
+	var codeField = null;
 	
 	this.init = function() {
 		var ct = this;
@@ -75,6 +77,11 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 				}
 			}
 		})
+		
+		if (codeFieldName) {
+			var $form = this.$input.parents("form").first();
+			codeField = $("[name='" + codeFieldName + "']", $form);
+		}
 		
 		this.$input.change();
 	}
@@ -198,7 +205,7 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 		rf_trace("selectItem");
 		var text = $item.text();
 		this.value = text;
-		this.$input.val(text);
+		this.setValue(text, $item.attr("val"));
 		this.filter(text);
 		this.hideList();
 		this.$input.change();
@@ -228,13 +235,20 @@ rf.registerCustomType("auto-complete-select", function(inputElement, flowId) {
 						if (valueLower == data[i][1].toLowerCase()) {
 							rf_trace("value in new downloaded list");
 							// Set correct case on input value.
-							$input.val(data[i][1]);
+							this.setValue(data[i][1], data[i][0]);
 							$input.attr("rf.valueFromSource", "true");
 							break;
 						}
 					}
 				});
 			}
+		}
+	}
+	
+	this.setValue = function(text, code) {
+		this.$input.val(text);
+		if (codeField) {
+			codeField.val(code).text(code);
 		}
 	}
 	

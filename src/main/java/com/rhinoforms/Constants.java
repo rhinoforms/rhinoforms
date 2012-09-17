@@ -26,6 +26,7 @@ public interface Constants {
 	String SELECT_PRESELECT_FIRST_OPTION_ATTR = "rf.preselectFirstOption";
 	String INPUT_SOURCE_ATTR = SELECT_SOURCE_ATTR;
 	String INCLUDE_IF_ATTR = "rf.includeif";
+	String CALCULATED_ATTR = "rf.calculated";
 	String INCLUDE_ELEMENT = "rf.include";
 	String FOR_EACH_ELEMENT = "rf.forEach";
 	

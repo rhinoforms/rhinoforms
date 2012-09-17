@@ -42,7 +42,8 @@ function Rhinoforms() {
 		});
 		
 		// Enable the 'date' validation function
-		this.registerValidationKeyword("date", function(value, rfAttributes, format) {
+		this.registerValidationKeyword("date", function(value, rfAttributes, args) {
+			var format = args.format;
 			if (value) {
 				if (!format) {
 					format = "dd/MM/yyyy";
@@ -136,12 +137,13 @@ function Rhinoforms() {
 		$("input[rf\\.customType]", $container).each(function() {
 			var input = this;
 			var $input = $(input);
-			var customType = $input.attr("rf.customType");
-			if (customTypes[customType]) {
-				var customTypeFunction = customTypes[customType];
-				customTypeFunction(input, flowId);
+			var customTypeAttr = $input.attr("rf.customType");
+			var customType = toNameAndArgs(customTypeAttr);
+			if (customTypes[customType.name]) {
+				var customTypeFunction = customTypes[customType.name];
+				customTypeFunction(input, flowId, customType.args);
 			} else {
-				rf.setupError("Input custom-type not found '" + customType + "'.")
+				rf.setupError("Input custom-type not found '" + customType.name + "'.")
 			}
 		})
 		
@@ -202,8 +204,8 @@ function Rhinoforms() {
 		$inputs.each(function(index) {
 			var $input = $(this);
 			var calculatedStatement = $input.attr("rf.calculated");
-			rf_trace("processCalculated index:" + index + ", statement:'" + calculatedStatement + "'");
 			var fields = getFieldsMap($form);
+			rf_trace("processCalculated index:" + index + ", fields:" + fields.ukResidentSinceMonthCode + ", statement:'" + calculatedStatement + "'");
 			var result = eval(calculatedStatement);
 			rf_trace("processCalculated result = " + result + "");
 			$input.val(result).text(result);
@@ -280,7 +282,7 @@ function Rhinoforms() {
 	
 	function getFieldsMap($form, includeValidationAndRfAttributes) {
 		var fields = {};
-		$(":input:visible", $form).each(function() {
+		$(":input", $form).each(function() {
 			var input = this;
 			var $input = $(this);
 			var name = $input.attr("name")
@@ -350,29 +352,54 @@ function Rhinoforms() {
 	}
 	
 	function validateField(name, value, rfAttributes, validationList) {
-		var validationArray = validationList.split(" ");
+		var validationArray = toNamesAndArgs(validationList);
 		for (a in validationArray) {
-			var validationKeyword = validationArray[a];
-			var validationKeywordArgs = "";
-			if (validationKeyword.indexOf("(") != -1 && validationKeyword.indexOf(")", validationKeyword.indexOf("(")) != -1) {
-				var validationKeywordParts = validationKeyword.split("(");
-				validationKeyword = validationKeywordParts[0];
-				validationKeywordArgs = validationKeywordParts[1];
-				validationKeywordArgs = validationKeywordArgs.substring(0, validationKeywordArgs.length - 1);
-			}
-			
+			var validation = validationArray[a];
 			var message = null;
-			
-			if (validationKeywords[validationKeyword]) {
-				message = validationKeywords[validationKeyword](value, rfAttributes, validationKeywordArgs);
+			if (validationKeywords[validation.name]) {
+				message = validationKeywords[validation.name](value, rfAttributes, validation.args);
 				if (message) {
 					return { name: name, message: message };
 				}
 			} else {
-				alert("Validation keyword '" + validationKeyword + "' is not defined.");
+				alert("Validation keyword '" + validation.name + "' is not defined.");
 			}
 		}
 		return null;
+	}
+
+		
+	function toNamesAndArgs(string) {
+		var namesAndArgs = [];
+		var stringSplit = (string + " ").match(/[^ \(]+ |[^ ]+\([^\)]*\) /g);
+		for ( var a in stringSplit) {
+			// var args
+			// stringSplit[a] = { name: stringSplit[a] };
+			var nameArgsString = stringSplit[a];
+			namesAndArgs.push(toNameAndArgs(nameArgsString));
+		}
+		return namesAndArgs;
+	}
+
+	function toNameAndArgs(string) {
+		string = string.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+		var name;
+		var args;
+		if (string.indexOf("(") != -1
+				&& string.indexOf(")", string.indexOf("(")) != -1) {
+			var nameParts = string.split("(");
+			name = nameParts[0];
+			args = nameParts[1];
+			args = args.substring(0, args.length - 1);
+			args = eval("(" + args + ")");
+		} else {
+			name = string;
+			args = {};
+		}
+		return {
+			name : name,
+			args : args
+		};
 	}
 	
 	this.setupError = function(message) {
@@ -390,6 +417,7 @@ function Rhinoforms() {
 function rf_trace(message) {
 	$("#trace").append(message + "\n").parent().scrollTop(9999999);
 }
+
 
 /** External Libraries **/
 

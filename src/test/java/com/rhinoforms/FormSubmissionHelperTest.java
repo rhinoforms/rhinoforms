@@ -1,6 +1,5 @@
 package com.rhinoforms;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,23 +21,14 @@ public class FormSubmissionHelperTest {
 	private Context context;
 	private JSMasterScope masterScope;
 	private FormSubmissionHelper formSubmissionHelper;
-	private Object netUtilReturnObject;
-	private String netUtilUrlRequested;
+	private TestNetUtil testNetUtil;
 	
 	@Before
 	public void before() throws Exception {
 		context = Context.enter();
+		testNetUtil = new TestNetUtil();
 		
-		// Modified NetUtil implementation for unit-test
-		final NetUtil testNetUtil = new NetUtil() {
-			@Override
-			public Object httpGetJsObject(String urlString) throws IOException {
-				netUtilUrlRequested = urlString;
-				return netUtilReturnObject;
-			}
-		};
-		
-		// Modified factory which uses the testNetUtil
+		// Modified factory which uses testNetUtil
 		RhinoFormsMasterScopeFactory masterScopeFactory = new RhinoFormsMasterScopeFactory() {
 			@Override
 			NetUtil createNetUtil(JSMasterScope masterScope) {
@@ -104,16 +94,16 @@ public class FormSubmissionHelperTest {
 		
 		Scriptable workingScope = masterScope.createWorkingScope();
 		Object jsObject = context.evaluateString(workingScope, "[['3.0','British Aircraft Corp. Staff'],['8.0','British Telecom Engineer'],['10.0','British Gas Employee'],['10.0','British Nuclear Fuels Employee'],['10.0','British Rail Employee'],['10.0','British Road Services Employee'],['10.0','British Steel Employee'],['10.0','British Telecom Employee'],['15.0','Bricklayer'],['15.0','British Tourist Board Employee']]", "Create occupation array", 1, null);
-		netUtilReturnObject = jsObject;
+		testNetUtil.setReturnObject(jsObject);
 		
 		Set<String> fieldsInError = formSubmissionHelper.validateInput(inputs);
-		Assert.assertEquals(null, netUtilUrlRequested);
+		Assert.assertEquals(null, testNetUtil.getUrlRequested());
 		Assert.assertEquals(1, fieldsInError.size());
 		Assert.assertEquals("occupation", fieldsInError.iterator().next());
 		
 		occupation.setValue("Bricklayer");
 		Assert.assertEquals(0, formSubmissionHelper.validateInput(inputs).size());
-		Assert.assertEquals("http://somewhere/something?value=bri", netUtilUrlRequested);
+		Assert.assertEquals("http://somewhere/something?value=bri", testNetUtil.getUrlRequested());
 	}
 	
 	@Test
@@ -157,4 +147,33 @@ public class FormSubmissionHelperTest {
 		Assert.assertEquals("oldAddress", includeFalseInputs.get(0).getName());
 	}
 	
+	@Test
+	public void testProcessCalculatedFields() {
+		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
+		
+		InputPojo basePremium = new InputPojo("basePremium", "text", new HashMap<String, String>());
+		basePremium.setValue("100");
+		inputs.add(basePremium);
+
+		InputPojo voluntaryExcess = new InputPojo("voluntaryExcess", "text", new HashMap<String, String>());
+		inputs.add(voluntaryExcess);
+		
+		HashMap<String, String> premiumAttributes = new HashMap<String, String>();
+		premiumAttributes.put(Constants.CALCULATED_ATTR, "{ new Number(fields.basePremium.value) + ( 30 - (fields.voluntaryExcess.value * 3) ) }");
+		InputPojo premium = new InputPojo("premium", "text", premiumAttributes);
+		inputs.add(premium);
+		
+		voluntaryExcess.setValue("0");
+		formSubmissionHelper.processCalculatedFields(inputs);
+		Assert.assertEquals("130", premium.getValue());
+		
+		voluntaryExcess.setValue("5");
+		formSubmissionHelper.processCalculatedFields(inputs);
+		Assert.assertEquals("115", premium.getValue());
+
+		voluntaryExcess.setValue("10");
+		formSubmissionHelper.processCalculatedFields(inputs);
+		Assert.assertEquals("100", premium.getValue());
+	}
+
 }

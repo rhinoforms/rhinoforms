@@ -212,9 +212,12 @@ public class FormParser {
 								inputTagNode.setAttribute(Constants.CHECKED_ATTR, Constants.CHECKED_ATTR);
 							}
 						} else if (type.equals("select")) {
-							Object[] node = inputTagNode.evaluateXPath("option[text()=\"" + inputValue + "\"]");
-							if (node.length > 0) {
-								((TagNode) node[0]).setAttribute(Constants.SELECTED_ATTR, "selected");
+							Object[] nodes = inputTagNode.evaluateXPath("option[@value=\"" + inputValue + "\"]");
+							if (nodes.length == 0) {
+								nodes = inputTagNode.evaluateXPath("option[text()=\"" + inputValue + "\"]");
+							}
+							if (nodes.length > 0) {
+								((TagNode) nodes[0]).setAttribute(Constants.SELECTED_ATTR, "selected");
 							}
 						} else {
 							inputTagNode.setAttribute("value", inputValue);

@@ -64,15 +64,41 @@ public class FormParserTest {
 		
 		List<InputPojo> inputPojos = formFlow.getCurrentInputPojos();
 		
-		Assert.assertEquals(4, inputPojos.size());
+		Assert.assertEquals(5, inputPojos.size());
 		Assert.assertEquals("terms", inputPojos.get(0).getName());
 		Assert.assertEquals("firstName", inputPojos.get(1).getName());
 		Assert.assertEquals("canWalkOnHands", inputPojos.get(2).getName());
 		Assert.assertEquals("title", inputPojos.get(3).getName());
+		Assert.assertEquals("maritalStatusCode", inputPojos.get(4).getName());
 		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
 		Assert.assertTrue(parsedFormHtml.contains("type=\"radio\" name=\"terms\" value=\"disagree\" checked=\"checked\""));
 		Assert.assertTrue(parsedFormHtml.contains("<option selected=\"selected\">Miss</option>"));
 		Assert.assertTrue(parsedFormHtml.contains("type=\"checkbox\" name=\"canWalkOnHands\" checked=\"checked\""));
+	}
+	
+	@Test
+	public void testSelectFromCSV() throws Exception {
+		this.formFlow = formFlowFactory.createFlow("test-flow1.js", Context.enter(), null);
+		this.formFlow.navigateToFirstForm(documentHelper);
+		
+		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+		formParser.parseForm(readFileContents("src/test/resources/all-input-types.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope);
+		
+		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
+		Assert.assertTrue("Option should have value and label from CSV.", parsedFormHtml.contains("<option value=\"1\">Single</option>"));
+	}
+	
+	@Test
+	public void testSelectFromCSVWithSelectedValue() throws Exception {
+		this.formFlow = formFlowFactory.createFlow("test-flow1.js", Context.enter(), "<myData><maritalStatusCode>2</maritalStatusCode></myData>");
+		this.formFlow.navigateToFirstForm(documentHelper);
+		
+		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+		formParser.parseForm(readFileContents("src/test/resources/all-input-types.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope);
+		
+		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
+		Assert.assertTrue("Option should have value and label from CSV.", parsedFormHtml.contains("<option value=\"1\">Single</option>"));
+		Assert.assertTrue("Option 2 should be selected.", parsedFormHtml.contains("<option value=\"2\" selected=\"selected\">Married</option>"));
 	}
 	
 	@Test
@@ -82,7 +108,6 @@ public class FormParserTest {
 		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
 		String[] split = parsedFormHtml.split("<option[^<]*");
 		Assert.assertEquals(8, split.length);
-		System.out.println(parsedFormHtml);
 		Assert.assertTrue(parsedFormHtml.contains("<option value=\"\">-- Please Select --</option>"));
 	}
 	

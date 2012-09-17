@@ -43,8 +43,8 @@ public class FormResponseWrapper extends HttpServletResponseWrapper {
 			PrintWriter writer = super.getWriter();
 			char[] charArray = charArrayWriter.toCharArray();
 	
-			String formContentsString = new String(charArray); // TODO: try to avoid the huge string here.
-			formParser.parseForm(formContentsString, formFlow, writer, masterScope); // TODO: Record the number of bytes written and use super.setContent(length)
+			String formContentsString = new String(charArray);
+			formParser.parseForm(formContentsString, formFlow, writer, masterScope);
 		} catch (Exception e) {
 			throw new FormResponseWrapperException(e);
 		}

@@ -56,41 +56,42 @@ public class FormSubmissionHelper {
 	public Set<String> validateAndPersist(FormFlow formFlow, String action, Map<String, String> parameterMap) throws ServletException {
 
 		// Collect input values
-		List<InputPojo> inputPOJOs = formFlow.getCurrentInputPojos();
-		for (InputPojo inputPOJO : inputPOJOs) {
-			if (inputPOJO.getType().equalsIgnoreCase("checkbox")) {
-				inputPOJO.setValue(parameterMap.get(inputPOJO.getName()) != null ? "true" : "false");
+		List<InputPojo> inputPojos = formFlow.getCurrentInputPojos();
+		for (InputPojo inputPojo : inputPojos) {
+			if (inputPojo.getType().equalsIgnoreCase("checkbox")) {
+				inputPojo.setValue(parameterMap.get(inputPojo.getName()) != null ? "true" : "false");
 			} else {
-				inputPOJO.setValue(parameterMap.get(inputPOJO.getName()));
+				inputPojo.setValue(parameterMap.get(inputPojo.getName()));
 			}
 		}
 		
-		List<InputPojo> includeFalseInputs = getIncludeFalseInputs(inputPOJOs);
-		inputPOJOs.removeAll(includeFalseInputs);
+		// Process includeIf fields
+		List<InputPojo> includeFalseInputs = getIncludeFalseInputs(inputPojos);
+		inputPojos.removeAll(includeFalseInputs);
 
-		Set<String> fieldsInError = validateInput(inputPOJOs);
+		// Process calculated fields
+		processCalculatedFields(inputPojos);
+		
+		// Validate fields
+		Set<String> fieldsInError = validateInput(inputPojos);
 
 		// If Back action remove any invalid input
 		if (action.equals(FormFlow.BACK_ACTION) && !fieldsInError.isEmpty()) {
 			HashSet<InputPojo> inputPOJOsToRemove = new HashSet<InputPojo>();
-			for (InputPojo inputPojo : inputPOJOs) {
+			for (InputPojo inputPojo : inputPojos) {
 				if (fieldsInError.contains(inputPojo.getName())) {
 					inputPOJOsToRemove.add(inputPojo);
 				}
 			}
-			inputPOJOs.removeAll(inputPOJOsToRemove);
+			inputPojos.removeAll(inputPOJOsToRemove);
 			fieldsInError.clear();
 		}
 
 		if (fieldsInError.isEmpty()) {
-			
-			// Process calculated fields
-			// TODO rf.calculated
-			
 			// Persist collected form data
 			String docBase = formFlow.getCurrentDocBase();
 			try {
-				documentHelper.persistFormData(inputPOJOs, docBase, formFlow.getDataDocument());
+				documentHelper.persistFormData(inputPojos, docBase, formFlow.getDataDocument());
 				documentHelper.clearFormData(includeFalseInputs, docBase, formFlow.getDataDocument());
 			} catch (DocumentHelperException e) {
 				String message = "Failed to map field to xml document.";
@@ -111,16 +112,15 @@ public class FormSubmissionHelper {
 			}
 		}
 		if (!inputsWithIncludeIfStatements.isEmpty()) {
-			String jsPojoMapString = jsSerialiser.inputPOJOListToJS(inputPojos);
 			Scriptable workingScope = masterScope.createWorkingScope();
 			Context context = masterScope.getCurrentContext();
-			context.evaluateString(workingScope, "var fields = " + jsPojoMapString, "Add fields to scope", 1, null);
+			addFieldsToScope(inputPojos, workingScope, context);
 			for (InputPojo inputPojo : inputsWithIncludeIfStatements) {
 				String inputName = inputPojo.getName();
 				String includeIfStatement = inputPojo.getRfAttributes().get(Constants.INCLUDE_IF_ATTR);
-				Object object = context.evaluateString(workingScope, includeIfStatement, inputName + " includeif statement", 1, null);
+				Object object = context.evaluateString(workingScope, includeIfStatement, inputName + " " + Constants.INCLUDE_IF_ATTR +" statement", 1, null);
 				boolean b = Context.toBoolean(object);
-				logger.debug("input includeif name:'{}', result:'{}'", inputName, b);
+				logger.debug("input {} name:'{}', result:'{}'", new Object[] {Constants.INCLUDE_IF_ATTR, inputName, b});
 				if (!b) {
 					includeFalseInputPojos.add(inputPojo);
 				}
@@ -129,6 +129,33 @@ public class FormSubmissionHelper {
 		return includeFalseInputPojos;
 	}
 
+	void processCalculatedFields(List<InputPojo> inputPojos) {
+		List<InputPojo> inputsWithCalculatedStatements = new ArrayList<InputPojo>();
+		for (InputPojo inputPojo : inputPojos) {
+			if (inputPojo.getRfAttributes().containsKey(Constants.CALCULATED_ATTR)) {
+				inputsWithCalculatedStatements.add(inputPojo);
+			}
+		}
+		if (!inputsWithCalculatedStatements.isEmpty()) {
+			Scriptable workingScope = masterScope.createWorkingScope();
+			Context context = masterScope.getCurrentContext();
+			addFieldsToScope(inputPojos, workingScope, context);
+			for (InputPojo inputPojo : inputsWithCalculatedStatements) {
+				String inputName = inputPojo.getName();
+				String calcExpression = inputPojo.getRfAttributes().get(Constants.CALCULATED_ATTR);
+				Object result = context.evaluateString(workingScope, calcExpression, inputName + " " + Constants.CALCULATED_ATTR + " statement", 1, null);
+				String resultString = Context.toString(result);
+				logger.debug("input {} name:'{}', result:'{}'", new Object[] {Constants.CALCULATED_ATTR, inputName, resultString});
+				inputPojo.setValue(resultString);
+			}
+		}
+	}
+
+	private void addFieldsToScope(List<InputPojo> inputPojos, Scriptable workingScope, Context context) {
+		String jsPojoMapString = jsSerialiser.inputPOJOListToJS(inputPojos);
+		context.evaluateString(workingScope, "var fields = " + jsPojoMapString, "Add fields to scope", 1, null);
+	}
+	
 	Set<String> validateInput(List<InputPojo> inputPojos) throws ServletException {
 		Set<String> fieldsInError = new HashSet<String>();
 		String jsPojoMapString = jsSerialiser.inputPOJOListToJS(inputPojos);
