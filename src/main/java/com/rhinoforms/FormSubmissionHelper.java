@@ -1,5 +1,6 @@
 package com.rhinoforms;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -53,7 +54,7 @@ public class FormSubmissionHelper {
 		return action;
 	}
 	
-	public Set<String> validateAndPersist(FormFlow formFlow, String action, Map<String, String> parameterMap) throws ServletException {
+	public Set<String> validateAndPersist(FormFlow formFlow, String action, Map<String, String> parameterMap) throws ServletException, IOException {
 
 		// Collect input values
 		List<InputPojo> inputPojos = formFlow.getCurrentInputPojos();
@@ -65,15 +66,17 @@ public class FormSubmissionHelper {
 			}
 		}
 		
+		Scriptable workingScope = masterScope.createWorkingScope(formFlow.getLibraries());
+		
 		// Process includeIf fields
-		List<InputPojo> includeFalseInputs = getIncludeFalseInputs(inputPojos);
+		List<InputPojo> includeFalseInputs = getIncludeFalseInputs(inputPojos, workingScope);
 		inputPojos.removeAll(includeFalseInputs);
 
 		// Process calculated fields
-		processCalculatedFields(inputPojos);
+		processCalculatedFields(inputPojos, workingScope);
 		
 		// Validate fields
-		Set<String> fieldsInError = validateInput(inputPojos);
+		Set<String> fieldsInError = validateInput(inputPojos, workingScope);
 
 		// If Back action remove any invalid input
 		if (action.equals(FormFlow.BACK_ACTION) && !fieldsInError.isEmpty()) {
@@ -103,7 +106,7 @@ public class FormSubmissionHelper {
 		return fieldsInError;
 	}
 
-	List<InputPojo> getIncludeFalseInputs(List<InputPojo> inputPojos) {
+	List<InputPojo> getIncludeFalseInputs(List<InputPojo> inputPojos, Scriptable workingScope) {
 		List<InputPojo> includeFalseInputPojos = new ArrayList<InputPojo>();
 		List<InputPojo> inputsWithIncludeIfStatements = new ArrayList<InputPojo>();
 		for (InputPojo inputPojo : inputPojos) {
@@ -112,8 +115,7 @@ public class FormSubmissionHelper {
 			}
 		}
 		if (!inputsWithIncludeIfStatements.isEmpty()) {
-			Scriptable workingScope = masterScope.createWorkingScope();
-			Context context = masterScope.getCurrentContext();
+			Context context = Context.getCurrentContext();
 			addFieldsToScope(inputPojos, workingScope, context);
 			for (InputPojo inputPojo : inputsWithIncludeIfStatements) {
 				String inputName = inputPojo.getName();
@@ -129,7 +131,7 @@ public class FormSubmissionHelper {
 		return includeFalseInputPojos;
 	}
 
-	void processCalculatedFields(List<InputPojo> inputPojos) {
+	void processCalculatedFields(List<InputPojo> inputPojos, Scriptable workingScope) {
 		List<InputPojo> inputsWithCalculatedStatements = new ArrayList<InputPojo>();
 		for (InputPojo inputPojo : inputPojos) {
 			if (inputPojo.getRfAttributes().containsKey(Constants.CALCULATED_ATTR)) {
@@ -137,8 +139,7 @@ public class FormSubmissionHelper {
 			}
 		}
 		if (!inputsWithCalculatedStatements.isEmpty()) {
-			Scriptable workingScope = masterScope.createWorkingScope();
-			Context context = masterScope.getCurrentContext();
+			Context context = Context.getCurrentContext();
 			addFieldsToScope(inputPojos, workingScope, context);
 			for (InputPojo inputPojo : inputsWithCalculatedStatements) {
 				String inputName = inputPojo.getName();
@@ -156,7 +157,7 @@ public class FormSubmissionHelper {
 		context.evaluateString(workingScope, "var fields = " + jsPojoMapString, "Add fields to scope", 1, null);
 	}
 	
-	Set<String> validateInput(List<InputPojo> inputPojos) throws ServletException {
+	Set<String> validateInput(List<InputPojo> inputPojos, Scriptable workingScope) throws ServletException {
 		Set<String> fieldsInError = new HashSet<String>();
 		String jsPojoMapString = jsSerialiser.inputPOJOListToJS(inputPojos);
 		logger.debug("inputPojos as js:{}", jsPojoMapString);
@@ -164,14 +165,13 @@ public class FormSubmissionHelper {
 		commandStringBuilder.append("rf.validateFields(");
 		commandStringBuilder.append(jsPojoMapString);
 		commandStringBuilder.append(")");
-		Scriptable scope = masterScope.createWorkingScope();
 		Context jsContext = Context.getCurrentContext();
 		try {
-			NativeArray errors = (NativeArray) jsContext.evaluateString(scope, commandStringBuilder.toString(), "<cmd>", 1, null);
+			NativeArray errors = (NativeArray) jsContext.evaluateString(workingScope, commandStringBuilder.toString(), "<cmd>", 1, null);
 			for (int i = 0; i < errors.getLength(); i++) {
-				ScriptableObject error = (ScriptableObject) errors.get(i, scope);
-				String errorFieldName = error.get("name", scope).toString();
-				String errorFieldMessage = error.get("message", scope).toString();
+				ScriptableObject error = (ScriptableObject) errors.get(i, workingScope);
+				String errorFieldName = error.get("name", workingScope).toString();
+				String errorFieldMessage = error.get("message", workingScope).toString();
 				logger.info("Input error, name:'{}', message:'{}'", errorFieldName, errorFieldMessage);
 				fieldsInError.add(errorFieldName);
 			}

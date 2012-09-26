@@ -15,7 +15,7 @@ import com.rhinoforms.resourceloader.ResourceLoader;
 public class RhinoFormsMasterScopeFactory {
 
 	public JSMasterScope createMasterScope(Context jsContext, ResourceLoader resourceLoader) throws IOException {
-		ScriptableObject sharedScope = jsContext.initStandardObjects(null, false);
+		ScriptableObject sharedScope = jsContext.initStandardObjects(null, true);
 
 		// Load main javascript library into shared scope
 		loadScript(Constants.RHINOFORMS_SCRIPT, sharedScope, jsContext, resourceLoader);
@@ -26,7 +26,7 @@ public class RhinoFormsMasterScopeFactory {
 		// Load server-side only functions into the scope
 		loadScript(Constants.RHINOFORMS_SERVER_SIDE_SCRIPT, sharedScope, jsContext, resourceLoader);
 		
-		JSMasterScope masterScope = new JSMasterScope(sharedScope);
+		JSMasterScope masterScope = new JSMasterScope(sharedScope, resourceLoader);
 		
 		// Define netUtil for use by server-side functions
 		NetUtil netUtil = createNetUtil(masterScope);

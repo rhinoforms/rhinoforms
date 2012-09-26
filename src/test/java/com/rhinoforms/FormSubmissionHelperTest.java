@@ -22,6 +22,7 @@ public class FormSubmissionHelperTest {
 	private JSMasterScope masterScope;
 	private FormSubmissionHelper formSubmissionHelper;
 	private TestNetUtil testNetUtil;
+	private Scriptable workingScope;
 	
 	@Before
 	public void before() throws Exception {
@@ -39,6 +40,7 @@ public class FormSubmissionHelperTest {
 		
 		masterScope = masterScopeFactory.createMasterScope(context, new TestResourceLoader());
 		formSubmissionHelper = new FormSubmissionHelper(masterScope);
+		workingScope = masterScope.createWorkingScope();
 	}
 	
 	@After
@@ -55,12 +57,12 @@ public class FormSubmissionHelperTest {
 		married.setValue("");
 		inputs.add(married);
 		
-		Set<String> fieldsInError = formSubmissionHelper.validateInput(inputs);
+		Set<String> fieldsInError = formSubmissionHelper.validateInput(inputs, workingScope);
 		Assert.assertEquals(1, fieldsInError.size());
 		Assert.assertEquals("name", fieldsInError.iterator().next());
 		
 		married.setValue("Kai");
-		Assert.assertEquals(0, formSubmissionHelper.validateInput(inputs).size());
+		Assert.assertEquals(0, formSubmissionHelper.validateInput(inputs, workingScope).size());
 	}
 	
 	@Test
@@ -72,14 +74,14 @@ public class FormSubmissionHelperTest {
 		dob.setValue("1");
 		inputs.add(dob);
 		
-		Set<String> fieldsInError = formSubmissionHelper.validateInput(inputs);
+		Set<String> fieldsInError = formSubmissionHelper.validateInput(inputs, workingScope);
 		Assert.assertEquals(1, fieldsInError.size());
 		Assert.assertEquals("dob", fieldsInError.iterator().next());
 		
 		dob.setValue("20/12/1983");
-		Assert.assertEquals(0, formSubmissionHelper.validateInput(inputs).size());
-		Assert.assertEquals(0, formSubmissionHelper.validateInput(inputs).size());
-		Assert.assertEquals(0, formSubmissionHelper.validateInput(inputs).size());
+		Assert.assertEquals(0, formSubmissionHelper.validateInput(inputs, workingScope).size());
+		Assert.assertEquals(0, formSubmissionHelper.validateInput(inputs, workingScope).size());
+		Assert.assertEquals(0, formSubmissionHelper.validateInput(inputs, workingScope).size());
 	}
 	
 	@Test
@@ -96,13 +98,13 @@ public class FormSubmissionHelperTest {
 		Object jsObject = context.evaluateString(workingScope, "[['3.0','British Aircraft Corp. Staff'],['8.0','British Telecom Engineer'],['10.0','British Gas Employee'],['10.0','British Nuclear Fuels Employee'],['10.0','British Rail Employee'],['10.0','British Road Services Employee'],['10.0','British Steel Employee'],['10.0','British Telecom Employee'],['15.0','Bricklayer'],['15.0','British Tourist Board Employee']]", "Create occupation array", 1, null);
 		testNetUtil.setReturnObject(jsObject);
 		
-		Set<String> fieldsInError = formSubmissionHelper.validateInput(inputs);
+		Set<String> fieldsInError = formSubmissionHelper.validateInput(inputs, workingScope);
 		Assert.assertEquals(null, testNetUtil.getUrlRequested());
 		Assert.assertEquals(1, fieldsInError.size());
 		Assert.assertEquals("occupation", fieldsInError.iterator().next());
 		
 		occupation.setValue("Bricklayer");
-		Assert.assertEquals(0, formSubmissionHelper.validateInput(inputs).size());
+		Assert.assertEquals(0, formSubmissionHelper.validateInput(inputs, workingScope).size());
 		Assert.assertEquals("http://somewhere/something?value=bri", testNetUtil.getUrlRequested());
 	}
 	
@@ -117,12 +119,12 @@ public class FormSubmissionHelperTest {
 		InputPojo madenNameInputPojo = new InputPojo("madenName", "text", rfAttributes);
 		inputs.add(madenNameInputPojo);
 		
-		Set<String> fieldsInError = formSubmissionHelper.validateInput(inputs);
+		Set<String> fieldsInError = formSubmissionHelper.validateInput(inputs, workingScope);
 		Assert.assertEquals(1, fieldsInError.size());
 		Assert.assertEquals("madenName", fieldsInError.iterator().next());
 		
 		marriedInputPojo.setValue("false");
-		Assert.assertEquals(0, formSubmissionHelper.validateInput(inputs).size());
+		Assert.assertEquals(0, formSubmissionHelper.validateInput(inputs, workingScope).size());
 	}
 	
 	@Test
@@ -138,11 +140,11 @@ public class FormSubmissionHelperTest {
 		InputPojo oldAddressInput = new InputPojo("oldAddress", "text", oldAddressRfAttributes);
 		inputs.add(oldAddressInput);
 		
-		Assert.assertEquals(0, formSubmissionHelper.getIncludeFalseInputs(inputs).size());
+		Assert.assertEquals(0, formSubmissionHelper.getIncludeFalseInputs(inputs, workingScope).size());
 		
 		movedHouseInput.setValue("false");
 		
-		List<InputPojo> includeFalseInputs = formSubmissionHelper.getIncludeFalseInputs(inputs);
+		List<InputPojo> includeFalseInputs = formSubmissionHelper.getIncludeFalseInputs(inputs, workingScope);
 		Assert.assertEquals(1, includeFalseInputs.size());
 		Assert.assertEquals("oldAddress", includeFalseInputs.get(0).getName());
 	}
@@ -164,15 +166,15 @@ public class FormSubmissionHelperTest {
 		inputs.add(premium);
 		
 		voluntaryExcess.setValue("0");
-		formSubmissionHelper.processCalculatedFields(inputs);
+		formSubmissionHelper.processCalculatedFields(inputs, workingScope);
 		Assert.assertEquals("130", premium.getValue());
 		
 		voluntaryExcess.setValue("5");
-		formSubmissionHelper.processCalculatedFields(inputs);
+		formSubmissionHelper.processCalculatedFields(inputs, workingScope);
 		Assert.assertEquals("115", premium.getValue());
 
 		voluntaryExcess.setValue("10");
-		formSubmissionHelper.processCalculatedFields(inputs);
+		formSubmissionHelper.processCalculatedFields(inputs, workingScope);
 		Assert.assertEquals("100", premium.getValue());
 	}
 

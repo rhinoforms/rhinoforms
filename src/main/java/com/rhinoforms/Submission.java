@@ -1,10 +1,14 @@
 package com.rhinoforms;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Submission implements Serializable {
 
 	private String url;
+	private String method;
+	private Map<String, String> data;
 	private String resultInsertPoint;
 	private String preTransform;
 	private String postTransform;
@@ -12,6 +16,8 @@ public class Submission implements Serializable {
 
 	public Submission(String url) {
 		this.url = url;
+		data = new HashMap<String, String>();
+		method = "POST";
 	}
 
 	public String getUrl() {
@@ -20,6 +26,18 @@ public class Submission implements Serializable {
 
 	public void setUrl(String url) {
 		this.url = url;
+	}
+	
+	public String getMethod() {
+		return method;
+	}
+	
+	public void setMethod(String method) {
+		this.method = method.toUpperCase();
+	}
+	
+	public Map<String, String> getData() {
+		return data;
 	}
 
 	public String getResultInsertPoint() {

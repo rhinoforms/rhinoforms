@@ -13,6 +13,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 
+import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.ContentNode;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.HtmlNode;
@@ -48,7 +49,9 @@ public class FormParser {
 		this.selectOptionHelper = new SelectOptionHelper(resourceLoader);
 		this.proxyFactory = new ProxyFactory();
 		this.valueInjector = new ValueInjector();
-		this.htmlCleaner = new HtmlCleaner();
+		CleanerProperties cleanerProperties = new CleanerProperties();
+		cleanerProperties.setAllowHtmlInsideAttributes(true);
+		this.htmlCleaner = new HtmlCleaner(cleanerProperties);
 	}
 
 	public void parseForm(String formContents, FormFlow formFlow, PrintWriter writer, JSMasterScope masterScope) throws XPatherException,

@@ -26,18 +26,17 @@ import com.rhinoforms.util.ServletHelper;
 @SuppressWarnings("serial")
 public class FormServlet extends HttpServlet {
 
-	final Logger logger = LoggerFactory.getLogger(FormServlet.class);
 	private FormFlowFactory formFlowFactory;
 	private DocumentHelper documentHelper;
 	private ResourceLoader resourceLoader;
 	private JSMasterScope masterScope;
 	private ServletHelper servletHelper;
 	private FormSubmissionHelper formSubmissionHelper;
+	private static final Logger LOGGER = LoggerFactory.getLogger(FormServlet.class);
 
 	@Override
 	public void init() throws ServletException {
 		this.resourceLoader = new ServletResourceLoader(getServletContext());
-		this.formFlowFactory = new FormFlowFactory(resourceLoader);
 		this.documentHelper = new DocumentHelper();
 		this.servletHelper = new ServletHelper();
 
@@ -46,13 +45,14 @@ public class FormServlet extends HttpServlet {
 			this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
 		} catch (IOException e) {
 			String message = "Failed to create master scope.";
-			logger.error(message, e);
+			LOGGER.error(message, e);
 			throw new ServletException(message);
 		} finally {
 			Context.exit();
 		}
 
 		this.formSubmissionHelper = new FormSubmissionHelper(masterScope);
+		this.formFlowFactory = new FormFlowFactory(resourceLoader, masterScope);
 	}
 
 	@Override
@@ -61,7 +61,7 @@ public class FormServlet extends HttpServlet {
 		HttpSession session = request.getSession();
 
 		if (pathInfo != null) {
-			logger.debug("pathInfo = {}", pathInfo);
+			LOGGER.debug("pathInfo = {}", pathInfo);
 			String proxyPathPrefix = "/proxy/";
 			if (pathInfo.startsWith(proxyPathPrefix)) {
 				// Proxy request
@@ -88,12 +88,12 @@ public class FormServlet extends HttpServlet {
 						fieldSourceProxy.makeRequest(parameterMap, response);
 					} catch (FieldSourceProxyException e) {
 						String message = "Failed to perform proxy request.";
-						logger.debug(message, e);
+						LOGGER.debug(message, e);
 						sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 					}
 				} else {
 					String message = "Your session has expired.";
-					logger.debug(message);
+					LOGGER.debug(message);
 					sendError(HttpServletResponse.SC_FORBIDDEN, message, response);
 				}
 			}
@@ -102,19 +102,19 @@ public class FormServlet extends HttpServlet {
 			String formFlowPath = request.getParameter(Constants.FLOW_PATH_PARAM);
 			String initData = request.getParameter(Constants.INIT_DATA_PARAM);
 
-			Context jsContext = Context.enter();
+			Context.enter();
 			try {
-				FormFlow newFormFlow = formFlowFactory.createFlow(formFlowPath, jsContext, initData);
+				FormFlow newFormFlow = formFlowFactory.createFlow(formFlowPath, initData);
 				SessionHelper.setFlow(newFormFlow, session);
 				String formUrl = newFormFlow.navigateToFirstForm(documentHelper);
 				forwardToAndParseForm(request, response, newFormFlow, formUrl);
 			} catch (FormFlowFactoryException e) {
 				String message = "Failed to create form flow.";
-				logger.error(message, e);
+				LOGGER.error(message, e);
 				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 			} catch (ActionError e) {
 				String message = "Failed to navigate to the first form.";
-				logger.error(message, e);
+				LOGGER.error(message, e);
 				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 			} finally {
 				Context.exit();
@@ -169,11 +169,11 @@ public class FormServlet extends HttpServlet {
 		} catch (ActionError e) {
 			SessionHelper.removeFlow(formFlow, session);
 			String message = "Failed to perform action, form session suspended.";
-			logger.error(message, e);
+			LOGGER.error(message, e);
 			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 		} catch (TransformerException e) {
 			String message = "Failed to output the underlaying xml data.";
-			logger.error(message, e);
+			LOGGER.error(message, e);
 			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 		} finally {
 			Context.exit();
@@ -204,7 +204,7 @@ public class FormServlet extends HttpServlet {
 			formResponseWrapper.parseResponseAndWrite(getServletContext(), formFlow, masterScope);
 		} catch (Exception e) {
 			String message = "Failed to load next form.";
-			logger.error(message, e);
+			LOGGER.error(message, e);
 			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 		}
 	}

@@ -14,18 +14,26 @@ import org.mozilla.javascript.Context;
 public class FormFlowTest {
 
 	private FormFlowFactory formFlowFactory;
-	private Context jsContext;
 	private HashMap<String, String> actionParams;
 	private FormFlow formFlow;
 	private DocumentHelper documentHelper;
+	private JSMasterScope masterScope;
 
 	@Before
 	public void setup() throws IOException, FormFlowFactoryException {
-		this.jsContext = Context.enter();
-		this.formFlowFactory = new FormFlowFactory(new TestResourceLoader());
+		TestResourceLoader resourceLoader = new TestResourceLoader();
 		this.actionParams = new HashMap<String, String>();
-		this.formFlow = formFlowFactory.createFlow("test-flow1.js", jsContext, "<myData/>");
 		this.documentHelper = new DocumentHelper();
+		
+		Context jsContext = Context.enter();
+		this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
+		this.formFlowFactory = new FormFlowFactory(resourceLoader, this.masterScope);
+		this.formFlow = formFlowFactory.createFlow("test-flow1.js", "<myData/>");
+	}
+	
+	@After
+	public void after() {
+		Context.exit();
 	}
 
 	@Test
@@ -140,7 +148,7 @@ public class FormFlowTest {
 
 	@Test
 	public void testNavDocBaseWithSecondIndexTwoDeep() throws Exception {
-		this.formFlow = formFlowFactory.createFlow("test-flow1.js", jsContext, "<myData><fishes><fish><something>existing data</something></fish></fishes></myData>");
+		this.formFlow = formFlowFactory.createFlow("test-flow1.js", "<myData><fishes><fish><something>existing data</something></fish></fishes></myData>");
 		Assert.assertEquals("one.html", formFlow.navigateToFirstForm(documentHelper));
 		Assert.assertEquals("<myData><fishes><fish><something>existing data</something></fish></fishes></myData>", documentHelper.documentToString(formFlow.getDataDocument()));
 		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams, documentHelper));
@@ -149,11 +157,6 @@ public class FormFlowTest {
 		Assert.assertEquals("editFish.html", formFlow.doAction("edit", actionParams, documentHelper));
 		Assert.assertEquals("/myData/fishes/fish[2]", formFlow.getCurrentDocBase());
 		Assert.assertEquals("<myData><fishes><fish><something>existing data</something></fish><fish/></fishes></myData>", documentHelper.documentToString(formFlow.getDataDocument()));
-	}
-
-	@After
-	public void tearDown() {
-		Context.exit();
 	}
 
 }

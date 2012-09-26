@@ -5,6 +5,16 @@ function loadFlow(flowMap) {
 	}
 	
 	formFlow.setFlowDocBase(flowMap.docBase);
+	if (flowMap.defaultInitalData) {
+		formFlow.setDefaultInitialData(flowMap.defaultInitalData);
+	}
+	if (flowMap.libraries) {
+		var libraries = flowMap.libraries;
+		var librariesJ = formFlow.getLibraries();
+		for (var l in libraries) {
+			librariesJ.add(libraries[l]);
+		}
+	}
 	var formLists = flowMap.formLists;
 	for (formListName in formLists) {
 		var formArray = formLists[formListName];
@@ -48,9 +58,25 @@ function loadFlow(flowMap) {
 				}
 				if (actionSubmission) {
 					var submissionJ = new com.rhinoforms.Submission(actionSubmission.url);
-					submissionJ.setResultInsertPoint(actionSubmission.resultInsertPoint);
-					submissionJ.setPreTransform(formFlow.resolveResourcePathIfRelative(actionSubmission.preTransform));
-					submissionJ.setPostTransform(formFlow.resolveResourcePathIfRelative(actionSubmission.postTransform));
+					if (actionSubmission.method) {
+						submissionJ.setMethod(actionSubmission.method);
+					}
+					var data = actionSubmission.data;
+					if (data) {
+						var dataMapJ = submissionJ.getData();
+						for (var prop in data) {
+							dataMapJ.put(prop, data[prop]);
+						}
+					}
+					if (actionSubmission.resultInsertPoint) {
+						submissionJ.setResultInsertPoint(actionSubmission.resultInsertPoint);
+					}
+					if (actionSubmission.preTransform) {
+						submissionJ.setPreTransform(formFlow.resolveResourcePathIfRelative(actionSubmission.preTransform));
+					}
+					if (actionSubmission.postTransform) {
+						submissionJ.setPostTransform(formFlow.resolveResourcePathIfRelative(actionSubmission.postTransform));
+					}
 					flowActionJ.setSubmission(submissionJ);
 				}
 				actionsJ.put(actionName, flowActionJ);

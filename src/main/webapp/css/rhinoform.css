@@ -66,3 +66,10 @@ input[type='radio']+label {
 .invalid-message {
 	margin: 0 5px;
 }
+
+.rf-debugbar {
+    background-color: #45BCD2;
+    opacity: 0.7;
+    border-radius: 5px;
+    padding: 7px 5px;
+}

@@ -14,6 +14,7 @@ import junit.framework.Assert;
 
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
@@ -34,20 +35,21 @@ public class FormParserTest {
 	public void setup() throws Exception {
 		TestResourceLoader resourceLoader = new TestResourceLoader();
 		this.formParser = new FormParser(resourceLoader);
-		this.formFlowFactory = new FormFlowFactory(new TestResourceLoader());
-		this.formFlow = formFlowFactory.createFlow("test-flow1.js", Context.enter(), "<myData><fishes><fish><name>One</name></fish><fish><name>Two</name></fish></fishes></myData>");
 		this.documentHelper = new DocumentHelper();
-		this.formFlow.navigateToFirstForm(documentHelper);
 		this.htmlCleaner = new HtmlCleaner();
 		
 		Context jsContext = Context.enter();
-		try {
-			this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
-		} finally {
-			Context.exit();
-		}
+		this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
+		this.formFlowFactory = new FormFlowFactory(new TestResourceLoader(), this.masterScope);
+		this.formFlow = formFlowFactory.createFlow("test-flow1.js", "<myData><fishes><fish><name>One</name></fish><fish><name>Two</name></fish></fishes></myData>");
+		this.formFlow.navigateToFirstForm(documentHelper);
 	}
 
+	@After
+	public void after() {
+		Context.exit();
+	}
+	
 	@Test
 	public void testIgnoreFieldsWithNoName() throws Exception {
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -56,7 +58,7 @@ public class FormParserTest {
 
 	@Test
 	public void testAllInputTypes() throws Exception {
-		this.formFlow = formFlowFactory.createFlow("test-flow1.js", Context.enter(), "<myData><terms>disagree</terms><title>Miss</title><canWalkOnHands>true</canWalkOnHands></myData>");
+		this.formFlow = formFlowFactory.createFlow("test-flow1.js", "<myData><terms>disagree</terms><title>Miss</title><canWalkOnHands>true</canWalkOnHands></myData>");
 		this.formFlow.navigateToFirstForm(documentHelper);
 		
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -78,7 +80,7 @@ public class FormParserTest {
 	
 	@Test
 	public void testSelectFromCSV() throws Exception {
-		this.formFlow = formFlowFactory.createFlow("test-flow1.js", Context.enter(), null);
+		this.formFlow = formFlowFactory.createFlow("test-flow1.js", null);
 		this.formFlow.navigateToFirstForm(documentHelper);
 		
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -90,7 +92,7 @@ public class FormParserTest {
 	
 	@Test
 	public void testSelectFromCSVWithSelectedValue() throws Exception {
-		this.formFlow = formFlowFactory.createFlow("test-flow1.js", Context.enter(), "<myData><maritalStatusCode>2</maritalStatusCode></myData>");
+		this.formFlow = formFlowFactory.createFlow("test-flow1.js", "<myData><maritalStatusCode>2</maritalStatusCode></myData>");
 		this.formFlow.navigateToFirstForm(documentHelper);
 		
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();

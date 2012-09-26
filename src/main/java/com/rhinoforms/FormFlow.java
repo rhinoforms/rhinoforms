@@ -1,6 +1,7 @@
 package com.rhinoforms;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,8 @@ public class FormFlow implements Serializable {
 
 	private int flowId;
 	private String flowDocBase;
+	private String defaultInitialData;
+	private List<String> libraries;
 	private Map<String, List<Form>> formLists;
 	private Document dataDocument;
 	
@@ -41,6 +44,7 @@ public class FormFlow implements Serializable {
 		this.navigationStack = new Stack<FlowNavigationLevel>();
 		this.fieldSourceProxies = new HashMap<String, FieldSourceProxy>();
 		this.remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader);
+		this.libraries = new ArrayList<String>();
 	}
 
 	public String navigateToFirstForm(DocumentHelper documentHelper) throws ActionError {
@@ -262,7 +266,23 @@ public class FormFlow implements Serializable {
 	public int getId() {
 		return flowId;
 	}
+	
+	public String getDefaultInitialData() {
+		return defaultInitialData;
+	}
+	
+	public void setDefaultInitialData(String defaultInitalData) {
+		this.defaultInitialData = defaultInitalData;
+	}
 
+	public List<String> getLibraries() {
+		return libraries;
+	}
+	
+	public void setLibraries(List<String> libraries) {
+		this.libraries = libraries;
+	}
+	
 	public List<InputPojo> getCurrentInputPojos() {
 		return currentInputPojos;
 	}
