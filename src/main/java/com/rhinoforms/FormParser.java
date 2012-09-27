@@ -185,46 +185,51 @@ public class FormParser {
 					} else {
 						type = inputTagNode.getAttributeByName(Constants.TYPE_ATTR);
 					}
+					
+					if (type != null) {
 
-					if (!(type.equals("radio") && inputPojosMap.containsKey(name))) {
-
-						// Collect all rf.xxx attributes
-						Map<String, String> rfAttributes = new HashMap<String, String>();
-						Map<String, String> attributes = inputTagNode.getAttributes();
-						for (String attName : attributes.keySet()) {
-							if (attName.startsWith("rf.")) {
-								rfAttributes.put(attName, attributes.get(attName));
+						if (!(type.equals("radio") && inputPojosMap.containsKey(name))) {
+	
+							// Collect all rf.xxx attributes
+							Map<String, String> rfAttributes = new HashMap<String, String>();
+							Map<String, String> attributes = inputTagNode.getAttributes();
+							for (String attName : attributes.keySet()) {
+								if (attName.startsWith("rf.")) {
+									rfAttributes.put(attName, attributes.get(attName));
+								}
+							}
+	
+							InputPojo inputPojo = new InputPojo(name, type, rfAttributes);
+							inputPojosMap.put(name, inputPojo);
+							inputPojos.add(inputPojo);
+						}
+	
+						// Push values from the dataDocument into the form html.
+						String inputValue = lookupValueByFieldName(dataDocument, name, docBase);
+						if (inputValue != null) {
+							if (type.equals("radio")) {
+								String value = inputTagNode.getAttributeByName(Constants.VALUE_ATTR);
+								if (inputValue.equals(value)) {
+									inputTagNode.setAttribute(Constants.CHECKED_ATTR, Constants.CHECKED_ATTR);
+								}
+							} else if (type.equals("checkbox")) {
+								if (inputValue.equals("true")) {
+									inputTagNode.setAttribute(Constants.CHECKED_ATTR, Constants.CHECKED_ATTR);
+								}
+							} else if (type.equals("select")) {
+								Object[] nodes = inputTagNode.evaluateXPath("option[@value=\"" + inputValue + "\"]");
+								if (nodes.length == 0) {
+									nodes = inputTagNode.evaluateXPath("option[text()=\"" + inputValue + "\"]");
+								}
+								if (nodes.length > 0) {
+									((TagNode) nodes[0]).setAttribute(Constants.SELECTED_ATTR, "selected");
+								}
+							} else {
+								inputTagNode.setAttribute("value", inputValue);
 							}
 						}
-
-						InputPojo inputPojo = new InputPojo(name, type, rfAttributes);
-						inputPojosMap.put(name, inputPojo);
-						inputPojos.add(inputPojo);
-					}
-
-					// Push values from the dataDocument into the form html.
-					String inputValue = lookupValueByFieldName(dataDocument, name, docBase);
-					if (inputValue != null) {
-						if (type.equals("radio")) {
-							String value = inputTagNode.getAttributeByName(Constants.VALUE_ATTR);
-							if (inputValue.equals(value)) {
-								inputTagNode.setAttribute(Constants.CHECKED_ATTR, Constants.CHECKED_ATTR);
-							}
-						} else if (type.equals("checkbox")) {
-							if (inputValue.equals("true")) {
-								inputTagNode.setAttribute(Constants.CHECKED_ATTR, Constants.CHECKED_ATTR);
-							}
-						} else if (type.equals("select")) {
-							Object[] nodes = inputTagNode.evaluateXPath("option[@value=\"" + inputValue + "\"]");
-							if (nodes.length == 0) {
-								nodes = inputTagNode.evaluateXPath("option[text()=\"" + inputValue + "\"]");
-							}
-							if (nodes.length > 0) {
-								((TagNode) nodes[0]).setAttribute(Constants.SELECTED_ATTR, "selected");
-							}
-						} else {
-							inputTagNode.setAttribute("value", inputValue);
-						}
+					} else {
+						logger.debug("Input name:{} has no type attribute!", name);
 					}
 				}
 			}

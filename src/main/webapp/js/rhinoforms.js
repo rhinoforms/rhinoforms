@@ -21,7 +21,7 @@ function Rhinoforms() {
 			}
 		});
 
-		// Enable the 'email' validation function
+		// Enable the 'email' validation keyword
 		this.registerValidationKeyword("email", function(value) {
 			if (value) {
 				var regex = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
@@ -41,7 +41,7 @@ function Rhinoforms() {
 			}
 		});
 		
-		// Enable the 'date' validation function
+		// Enable the 'date' validation keyword
 		this.registerValidationKeyword("date", function(value, rfAttributes, args) {
 			var format = args.format;
 			if (value) {
@@ -54,6 +54,26 @@ function Rhinoforms() {
 					return "Invalid date. Please use the format " + format.toLowerCase() + ".";
 				} else if (parsed == null || !parsed.isValid()) {
 					return "Invalid date.";
+				}
+			}
+		});
+		
+		// Enable the 'pattern' validation keyword
+		this.registerValidationKeyword("pattern", function(value, rfAttributes, args) {
+			var regex = args.regex;
+			var errorMessage = args.errorMessage;
+			if (value) {
+				if (regex) {
+					var re = new RegExp(regex);
+					if (!re.test(value)) {
+						if (errorMessage) {
+							return errorMessage;
+						} else {
+							return "Does not match the required pattern.";
+						}
+					}
+				} else {
+					return "No pattern regex specified."
 				}
 			}
 		});
@@ -149,7 +169,36 @@ function Rhinoforms() {
 			} else {
 				rf.setupError("Input custom-type not found '" + customType.name + "'.")
 			}
-		})
+		});
+		
+		$("input[rf\\.validateOn='inputBlur']", $container).each(function() {
+			var input = this;
+			var $input = $(input);
+			$input.blur(function() {
+				if ($input.val()) {
+					validateForm($container, $input.attr("name"));
+				}
+			});
+		});
+		
+		$("input[rf\\.inputMask]", $container).each(function() {
+			var input = this;
+			var $input = $(input);
+			var mask = $input.attr("rf.inputMask");
+			if (mask) {
+				var re = new RegExp(mask);
+				$input.keypress(function(event) {
+					var val = $input.val();
+					if (val == getSelection()) {
+						// Text is selected and about to be replaced
+						val = "";
+					}
+					val = val + String.fromCharCode(event.which);
+					var result = re.test(val);
+					return result;
+				});
+			}
+		});
 		
 		// Wire action buttons
 		$form.attr("action", "javascript: void(0)");
@@ -240,18 +289,28 @@ function Rhinoforms() {
 		}
 	}
 	
-	function validateForm($form) {
+	function validateForm($form, fieldName) {
 		var submit = true;
-		
+
 		// Compile map of fields with their values, include validation options and rf fields
-		var fields = getFieldsMap($form, true);
+		var fields = getFieldsMap($form, true, fieldName);
 		// Pass map and get list of errors back
 		var errors = rf.validateFields(fields);
+
+		var $inputs = getInputs($form, fieldName);
+		
+		// Remove invalid messages
+		$inputs.removeClass("invalid");
+		var invalidMessages;
+		if (fieldName) {
+			invalidMessages = $(".invalid-message[forname='" + fieldName + "']", $form)
+		} else {
+			invalidMessages = $(".invalid-message", $form)
+		}
+		invalidMessages.remove();
 		
 		if (errors.length > 0) {
 			// Add invalid class to inputs
-			$(":input", $form).removeClass("invalid");
-			$(".invalid-message", $form).remove();
 			for (var a in errors) {
 				var name = errors[a].name;
 				var message = errors[a].message;
@@ -275,8 +334,10 @@ function Rhinoforms() {
 				}
 			}
 			
-			// Focus first invalid field
-			$(":input.invalid", $form).first().focus();
+			if (!fieldName) {
+				// Focus first invalid field
+				$(":input.invalid", $form).first().focus();
+			}
 			return false;
 		} else {
 			// return true if no errors, otherwise false
@@ -284,9 +345,11 @@ function Rhinoforms() {
 		}
 	}
 	
-	function getFieldsMap($form, includeValidationAndRfAttributes) {
+	function getFieldsMap($form, includeValidationAndRfAttributes, fieldName) {
 		var fields = {};
-		$(":input", $form).each(function() {
+		var $inputs = getInputs($form, fieldName);
+
+		$inputs.each(function() {
 			var input = this;
 			var $input = $(this);
 			var name = $input.attr("name")
@@ -327,6 +390,14 @@ function Rhinoforms() {
 			}
 		});
 		return fields;
+	}
+	
+	function getInputs($form, fieldName) {
+		if (fieldName) {
+			return $(":input[name='" + fieldName + "']", $form);
+		} else {
+			return $(":input", $form);
+		}
 	}
 	
 	// Take a map of fields and validate each returning a list of any errors.
@@ -404,6 +475,18 @@ function Rhinoforms() {
 			name : name,
 			args : args
 		};
+	}
+	
+	function getSelection(){
+		var t = '';
+		if (window.getSelection) {
+			t = window.getSelection();
+		} else if (document.getSelection) {
+			t = document.getSelection();
+		} else if(document.selection) {
+			t = document.selection.createRange().text;
+		}
+		return t;
 	}
 	
 	this.setupError = function(message) {
