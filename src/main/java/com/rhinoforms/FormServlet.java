@@ -23,6 +23,7 @@ import org.w3c.dom.Document;
 import com.rhinoforms.resourceloader.ResourceLoader;
 import com.rhinoforms.resourceloader.ServletResourceLoader;
 import com.rhinoforms.util.ServletHelper;
+import com.rhinoforms.util.StringUtils;
 
 @SuppressWarnings("serial")
 public class FormServlet extends HttpServlet {
@@ -125,7 +126,8 @@ public class FormServlet extends HttpServlet {
 				FormFlow newFormFlow = formFlowFactory.createFlow(formFlowPath, initData);
 				SessionHelper.setFlow(newFormFlow, session);
 				String formUrl = newFormFlow.navigateToFirstForm(documentHelper);
-				forwardToAndParseForm(request, response, newFormFlow, formUrl);
+				boolean suppressDebugBar = StringUtils.isStringTrueNullSafe(request.getParameter(Constants.SUPPRESS_DEBUG_BAR_PARAM));
+				forwardToAndParseForm(request, response, newFormFlow, formUrl, suppressDebugBar);
 			} catch (FormFlowFactoryException e) {
 				String message = "Failed to create form flow.";
 				LOGGER.error(message, e);
@@ -169,7 +171,8 @@ public class FormServlet extends HttpServlet {
 					}
 
 					if (nextUrl != null) {
-						forwardToAndParseForm(request, response, formFlow, nextUrl);
+						boolean suppressDebugBar = StringUtils.isStringTrueNullSafe(parameterMap.get(Constants.SUPPRESS_DEBUG_BAR_PARAM));
+						forwardToAndParseForm(request, response, formFlow, nextUrl, suppressDebugBar);
 						SessionHelper.setFlow(formFlow, session); // Required for Google AppEngine
 					} else {
 						// End of flow. Spit out XML.
@@ -210,7 +213,7 @@ public class FormServlet extends HttpServlet {
 		}
 	}
 
-	private void forwardToAndParseForm(HttpServletRequest request, HttpServletResponse response, FormFlow formFlow, String formUrl)
+	private void forwardToAndParseForm(HttpServletRequest request, HttpServletResponse response, FormFlow formFlow, String formUrl, boolean suppressDebugBar)
 			throws ServletException, IOException {
 		
 		formUrl = formFlow.resolveResourcePathIfRelative(formUrl);
@@ -219,7 +222,7 @@ public class FormServlet extends HttpServlet {
 		FormResponseWrapper formResponseWrapper = new FormResponseWrapper(response, formParser);
 		requestDispatcher.forward(request, formResponseWrapper);
 		try {
-			formResponseWrapper.parseResponseAndWrite(getServletContext(), formFlow, masterScope);
+			formResponseWrapper.parseResponseAndWrite(getServletContext(), formFlow, masterScope, suppressDebugBar);
 		} catch (Exception e) {
 			String message = "Failed to load next form.";
 			LOGGER.error(message, e);

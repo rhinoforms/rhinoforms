@@ -11,6 +11,7 @@ public interface Constants {
 	
 	String FLOW_PATH_PARAM = "rf.flowPath";
 	String INIT_DATA_PARAM = "rf.initData";
+	String SUPPRESS_DEBUG_BAR_PARAM = "rf.suppressDebugBar";
 	
 	String NAME_ATTR = "name";
 	String TYPE_ATTR = "type";
@@ -29,5 +30,6 @@ public interface Constants {
 	String CALCULATED_ATTR = "rf.calculated";
 	String INCLUDE_ELEMENT = "rf.include";
 	String FOR_EACH_ELEMENT = "rf.forEach";
+
 	
 }

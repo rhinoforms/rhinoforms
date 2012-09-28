@@ -32,7 +32,7 @@ public class FormResponseWrapper extends HttpServletResponseWrapper {
 		response.setHeader("Pragma", "no-cache");
 	}
 
-	public void parseResponseAndWrite(ServletContext servletContext, FormFlow formFlow, JSMasterScope masterScope) throws FormResponseWrapperException {
+	public void parseResponseAndWrite(ServletContext servletContext, FormFlow formFlow, JSMasterScope masterScope, boolean suppressDebugBar) throws FormResponseWrapperException {
 		try {
 			printWriterOutputStream.flush();
 			printWriterOutputStream.close();
@@ -43,7 +43,7 @@ public class FormResponseWrapper extends HttpServletResponseWrapper {
 			char[] charArray = charArrayWriter.toCharArray();
 	
 			String formContentsString = new String(charArray);
-			formParser.parseForm(formContentsString, formFlow, writer, masterScope);
+			formParser.parseForm(formContentsString, formFlow, writer, masterScope, suppressDebugBar);
 		} catch (Exception e) {
 			throw new FormResponseWrapperException(e);
 		}

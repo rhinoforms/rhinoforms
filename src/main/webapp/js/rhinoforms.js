@@ -9,6 +9,7 @@ function Rhinoforms() {
 	var validationKeywords;
 	var customTypes;
 	var onFormLoadFunctions = [];
+	var onEveryFormLoadFunctions = [];
 	
 	this.init = function() {
 		validationKeywords = {};
@@ -125,7 +126,7 @@ function Rhinoforms() {
 		
 		// Replace container contents with single form
 		$container.html(html);
-		var $form = $("form", $container);
+		var $form = $("form[rhinoforms='true'][parsed='true']", $container).first();
 		
 		var flowId = $("[name='rf.flowId']").val();
 		
@@ -203,13 +204,23 @@ function Rhinoforms() {
 		// Wire action buttons
 		$form.attr("action", "javascript: void(0)");
 		$("[action]", $form).click(function() {
-			var action = $(this).attr("action");
-			doAction(action, $form, $container);
+			var $this = $(this);
+			var action = $this.attr("action");
+			var container = $this.attr("container");
+			var suppressDebugBar = false;
+			var $actionTargetContainer = $container;
+			if (container) {
+				$actionTargetContainer = $(container);
+				suppressDebugBar = true; // We don't want more than one DebugBar
+			}
+			doAction(action, $form, $actionTargetContainer, suppressDebugBar);
 			return false;
 		});
 		
+		$form.addClass("rf-active-form");
+		
 		// Give first input focus
-		$(":input[type!='hidden'][action!='back']", $container).first().focus();
+		$(":input[type!='hidden'][action!='back']:not([disabled])", $container).first().focus();
 		
 		doOnFormLoad();
 	}
@@ -222,9 +233,21 @@ function Rhinoforms() {
 		}
 	}
 	
+	this.onEveryFormLoad = function(callback) {
+		if (callback instanceof Function) {
+			onEveryFormLoadFunctions.push(callback);
+		} else {
+			throw new TypeError("rhinoforms.onEveryFormLoad() - callback given is not a function.");
+		}
+	}
+	
 	function doOnFormLoad() {
 		var methodToCall;
 		while (methodToCall = onFormLoadFunctions.shift()) {
+			methodToCall();
+		}
+		for (var a = 0; a < onEveryFormLoadFunctions.length; a++) {
+			methodToCall = onEveryFormLoadFunctions[a];
 			methodToCall();
 		}
 	}
@@ -265,11 +288,16 @@ function Rhinoforms() {
 		})
 	}
 	
-	function doAction(action, $form, $container) {
+	function doAction(action, $form, $container, suppressDebugBar) {
 		if (action == "back" || action == "cancel" || validateForm($form) == true) {
+			$form.removeClass("rf-active-form");
+			var suppressDebugBarString = "";
+			if (suppressDebugBar) {
+				suppressDebugBarString = "&rf.suppressDebugBar=true";
+			}
 			var jqXHR = $.ajax({
 				url: servletUrl,
-				data: $form.serialize() + "&rf.action=" + action,
+				data: $form.serialize() + "&rf.action=" + action + suppressDebugBarString,
 				type: "POST",
 				success: function(data) {
 					switch (jqXHR.getResponseHeader("rf.responseType")) {

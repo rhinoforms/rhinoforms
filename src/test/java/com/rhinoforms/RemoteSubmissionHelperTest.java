@@ -1,8 +1,6 @@
 package com.rhinoforms;
 
-import java.io.FileInputStream;
 import java.net.URLDecoder;
-import java.util.Map;
 
 import junit.framework.Assert;
 
@@ -46,15 +44,37 @@ public class RemoteSubmissionHelperTest {
 	public void testHandleSubmissionInsertResult() throws Exception {
 		Submission submission = new Submission("http://localhost/dummyURL");
 		submission.getData().put("xml", "[dataDocument]");
-		submission.setResultInsertPoint("/myData");
-		testConnectionFactory.setResultXmlString("<submissionResult>one</submissionResult>");
+		submission.setResultInsertPoint("/myData/submissionResult");
+		testConnectionFactory.setResultXmlString("<data>one</data>");
 		
 		remoteSubmissionHelper.handleSubmission(submission, dataDocument);
 		
 		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
 		Assert.assertEquals("xml=" + dataDocumentString, URLDecoder.decode(submittedData, "UTF-8"));
 		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
-		Assert.assertEquals("<myData><something>a</something><submissionResult>one</submissionResult></myData>", dataDocumentStringAfterSubmission);
+		Assert.assertEquals("<myData><something>a</something><submissionResult><data>one</data></submissionResult></myData>", dataDocumentStringAfterSubmission);
+	}
+	
+	@Test
+	public void testHandleSubmissionInsertResultReplaceExisting() throws Exception {
+		Submission submission = new Submission("http://localhost/dummyURL");
+		submission.getData().put("xml", "[dataDocument]");
+		submission.setResultInsertPoint("/myData/submissionResult");
+		testConnectionFactory.setResultXmlString("<data>one</data>");
+		
+		remoteSubmissionHelper.handleSubmission(submission, dataDocument);
+		
+		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
+		Assert.assertEquals("xml=" + dataDocumentString, URLDecoder.decode(submittedData, "UTF-8"));
+		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
+		Assert.assertEquals("<myData><something>a</something><submissionResult><data>one</data></submissionResult></myData>", dataDocumentStringAfterSubmission);
+		
+		testConnectionFactory.resetByteArrayOutputStream();
+		remoteSubmissionHelper.handleSubmission(submission, dataDocument);
+		
+		submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
+		dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
+		Assert.assertEquals("<myData><something>a</something><submissionResult><data>one</data></submissionResult></myData>", dataDocumentStringAfterSubmission);
 	}
 	
 	@Test
@@ -80,15 +100,15 @@ public class RemoteSubmissionHelperTest {
 		Submission submission = new Submission("http://localhost/dummyURL");
 		submission.setPreTransform("xslt/toServerFormat.xsl");
 		submission.getData().put("xml", "[dataDocument]");
-		submission.setResultInsertPoint("/myData");
-		testConnectionFactory.setResultXmlString("<submissionResult>one</submissionResult>");
+		submission.setResultInsertPoint("/myData/submissionResult");
+		testConnectionFactory.setResultXmlString("<data>one</data>");
 		
 		remoteSubmissionHelper.handleSubmission(submission, dataDocument);
 		
 		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
 		Assert.assertEquals("xml=<serverData><abc>a</abc></serverData>", URLDecoder.decode(submittedData, "UTF-8"));
 		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
-		Assert.assertEquals("<myData><something>a</something><submissionResult>one</submissionResult></myData>", dataDocumentStringAfterSubmission);
+		Assert.assertEquals("<myData><something>a</something><submissionResult><data>one</data></submissionResult></myData>", dataDocumentStringAfterSubmission);
 	}
 	
 	@Test
@@ -96,7 +116,7 @@ public class RemoteSubmissionHelperTest {
 		Submission submission = new Submission("http://localhost/dummyURL");
 		submission.getData().put("myXml", "[dataDocument]");
 		submission.setPostTransform("xslt/fromServerFormat.xsl");
-		submission.setResultInsertPoint("/myData");
+		submission.setResultInsertPoint("/myData/submissionResult");
 		testConnectionFactory.setResultXmlString("<serverData><wrapper><premium123>10.00</premium123></wrapper></serverData>");
 		
 		remoteSubmissionHelper.handleSubmission(submission, dataDocument);
@@ -104,7 +124,7 @@ public class RemoteSubmissionHelperTest {
 		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
 		Assert.assertEquals("myXml=" + dataDocumentString, URLDecoder.decode(submittedData, "UTF-8"));
 		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
-		Assert.assertEquals("<myData><something>a</something><submissionResult><premium>10.00</premium></submissionResult></myData>", dataDocumentStringAfterSubmission);
+		Assert.assertEquals("<myData><something>a</something><submissionResult><submissionResult><premium>10.00</premium></submissionResult></submissionResult></myData>", dataDocumentStringAfterSubmission);
 	}
 	
 }

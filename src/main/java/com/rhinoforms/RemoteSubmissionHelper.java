@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import com.rhinoforms.net.ConnectionFactory;
 import com.rhinoforms.resourceloader.ResourceLoader;
@@ -153,6 +154,11 @@ public class RemoteSubmissionHelper {
 
 					Node importedNode = dataDocument.importNode(nodeToImport, true);
 					Node insertPointNode = documentHelper.lookupOrCreateNode(dataDocument, resultInsertPoint);
+					
+					NodeList childNodes = insertPointNode.getChildNodes();
+					for (int i = 0; i < childNodes.getLength(); i++) {
+						insertPointNode.removeChild(childNodes.item(i));
+					}
 					insertPointNode.appendChild(importedNode);
 				}
 			} else {

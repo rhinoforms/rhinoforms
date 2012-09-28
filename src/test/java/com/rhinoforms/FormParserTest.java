@@ -6,25 +6,20 @@ import static com.rhinoforms.TestUtil.serialiseHtmlCleanerNode;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.List;
-
-import javax.xml.xpath.XPathExpressionException;
 
 import junit.framework.Assert;
 
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
-import org.htmlcleaner.XPatherException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.w3c.dom.Document;
 
-import com.rhinoforms.resourceloader.ResourceLoaderException;
 import com.rhinoforms.serverside.InputPojo;
 
 public class FormParserTest {
@@ -59,7 +54,7 @@ public class FormParserTest {
 	@Test
 	public void testIgnoreFieldsWithNoName() throws Exception {
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		formParser.parseForm(readFileContents("src/test/resources/fields-with-no-name.html"), formFlow, new PrintWriter(outputStream), masterScope);
+		formParser.parseForm(readFileContents("src/test/resources/fields-with-no-name.html"), formFlow, new PrintWriter(outputStream), masterScope, false);
 	}
 
 	@Test
@@ -68,7 +63,7 @@ public class FormParserTest {
 		this.formFlow.navigateToFirstForm(documentHelper);
 		
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		formParser.parseForm(readFileContents("src/test/resources/all-input-types.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope);
+		formParser.parseForm(readFileContents("src/test/resources/all-input-types.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope, false);
 		
 		List<InputPojo> inputPojos = formFlow.getCurrentInputPojos();
 		
@@ -90,7 +85,7 @@ public class FormParserTest {
 		this.formFlow.navigateToFirstForm(documentHelper);
 		
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		formParser.parseForm(readFileContents("src/test/resources/all-input-types.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope);
+		formParser.parseForm(readFileContents("src/test/resources/all-input-types.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope, false);
 		
 		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
 		Assert.assertTrue("Option should have value and label from CSV.", parsedFormHtml.contains("<option value=\"1\">Single</option>"));
@@ -102,7 +97,7 @@ public class FormParserTest {
 		this.formFlow.navigateToFirstForm(documentHelper);
 		
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		formParser.parseForm(readFileContents("src/test/resources/all-input-types.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope);
+		formParser.parseForm(readFileContents("src/test/resources/all-input-types.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope, false);
 		
 		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
 		Assert.assertTrue("Option should have value and label from CSV.", parsedFormHtml.contains("<option value=\"1\">Single</option>"));
@@ -112,7 +107,7 @@ public class FormParserTest {
 	@Test
 	public void testSelectRangePreselectFirstOptionDefaultFalse() throws Exception {
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		formParser.parseForm(readFileContents("src/test/resources/select-range.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope);
+		formParser.parseForm(readFileContents("src/test/resources/select-range.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope, false);
 		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
 		String[] split = parsedFormHtml.split("<option[^<]*");
 		Assert.assertEquals(8, split.length);
@@ -122,7 +117,7 @@ public class FormParserTest {
 	@Test
 	public void testSelectRangePreselectFirstOptionTrue() throws Exception {
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		formParser.parseForm(readFileContents("src/test/resources/select-range-preselect-true.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope);
+		formParser.parseForm(readFileContents("src/test/resources/select-range-preselect-true.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope, false);
 		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
 		String[] split = parsedFormHtml.split("<option[^<]*");
 		Assert.assertEquals(7, split.length);
@@ -167,7 +162,7 @@ public class FormParserTest {
 		RhinoformsProperties.getInstance().setShowDebugBar(true);
 		this.formParser = new FormParser(resourceLoader);
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		formParser.parseForm(readFileContents("src/test/resources/empty-form.html"), formFlow, new PrintWriter(outputStream), masterScope);
+		formParser.parseForm(readFileContents("src/test/resources/empty-form.html"), formFlow, new PrintWriter(outputStream), masterScope, false);
 		String string = outputStream.toString();
 		System.out.println(string);
 		Assert.assertTrue(string.contains("<div class=\"rf-debugbar\">"));

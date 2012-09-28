@@ -59,7 +59,7 @@ public class FormParser {
 		debugBarNode = loadDebugBar(resourceLoader);
 	}
 
-	public void parseForm(String formContents, FormFlow formFlow, PrintWriter writer, JSMasterScope masterScope) throws XPatherException,
+	public void parseForm(String formContents, FormFlow formFlow, PrintWriter writer, JSMasterScope masterScope, boolean suppressDebugBar) throws XPatherException,
 			XPathExpressionException, IOException, ResourceLoaderException, FormParserException {
 
 		TagNode formHtml = htmlCleaner.clean(formContents);
@@ -73,7 +73,7 @@ public class FormParser {
 		processIncludes(formHtml, formFlow);
 		
 		// Add debugBar
-		if (showDebugBar) {
+		if (showDebugBar && !suppressDebugBar) {
 			TagNode body = formHtml.findElementByName("body", false);
 			int size = body.getChildren().size();
 			body.insertChild(size, debugBarNode);
