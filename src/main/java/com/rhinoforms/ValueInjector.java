@@ -50,7 +50,7 @@ public class ValueInjector {
 				Node dataNode = dataNodeList.item(dataNodeindex);
 
 				StringBuilder forEachNodeContents = nodeToStringBuilder(forEachNode);
-				replaceCurlyBrackets(forEachNodeContents, dataDocument, dataNode, selectAsName, dataNodeindex + 1);
+				replaceCurlyBrackets(forEachNodeContents, dataDocument, null, dataNode, selectAsName, dataNodeindex + 1);
 				TagNode processedForEachNode = stringBuilderToNode(forEachNodeContents);
 
 				parent.addChildren(processedForEachNode.getChildren());
@@ -60,7 +60,7 @@ public class ValueInjector {
 		}
 	}
 
-	public void processRemainingCurlyBrackets(TagNode formHtml, Document dataDocument, String docBase) throws IOException,
+	public void processRemainingCurlyBrackets(TagNode formHtml, Document dataDocument, String docBase, String flowID) throws IOException,
 			XPathExpressionException {
 		XPathExpression selectExpression = xPathFactory.newXPath().compile(docBase);
 		Node dataDocAtDocBase = (Node) selectExpression.evaluate(dataDocument, XPathConstants.NODE);
@@ -69,14 +69,14 @@ public class ValueInjector {
 		if (bodyElements.length > 0) {
 			TagNode bodyElement = bodyElements[0];
 			StringBuilder builder = nodeToStringBuilder(bodyElement);
-			replaceCurlyBrackets(builder, dataDocAtDocBase, null, null, null);
+			replaceCurlyBrackets(builder, dataDocAtDocBase, flowID, null, null, null);
 			TagNode processedBodyElement = stringBuilderBodyToNode(builder);
 			TagNode parent = bodyElement.getParent();
 			parent.replaceChild(bodyElement, processedBodyElement);
 		}
 	}
 
-	private void replaceCurlyBrackets(StringBuilder builder, Node dataDocument, Node contextNode, String contextName, Integer contextindex)
+	private void replaceCurlyBrackets(StringBuilder builder, Node dataDocument, String flowID, Node contextNode, String contextName, Integer contextindex)
 			throws XPathExpressionException {
 		StringBuffer completedText = new StringBuffer();
 
@@ -85,16 +85,20 @@ public class ValueInjector {
 			// get brackets contents
 			String group = matcher.group(1);
 			String value = null;
-			if (contextNode != null && group.startsWith(contextName + ".")) {
-				if (group.equals(contextName + ".index")) {
-					value = "" + contextindex;
-				} else {
-					// lookup value from context node
-					value = lookupValue(contextNode, group.substring(contextName.length() + 1));
-				}
+			if (group.equals(Constants.FLOW_ID_FIELD_NAME) && flowID != null) {
+				value = flowID;
 			} else {
-				// lookup value from main dataDoc
-				value = lookupValue(dataDocument, group);
+				if (contextNode != null && group.startsWith(contextName + ".")) {
+					if (group.equals(contextName + ".index")) {
+						value = "" + contextindex;
+					} else {
+						// lookup value from context node
+						value = lookupValue(contextNode, group.substring(contextName.length() + 1));
+					}
+				} else {
+					// lookup value from main dataDoc
+					value = lookupValue(dataDocument, group);
+				}
 			}
 
 			int groupStart = builder.indexOf("{{" + group + "}}");

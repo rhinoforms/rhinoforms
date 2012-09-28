@@ -18,6 +18,7 @@ import javax.xml.transform.TransformerException;
 import org.mozilla.javascript.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
 
 import com.rhinoforms.resourceloader.ResourceLoader;
 import com.rhinoforms.resourceloader.ServletResourceLoader;
@@ -32,6 +33,7 @@ public class FormServlet extends HttpServlet {
 	private JSMasterScope masterScope;
 	private ServletHelper servletHelper;
 	private FormSubmissionHelper formSubmissionHelper;
+	private FormParser formParser;
 	private static final Logger LOGGER = LoggerFactory.getLogger(FormServlet.class);
 
 	@Override
@@ -39,6 +41,7 @@ public class FormServlet extends HttpServlet {
 		this.resourceLoader = new ServletResourceLoader(getServletContext());
 		this.documentHelper = new DocumentHelper();
 		this.servletHelper = new ServletHelper();
+		this.formParser = new FormParser(resourceLoader);
 
 		Context jsContext = Context.enter();
 		try {
@@ -63,6 +66,7 @@ public class FormServlet extends HttpServlet {
 		if (pathInfo != null) {
 			LOGGER.debug("pathInfo = {}", pathInfo);
 			String proxyPathPrefix = "/proxy/";
+			String viewDataDocPathPrefix = "/data-document/";
 			if (pathInfo.startsWith(proxyPathPrefix)) {
 				// Proxy request
 				String proxyPath = pathInfo.substring(proxyPathPrefix.length());
@@ -95,6 +99,20 @@ public class FormServlet extends HttpServlet {
 					String message = "Your session has expired.";
 					LOGGER.debug(message);
 					sendError(HttpServletResponse.SC_FORBIDDEN, message, response);
+				}
+			} else if (pathInfo.startsWith(viewDataDocPathPrefix)) {
+				String flowId = pathInfo.substring(viewDataDocPathPrefix.length());
+				FormFlow formFlow = SessionHelper.getFlow(flowId, session);
+				if (formFlow != null) {
+					Document dataDocument = formFlow.getDataDocument();
+					try {
+						response.setContentType("text/xml");
+						documentHelper.documentToWriterPretty(dataDocument, response.getWriter(), false);
+					} catch (TransformerException e) {
+						throw new ServletException("Failed to display dataDocument", e);
+					}
+				} else {
+					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "No flow found with ID '" + flowId + "'");
 				}
 			}
 		} else {
@@ -183,7 +201,7 @@ public class FormServlet extends HttpServlet {
 	private FormFlow getFlow(HttpServletRequest request) throws ServletException {
 		String parameter = request.getParameter(Constants.FLOW_ID_FIELD_NAME);
 		if (parameter != null && parameter.matches("\\d+")) {
-			int flowId = Integer.parseInt(parameter);
+			String flowId = parameter;
 			HttpSession session = request.getSession();
 			FormFlow formFlow = SessionHelper.getFlow(flowId, session);
 			return formFlow;
@@ -198,7 +216,7 @@ public class FormServlet extends HttpServlet {
 		formUrl = formFlow.resolveResourcePathIfRelative(formUrl);
 
 		RequestDispatcher requestDispatcher = getServletContext().getRequestDispatcher(formUrl);
-		FormResponseWrapper formResponseWrapper = new FormResponseWrapper(response, resourceLoader);
+		FormResponseWrapper formResponseWrapper = new FormResponseWrapper(response, formParser);
 		requestDispatcher.forward(request, formResponseWrapper);
 		try {
 			formResponseWrapper.parseResponseAndWrite(getServletContext(), formFlow, masterScope);

@@ -16,6 +16,9 @@ public class TestResourceLoader implements ResourceLoader {
 			file = new File("src/test/resources/" + path);
 		}
 		if (!file.isFile()) {
+			file = new File("src/main/resources/" + path);
+		}
+		if (!file.isFile()) {
 			throw new FileNotFoundException("File not found in 'src/main/webapp/' or 'src/test/resources/', path: '" + path + "'");
 		}
 		return new FileInputStream(file);

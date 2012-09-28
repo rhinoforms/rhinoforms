@@ -8,7 +8,7 @@ public class SessionHelper {
 		session.setAttribute(getAttributeName(formFlow.getId()), formFlow);
 	}
 
-	public static FormFlow getFlow(int id, HttpSession session) {
+	public static FormFlow getFlow(String id, HttpSession session) {
 		return (FormFlow) session.getAttribute(getAttributeName(id));
 	}
 	
@@ -16,7 +16,7 @@ public class SessionHelper {
 		session.removeAttribute(getAttributeName(formFlow.getId()));
 	}
 	
-	private static String getAttributeName(int id) {
+	private static String getAttributeName(String id) {
 		return "FormFlow" + id;
 	}
 }

@@ -31,6 +31,7 @@ import org.w3c.dom.NodeList;
 import com.rhinoforms.resourceloader.ResourceLoader;
 import com.rhinoforms.resourceloader.ResourceLoaderException;
 import com.rhinoforms.serverside.InputPojo;
+import com.rhinoforms.util.StreamUtils;
 
 public class FormParser {
 
@@ -39,6 +40,8 @@ public class FormParser {
 	private ProxyFactory proxyFactory;
 	private ValueInjector valueInjector;
 	private HtmlCleaner htmlCleaner;
+	private boolean showDebugBar;
+	private TagNode debugBarNode;
 	
 	private static final FieldPathHelper fieldPathHelper = new FieldPathHelper();
 	private static final int processIncludesMaxDepth = 10;
@@ -52,12 +55,15 @@ public class FormParser {
 		CleanerProperties cleanerProperties = new CleanerProperties();
 		cleanerProperties.setAllowHtmlInsideAttributes(true);
 		this.htmlCleaner = new HtmlCleaner(cleanerProperties);
+		showDebugBar = RhinoformsProperties.getInstance().isShowDebugBar();
+		debugBarNode = loadDebugBar(resourceLoader);
 	}
 
 	public void parseForm(String formContents, FormFlow formFlow, PrintWriter writer, JSMasterScope masterScope) throws XPatherException,
 			XPathExpressionException, IOException, ResourceLoaderException, FormParserException {
 
 		TagNode formHtml = htmlCleaner.clean(formContents);
+		String flowID = formFlow.getId();
 
 		Document dataDocument = formFlow.getDataDocument();
 		String docBase = formFlow.getCurrentDocBase();
@@ -65,10 +71,17 @@ public class FormParser {
 		
 		// Process rf.include
 		processIncludes(formHtml, formFlow);
+		
+		// Add debugBar
+		if (showDebugBar) {
+			TagNode body = formHtml.findElementByName("body", false);
+			int size = body.getChildren().size();
+			body.insertChild(size, debugBarNode);
+		}
 
 		// Process rf.forEach statements
 		valueInjector.processForEachStatements(formHtml, dataDocument, docBase);
-		valueInjector.processRemainingCurlyBrackets(formHtml, dataDocument, docBase);
+		valueInjector.processRemainingCurlyBrackets(formHtml, dataDocument, docBase, flowID);
 
 		Object[] rfFormNodes = formHtml.evaluateXPath("//form[@" + Constants.RHINOFORMS_FLAG + "='true']");
 		if (rfFormNodes.length > 0) {
@@ -252,7 +265,7 @@ public class FormParser {
 			TagNode flowIdNode = new TagNode("input");
 			flowIdNode.setAttribute("name", Constants.FLOW_ID_FIELD_NAME);
 			flowIdNode.setAttribute("type", "hidden");
-			flowIdNode.setAttribute("value", formFlow.getId() + "");
+			flowIdNode.setAttribute("value", flowID + "");
 			formNode.insertChild(0, flowIdNode);
 
 			// Mark form as parsed
@@ -260,7 +273,7 @@ public class FormParser {
 		} else {
 			logger.warn("No forms found");
 		}
-
+		
 		// Write out processed document
 		new SimpleHtmlSerializer(htmlCleaner.getProperties()).write(formHtml, writer, "utf-8");
 	}
@@ -310,6 +323,23 @@ public class FormParser {
 					+ "'. No value will be pushed into the form and there may be submission problems.", docBase, name);
 		}
 		return inputValue;
+	}
+	
+	private TagNode loadDebugBar(ResourceLoader resourceLoader) {
+		try {
+			InputStream debugBarStream = FormParser.class.getResourceAsStream("/debugbar.html");
+			String barHtmlString = new String(new StreamUtils().readStream(debugBarStream));
+			barHtmlString = barHtmlString.replace("{viewDataDocumentUrl}", "");
+			
+			TagNode html = htmlCleaner.clean(barHtmlString);
+			TagNode body = (TagNode) html.getChildren().get(1);
+			TagNode div = (TagNode) body.getChildren().get(0);
+			return div;
+		} catch (IOException e) {
+			RuntimeException runtimeException = new RuntimeException("Failed to load debugBar.", e);
+			logger.error(runtimeException.getMessage(), runtimeException);
+			throw runtimeException;
+		}
 	}
 
 }

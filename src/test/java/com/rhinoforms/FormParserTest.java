@@ -6,20 +6,25 @@ import static com.rhinoforms.TestUtil.serialiseHtmlCleanerNode;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.List;
+
+import javax.xml.xpath.XPathExpressionException;
 
 import junit.framework.Assert;
 
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
+import org.htmlcleaner.XPatherException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.w3c.dom.Document;
 
+import com.rhinoforms.resourceloader.ResourceLoaderException;
 import com.rhinoforms.serverside.InputPojo;
 
 public class FormParserTest {
@@ -30,15 +35,16 @@ public class FormParserTest {
 	private DocumentHelper documentHelper;
 	private HtmlCleaner htmlCleaner;
 	private FormFlowFactory formFlowFactory;
+	private TestResourceLoader resourceLoader;
 
 	@Before
 	public void setup() throws Exception {
-		TestResourceLoader resourceLoader = new TestResourceLoader();
+		Context jsContext = Context.enter();
+		this.resourceLoader = new TestResourceLoader();
 		this.formParser = new FormParser(resourceLoader);
 		this.documentHelper = new DocumentHelper();
 		this.htmlCleaner = new HtmlCleaner();
 		
-		Context jsContext = Context.enter();
 		this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
 		this.formFlowFactory = new FormFlowFactory(new TestResourceLoader(), this.masterScope);
 		this.formFlow = formFlowFactory.createFlow("test-flow1.js", "<myData><fishes><fish><name>One</name></fish><fish><name>Two</name></fish></fishes></myData>");
@@ -154,6 +160,17 @@ public class FormParserTest {
 		int nameIndex = processedHtml.indexOf("name=\"firstName\"");
 		int handsIndex = processedHtml.indexOf("name=\"canWalkOnHands\"");
 		Assert.assertTrue("firstName element comes before canWalkOnHands element in the html", nameIndex < handsIndex);
+	}
+	
+	@Test
+	public void testDebugBar() throws Exception {
+		RhinoformsProperties.getInstance().setShowDebugBar(true);
+		this.formParser = new FormParser(resourceLoader);
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		formParser.parseForm(readFileContents("src/test/resources/empty-form.html"), formFlow, new PrintWriter(outputStream), masterScope);
+		String string = outputStream.toString();
+		System.out.println(string);
+		Assert.assertTrue(string.contains("<div class=\"rf-debugbar\">"));
 	}
 
 }

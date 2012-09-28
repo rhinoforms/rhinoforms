@@ -20,11 +20,13 @@ public class FormFlowFactory {
 	private ResourceLoader resourceLoader;
 	private JSMasterScope masterScope;
 	private DocumentHelper documentHelper;
+	private RemoteSubmissionHelper remoteSubmissionHelper;
 
 	public FormFlowFactory(ResourceLoader resourceLoader, JSMasterScope masterScope) {
 		this.resourceLoader = resourceLoader;
 		this.masterScope = masterScope;
 		this.documentHelper = new DocumentHelper();
+		this.remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader);
 	}
 
 	public FormFlow createFlow(String formFlowPath, String dataDocumentString) throws IOException,
@@ -34,7 +36,7 @@ public class FormFlowFactory {
 			Scriptable scope = masterScope.createWorkingScope();
 			
 			// Create flow
-			FormFlow formFlow = new FormFlow(resourceLoader);
+			FormFlow formFlow = new FormFlow(remoteSubmissionHelper);
 			formFlow.setResourcesBase(resolveResourcesBase(formFlowPath));
 			loadFlowFromJSDefinition(formFlow, formFlowPath, scope, masterScope.getCurrentContext());
 

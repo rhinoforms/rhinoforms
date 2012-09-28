@@ -11,12 +11,11 @@ import javax.xml.xpath.XPathExpressionException;
 
 import org.w3c.dom.Document;
 
-import com.rhinoforms.resourceloader.ResourceLoader;
 import com.rhinoforms.serverside.InputPojo;
 
 public class FormFlow implements Serializable {
 
-	private int flowId;
+	private String flowId;
 	private String flowDocBase;
 	private String defaultInitialData;
 	private List<String> libraries;
@@ -38,12 +37,12 @@ public class FormFlow implements Serializable {
 
 	private static final long serialVersionUID = -5683469121328756822L;
 
-	public FormFlow(ResourceLoader resourceLoader) {
-		this.flowId = (int) (Math.random() * 100000000f);
+	public FormFlow(RemoteSubmissionHelper remoteSubmissionHelper) {
+		this.flowId = (int) (Math.random() * 100000000f) + "";
 		this.formLists = new HashMap<String, List<Form>>();
 		this.navigationStack = new Stack<FlowNavigationLevel>();
 		this.fieldSourceProxies = new HashMap<String, FieldSourceProxy>();
-		this.remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader);
+		this.remoteSubmissionHelper = remoteSubmissionHelper;
 		this.libraries = new ArrayList<String>();
 	}
 
@@ -263,7 +262,7 @@ public class FormFlow implements Serializable {
 		fieldSourceProxies.clear();
 	}
 
-	public int getId() {
+	public String getId() {
 		return flowId;
 	}
 	

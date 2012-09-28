@@ -44,7 +44,7 @@ public class ValueInjectorTest {
 	public void testProcessRemainingCurlyBrackets() throws Exception {
 		Assert.assertTrue("Placeholder present.", serialiseHtmlCleanerNode(formHtml).contains("<span class=\"ocean\">{{name}}</span>"));
 
-		valueInjector.processRemainingCurlyBrackets(formHtml, dataDocument, "/myData/ocean");
+		valueInjector.processRemainingCurlyBrackets(formHtml, dataDocument, "/myData/ocean", "123");
 
 		String actual = serialiseHtmlCleanerNode(formHtml);
 		Assert.assertTrue("Placeholder replaced with dataDocument content.", actual.contains("<span class=\"ocean\">Pacific</span>"));

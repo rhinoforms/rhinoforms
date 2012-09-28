@@ -10,8 +10,6 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 
-import com.rhinoforms.resourceloader.ResourceLoader;
-
 public class FormResponseWrapper extends HttpServletResponseWrapper {
 
 	private CharArrayWriter charArrayWriter;
@@ -19,12 +17,13 @@ public class FormResponseWrapper extends HttpServletResponseWrapper {
 	private PrintWriterOutputStream printWriterOutputStream;
 	private FormParser formParser;
 
-	public FormResponseWrapper(HttpServletResponse response, ResourceLoader resourceLoader) {
+	public FormResponseWrapper(HttpServletResponse response, FormParser formParser) {
 		super(response);
+		this.formParser = formParser;
+		
 		charArrayWriter = new CharArrayWriter();
 		printWriter = new PrintWriter(charArrayWriter);
 		printWriterOutputStream = new PrintWriterOutputStream(printWriter);
-		this.formParser = new FormParser(resourceLoader);
 
 		// Set no-cache headers - maybe should be in web.xml?
 		response.setHeader("Expires", new Date().toString());
