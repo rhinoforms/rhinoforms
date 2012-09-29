@@ -290,7 +290,11 @@ function Rhinoforms() {
 	
 	function doAction(action, $form, $container, suppressDebugBar) {
 		if (action == "back" || action == "cancel" || validateForm($form) == true) {
+			// Deactivate current form
 			$form.removeClass("rf-active-form");
+			$(":input", $form).unbind();
+
+			// Request new form
 			var suppressDebugBarString = "";
 			if (suppressDebugBar) {
 				suppressDebugBarString = "&rf.suppressDebugBar=true";
