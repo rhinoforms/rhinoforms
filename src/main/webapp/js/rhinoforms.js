@@ -404,7 +404,7 @@ function Rhinoforms() {
 				validation = $input.attr("rf.validation");
 				validationFunction = $input.attr("rf.validationfunction");
 				rfAttributes = {};
-				for (var a in input.attributes) {
+				for (var a = 0; a < input.attributes.length; a++) {
 					var attribute = input.attributes[a];
 					if (attribute.name && attribute.name.indexOf("rf.") == 0) {
 						rfAttributes[attribute.name] = attribute.value;
@@ -479,9 +479,7 @@ function Rhinoforms() {
 	function toNamesAndArgs(string) {
 		var namesAndArgs = [];
 		var stringSplit = (string + " ").match(/[^ \(]+ |[^ ]+\([^\)]*\) /g);
-		for ( var a in stringSplit) {
-			// var args
-			// stringSplit[a] = { name: stringSplit[a] };
+		for (var a = 0; a < stringSplit.length; a++) {
 			var nameArgsString = stringSplit[a];
 			namesAndArgs.push(toNameAndArgs(nameArgsString));
 		}

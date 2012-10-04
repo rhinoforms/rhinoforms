@@ -1,51 +1,29 @@
-.invalid {
-	background-color: Salmon;
+/** Layout **/
+.field {
+	margin: 15px 0;
 }
-
-#formContainer {
-	border: 1px solid black;
-	padding: 20px;
-	width: 800px
-}
-
 button {
 	margin-top: 20px;
 }
-
-.clear {
-	clear: both;
-}
-
-.menu,.buttons {
-	overflow: hidden;
-	width: 100%;
-}
-
-.menu-block {
-	float: left;
-	margin-top: -20px;
-	margin-right: 50px;
-	margin-bottom: 20px;
-	margin-left: 10px;
-}
-
 label {
 	width: 150px;
 	display: inline-block;
 }
-
-.field {
-	margin: 15px 0;
-}
-
 input[type='radio']+label {
 	width: auto;
 }
+.invalid {
+	background-color: Salmon;
+}
+.invalid-message {
+	margin: 0 5px;
+}
 
+
+/** Auto-complete **/
 .rf-dropdown {
 	position: absolute;
 }
-
 .rf-dropdown ul {
 	margin: 0;
 	padding: 0;
@@ -53,23 +31,20 @@ input[type='radio']+label {
 	overflow-y: scroll;
 	border: 1px solid lightGrey;
 }
-
 .rf-dropdown li {
 	list-style-type: none;
 	background-color: white;
 }
-
 .rf-dropdown li.over {
 	background-color: lightblue;
 }
 
-.invalid-message {
-	margin: 0 5px;
-}
 
+/** DebugBar **/
 .rf-debugbar {
     background-color: #45BCD2;
     opacity: 0.7;
     border-radius: 5px;
     padding: 7px 5px;
+    margin-top: 10px;
 }

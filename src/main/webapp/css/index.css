@@ -1,0 +1,28 @@
+body {
+	margin: 8px;
+}
+h1 {
+	margin: 0.4em 0;
+}
+.menu,.buttons {
+	overflow: hidden;
+	width: 100%;
+}
+
+.menu-block {
+	float: left;
+	margin-top: -20px;
+	margin-right: 50px;
+	margin-bottom: 20px;
+	margin-left: 10px;
+}
+
+#formContainer {
+	border: 1px solid black;
+	padding: 20px;
+	width: 800px
+}
+
+#formContainer h3 {
+	margin-top: 0px;
+}
