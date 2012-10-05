@@ -157,10 +157,14 @@ public class FormServlet extends HttpServlet {
 			if (formFlow != null) {
 				Map<String, String> actionParams = new HashMap<String, String>();
 				String action = formSubmissionHelper.collectActionParameters(actionParams, parameterMap);
-
+				
+				FlowAction flowAction = formFlow.getCurrentActions().get(action);
 				Set<String> fieldsInError = null;
-				if (!action.equals(FormFlow.CANCEL_ACTION)) {
-					fieldsInError = formSubmissionHelper.validateAndPersist(formFlow, action, parameterMap);
+				if (flowAction != null) {
+					FlowActionType actionType = flowAction.getType();
+					if (actionType != FlowActionType.CANCEL) {
+						fieldsInError = formSubmissionHelper.validateAndPersist(formFlow, actionType, parameterMap);
+					}
 				}
 
 				if (fieldsInError == null || fieldsInError.isEmpty()) {
@@ -217,6 +221,8 @@ public class FormServlet extends HttpServlet {
 			throws ServletException, IOException {
 		
 		formUrl = formFlow.resolveResourcePathIfRelative(formUrl);
+		String currentFormId = formFlow.getCurrentFormId();
+		response.setHeader("rf.formId", currentFormId);
 
 		RequestDispatcher requestDispatcher = getServletContext().getRequestDispatcher(formUrl);
 		FormResponseWrapper formResponseWrapper = new FormResponseWrapper(response, formParser);

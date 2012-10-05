@@ -26,14 +26,22 @@ function loadFlow(flowMap) {
 				var action = form.actions[actionIndex];
 				var actionName;
 				var actionTarget = "";
+				var actionType = null;
 				var actionSubmission = null;
+				var actionClearTargetFormDocBase = false;
 				if (action instanceof Object) {
 					actionName = action.name;
 					if (action.target) {
 						actionTarget = action.target;
 					}
+					if (action.type) {
+						actionType = action.type;
+					}
 					if (action.submission) {
 						actionSubmission = action.submission;
+					}
+					if (action.clearTargetFormDocBase && (action.clearTargetFormDocBase == true || action.clearTargetFormDocBase.toLowerCase() == "true")) {
+						actionClearTargetFormDocBase = true;
 					}
 				} else {
 					var actionParts = form.actions[actionIndex].split(':');
@@ -55,6 +63,9 @@ function loadFlow(flowMap) {
 					var param = actionTargetParamsParts[actionTargetParamsPartIndex];
 					var paramParts = param.split("=");
 					flowActionJ.addParam(this.trim(paramParts[0]), this.trim(paramParts[1]));
+				}
+				if (actionType) {
+					flowActionJ.setType(actionType);
 				}
 				if (actionSubmission) {
 					var submissionJ = new com.rhinoforms.Submission(actionSubmission.url);
@@ -79,6 +90,7 @@ function loadFlow(flowMap) {
 					}
 					flowActionJ.setSubmission(submissionJ);
 				}
+				flowActionJ.setClearTargetFormDocBase(actionClearTargetFormDocBase);
 				actionsJ.put(actionName, flowActionJ);
 			}
 			var formJ = new com.rhinoforms.Form(form.id, form.url, actionsJ, formIndex);

@@ -54,7 +54,7 @@ public class FormSubmissionHelper {
 		return action;
 	}
 	
-	public Set<String> validateAndPersist(FormFlow formFlow, String action, Map<String, String> parameterMap) throws ServletException, IOException {
+	public Set<String> validateAndPersist(FormFlow formFlow, FlowActionType actionType , Map<String, String> parameterMap) throws ServletException, IOException {
 
 		// Collect input values
 		List<InputPojo> inputPojos = formFlow.getCurrentInputPojos();
@@ -79,7 +79,7 @@ public class FormSubmissionHelper {
 		Set<String> fieldsInError = validateInput(inputPojos, workingScope);
 
 		// If Back action remove any invalid input
-		if (action.equals(FormFlow.BACK_ACTION) && !fieldsInError.isEmpty()) {
+		if (actionType == FlowActionType.BACK && !fieldsInError.isEmpty()) {
 			HashSet<InputPojo> inputPOJOsToRemove = new HashSet<InputPojo>();
 			for (InputPojo inputPojo : inputPojos) {
 				if (fieldsInError.contains(inputPojo.getName())) {

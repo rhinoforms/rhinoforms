@@ -10,7 +10,7 @@
 						"back",
 						"finish",
 						{
-							name: "sendToMyServer",
+							name: "send-to-my-server",
 							submission: {
 								preTransform: "xslt/toServerFormat.xsl",
 								url: "http://localhost/dummy-url",
@@ -21,7 +21,14 @@
 								},
 								postTransform: "xslt/fromServerFormat.xsl",
 								resultInsertPoint: "/myData/submissionResult"
-							}
+							},
+							clearTargetFormDocBase: "true"
+						},
+						{
+							/** Named cancel action with specific target */
+							name: "cancel-back-to-one",
+							type: "cancel",
+							target: "one"
 						}
 					]
 				}

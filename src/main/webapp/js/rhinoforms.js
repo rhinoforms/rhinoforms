@@ -18,7 +18,7 @@ function Rhinoforms() {
 		// Enable the 'required' validation keyword
 		this.registerValidationKeyword("required", function(value) {
 			if (!value) {
-				return "This value is required.";
+				return "Required value.";
 			}
 		});
 
@@ -27,7 +27,7 @@ function Rhinoforms() {
 			if (value) {
 				var regex = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
 				if (regex.test(value) != true) {
-					return "This is not a valid email address.";
+					return "Invalid email address.";
 				}
 			}
 		});
@@ -37,7 +37,7 @@ function Rhinoforms() {
 		this.registerValidationKeyword("fromSource", function(value, rfAttributes) {
 			if (value) {
 				if ("true" != rfAttributes["rf.valueFromSource".toLowerCase()]) {
-					return "This should be a value from the drop-down list."
+					return "Not from drop-down list."
 				}
 			}
 		});
@@ -78,6 +78,20 @@ function Rhinoforms() {
 				}
 			}
 		});
+		
+		this.registerValidationKeyword("between", function(value, rfAttributes, args) {
+			var decimalA = args.decimalA * 1;
+			var decimalB = args.decimalB * 1;
+			if (decimalA > decimalB) {
+				var decimalC = decimalB;
+				decimalB = decimalA;
+				decimalA = decimalC;
+			}
+			value = value * 1;
+			if (value < decimalA || value > decimalB) {
+				return "Not between " + decimalA + " and " + decimalB + ".";
+			}
+		});
 
 	}
 	
@@ -91,7 +105,7 @@ function Rhinoforms() {
 	
 	this.loadFlow = function(flowPath, $container, initData, callback) {
 		var rf = this;
-		$.ajax({
+		var jqXHR = $.ajax({
 			url: servletUrl,
 			cache: false,
 			data: {
@@ -99,7 +113,8 @@ function Rhinoforms() {
 				"rf.initData": initData
 				},
 			success: function(html) {
-				insertForm(html, $container);
+				var formId = jqXHR.getResponseHeader("rf.formId");
+				insertForm(html, $container, formId);
 				if (callback) {
 					if (typeof callback === 'function') {
 						callback();
@@ -121,7 +136,7 @@ function Rhinoforms() {
 		alert(message);
 	}
 	
-	function insertForm(html, $container) {
+	function insertForm(html, $container, formId) {
 		var rf = this;
 		
 		// Replace container contents with single form
@@ -190,12 +205,10 @@ function Rhinoforms() {
 				var re = new RegExp(mask);
 				$input.keypress(function(event) {
 					var val = $input.val();
-					if (val == getSelection()) {
-						// Text is selected and about to be replaced
-						val = "";
-					}
-					val = val + String.fromCharCode(event.which);
-					var result = re.test(val);
+					var selectionStart = input.selectionStart;
+					var selectionEnd = input.selectionEnd;
+					var newVal = val.substring(0, selectionStart) + String.fromCharCode(event.which) + val.substring(selectionEnd);
+					var result = re.test(newVal);
 					return result;
 				});
 			}
@@ -206,14 +219,16 @@ function Rhinoforms() {
 		$("[action]", $form).click(function() {
 			var $this = $(this);
 			var action = $this.attr("action");
+			var type = $this.attr("actionType");
 			var container = $this.attr("container");
+			var unbind = $this.attr("unbind");
 			var suppressDebugBar = false;
 			var $actionTargetContainer = $container;
 			if (container) {
 				$actionTargetContainer = $(container);
 				suppressDebugBar = true; // We don't want more than one DebugBar
 			}
-			doAction(action, $form, $actionTargetContainer, suppressDebugBar);
+			doAction(action, type, $form, $actionTargetContainer, { suppressDebugBar: suppressDebugBar, unbind: unbind });
 			return false;
 		});
 		
@@ -222,7 +237,7 @@ function Rhinoforms() {
 		// Give first input focus
 		$(":input[type!='hidden'][action!='back']:not([disabled])", $container).first().focus();
 		
-		doOnFormLoad();
+		doOnFormLoad(formId);
 	}
 	
 	this.onFormLoad = function(callback) {
@@ -241,14 +256,14 @@ function Rhinoforms() {
 		}
 	}
 	
-	function doOnFormLoad() {
+	function doOnFormLoad(formId) {
 		var methodToCall;
 		while (methodToCall = onFormLoadFunctions.shift()) {
-			methodToCall();
+			methodToCall(formId);
 		}
 		for (var a = 0; a < onEveryFormLoadFunctions.length; a++) {
 			methodToCall = onEveryFormLoadFunctions[a];
-			methodToCall();
+			methodToCall(formId);
 		}
 	}
 	
@@ -288,15 +303,21 @@ function Rhinoforms() {
 		})
 	}
 	
-	function doAction(action, $form, $container, suppressDebugBar) {
-		if (action == "back" || action == "cancel" || validateForm($form) == true) {
+	function doAction(action, type, $form, $container, options) {
+		if (!type) {
+			type = action;
+		}
+		if (type == "back" || type == "cancel" || validateForm($form) == true) {
 			// Deactivate current form
 			$form.removeClass("rf-active-form");
-			$(":input", $form).unbind();
+			
+			if (!(options && options.unbind && options.unbind.toLowerCase() == "false")) {
+				$(":input", $form).unbind();
+			}
 
 			// Request new form
 			var suppressDebugBarString = "";
-			if (suppressDebugBar) {
+			if (options && options.suppressDebugBar) {
 				suppressDebugBarString = "&rf.suppressDebugBar=true";
 			}
 			var jqXHR = $.ajax({
@@ -309,7 +330,8 @@ function Rhinoforms() {
 						$($form.parents()[0]).html($("<h3>").text("Collected Data:").append("<br/>").append($("<textarea>").attr("style", "width: 700px; height: 350px;").text(data)));
 						break;
 					default:
-						insertForm(data, $container);
+						var formId = jqXHR.getResponseHeader("rf.formId");
+						insertForm(data, $container, formId);
 					}
 				},
 				error: function(jqXHR, textStatus, errorThrown) {
@@ -384,8 +406,8 @@ function Rhinoforms() {
 		$inputs.each(function() {
 			var input = this;
 			var $input = $(this);
-			var name = $input.attr("name")
-			var type = $input.attr("type")
+			var name = $input.attr("name");
+			var type = $input.attr("type");
 			var value;
 			if (type == 'checkbox') {
 				value = $input.prop('checked');
@@ -505,18 +527,6 @@ function Rhinoforms() {
 			name : name,
 			args : args
 		};
-	}
-	
-	function getSelection(){
-		var t = '';
-		if (window.getSelection) {
-			t = window.getSelection();
-		} else if (document.getSelection) {
-			t = document.getSelection();
-		} else if(document.selection) {
-			t = document.selection.createRange().text;
-		}
-		return t;
 	}
 	
 	this.setupError = function(message) {

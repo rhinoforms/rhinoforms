@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import javax.xml.xpath.XPathExpressionException;
-
 import org.w3c.dom.Document;
 
 import com.rhinoforms.serverside.InputPojo;
@@ -27,13 +25,6 @@ public class FormFlow implements Serializable {
 	private Map<String, FieldSourceProxy> fieldSourceProxies;
 	private String resourcesBase;
 	private RemoteSubmissionHelper remoteSubmissionHelper;
-
-	public static final String FIRST_ACTION = "first";
-	public static final String NEXT_ACTION = "next";
-	public static final String BACK_ACTION = "back";
-	public static final String CANCEL_ACTION = "cancel";
-	public static final String DELETE_ACTION = "_delete";
-	public static final String FINISH_ACTION = "finish";
 
 	private static final long serialVersionUID = -5683469121328756822L;
 
@@ -61,7 +52,7 @@ public class FormFlow implements Serializable {
 
 		FlowAction flowAction = getAction(action);
 		Map<String, String> actionParams = filterActionParams(paramsFromFontend, flowAction.getParams());
-		String actionName = flowAction.getName();
+		FlowActionType actionType = flowAction.getType();
 		String actionTarget = flowAction.getTarget();
 		String lastDocBase = getCurrentDocBase();
 		boolean movedUpNavStack = false;
@@ -78,11 +69,11 @@ public class FormFlow implements Serializable {
 		}
 		
 		if (actionTarget.isEmpty()) {
-			if (actionName.equals(NEXT_ACTION) || actionName.equals(BACK_ACTION) || actionName.equals(CANCEL_ACTION)) {
+			if (actionType == FlowActionType.NEXT || actionType == FlowActionType.BACK || actionType == FlowActionType.CANCEL) {
 				// Moving forward or back in list. May pop up to next level if end of current list.
 				int currentFormIndexInList = currentNavigationLevel.getCurrentForm().getIndexInList();
 				int nextIndex;
-				if (actionName.equals(NEXT_ACTION)) {
+				if (actionType == FlowActionType.NEXT) {
 					nextIndex = currentFormIndexInList + 1;
 				} else {
 					nextIndex = currentFormIndexInList - 1;
@@ -98,11 +89,11 @@ public class FormFlow implements Serializable {
 					}
 				}
 			} else {
-				if (actionName.equals(FINISH_ACTION)) {
+				if (actionType == FlowActionType.FINISH) {
 					return null;
 				}
 			}
-		} else if (actionTarget.equals(DELETE_ACTION)) {
+		} else if (actionTarget.equals(FlowActionType.DELETE.toString())) {
 			String xpath = actionParams.get("xpath");
 			try {
 				if (!xpath.startsWith("/")) {
@@ -111,9 +102,7 @@ public class FormFlow implements Serializable {
 				xpath = documentHelper.resolveXPathIndexesForAction(xpath, actionParams, dataDocument);
 				documentHelper.deleteNodes(xpath, dataDocument);
 			} catch (DocumentHelperException e) {
-				throw new ActionError("Problem building delete action.", e);
-			} catch (XPathExpressionException e) {
-				throw new ActionError("Problem deleting nodes.", e);
+				throw new ActionError("Problem with delete action.", e);
 			}
 		} else {
 			// Moving to a named form
@@ -146,7 +135,7 @@ public class FormFlow implements Serializable {
 			String newDocBase = resolveNewDocBase(currentNavigationLevel.getCurrentForm().getDocBase(), actionParams, lastDocBase, documentHelper);
 			currentNavigationLevel.setDocBase(newDocBase);
 		}
-		prepDataDocument(getCurrentDocBase(), lastDocBase, documentHelper);
+		prepDataDocument(getCurrentDocBase(), lastDocBase, flowAction.isClearTargetFormDocBase(), documentHelper);
 		
 		return currentNavigationLevel.getCurrentForm().getPath();
 	}
@@ -187,17 +176,19 @@ public class FormFlow implements Serializable {
 		}
 	}
 	
-	private void prepDataDocument(String newDocBase, String lastDocBase, DocumentHelper documentHelper) throws ActionError {
+	private void prepDataDocument(String newDocBase, String lastDocBase, boolean clearTargetFormDocBase, DocumentHelper documentHelper) throws ActionError {
 		try {
 			if (lastDocBase != null && !lastDocBase.equals(newDocBase)) {
 				documentHelper.deleteNodeIfEmptyRecurseUp(dataDocument, lastDocBase);
+			}
+			if (clearTargetFormDocBase) {
+				documentHelper.deleteNodes(newDocBase, dataDocument);
 			}
 			documentHelper.createNodeIfNotThere(dataDocument, newDocBase);
 		} catch (DocumentHelperException e) {
 			throw new ActionError("Problem with docBase index alias.", e);
 		}
 	}
-
 
 	private void clearPreviousFormResources() {
 		clearFieldSourceProxies();
@@ -245,7 +236,15 @@ public class FormFlow implements Serializable {
 	public String getCurrentPath() {
 		return getCurrentNavigationLevel().getCurrentForm().getPath();
 	}
+	
+	public String getCurrentFormId() {
+		return getCurrentNavigationLevel().getCurrentForm().getId();
+	}
 
+	public Map<String, FlowAction> getCurrentActions() {
+		return getCurrentNavigationLevel().getCurrentForm().getActions();
+	}
+	
 	public void addFormList(String listName, List<Form> formList) {
 		this.formLists.put(listName, formList);
 	}

@@ -56,7 +56,7 @@ public class FormFlowFactoryTest {
 		Assert.assertEquals("three", nextForm.getId());
 		Assert.assertEquals(2, nextForm.getIndexInList());
 		actions = nextForm.getActions();
-		FlowAction flowActionToServer = actions.get("sendToMyServer");
+		FlowAction flowActionToServer = actions.get("send-to-my-server");
 		Assert.assertNotNull(flowActionToServer);
 		
 		Submission submission = flowActionToServer.getSubmission();
@@ -70,6 +70,11 @@ public class FormFlowFactoryTest {
 		Assert.assertEquals("/myData/submissionResult", submission.getResultInsertPoint());
 		Assert.assertEquals("xslt/toServerFormat.xsl", submission.getPreTransform());
 		Assert.assertEquals("xslt/fromServerFormat.xsl", submission.getPostTransform());
+		Assert.assertTrue(flowActionToServer.isClearTargetFormDocBase());
+		
+		FlowAction cancelAction = actions.get("cancel-back-to-one");
+		Assert.assertEquals(FlowActionType.CANCEL, cancelAction.getType());
+		Assert.assertEquals("one", cancelAction.getTarget());
 		
 		List<Form> anotherList = formLists.get("anotherList");
 		Assert.assertEquals(1, anotherList.size());

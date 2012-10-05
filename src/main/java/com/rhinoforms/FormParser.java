@@ -42,7 +42,7 @@ public class FormParser {
 	private HtmlCleaner htmlCleaner;
 	private boolean showDebugBar;
 	private TagNode debugBarNode;
-	
+
 	private static final FieldPathHelper fieldPathHelper = new FieldPathHelper();
 	private static final int processIncludesMaxDepth = 10;
 	final Logger logger = LoggerFactory.getLogger(FormParser.class);
@@ -59,8 +59,8 @@ public class FormParser {
 		debugBarNode = loadDebugBar(resourceLoader);
 	}
 
-	public void parseForm(String formContents, FormFlow formFlow, PrintWriter writer, JSMasterScope masterScope, boolean suppressDebugBar) throws XPatherException,
-			XPathExpressionException, IOException, ResourceLoaderException, FormParserException {
+	public void parseForm(String formContents, FormFlow formFlow, PrintWriter writer, JSMasterScope masterScope, boolean suppressDebugBar)
+			throws XPatherException, XPathExpressionException, IOException, ResourceLoaderException, FormParserException {
 
 		TagNode formHtml = htmlCleaner.clean(formContents);
 		String flowID = formFlow.getId();
@@ -68,10 +68,11 @@ public class FormParser {
 		Document dataDocument = formFlow.getDataDocument();
 		String docBase = formFlow.getCurrentDocBase();
 		String currentPath = formFlow.getCurrentPath();
-		
+		Map<String, FlowAction> currentActions = formFlow.getCurrentActions();
+
 		// Process rf.include
 		processIncludes(formHtml, formFlow);
-		
+
 		// Add debugBar
 		if (showDebugBar && !suppressDebugBar) {
 			TagNode body = formHtml.findElementByName("body", false);
@@ -129,7 +130,7 @@ public class FormParser {
 					rangeSelectNode.removeAttribute(Constants.SELECT_RANGE_START_ATTR);
 					rangeSelectNode.removeAttribute(Constants.SELECT_RANGE_END_ATTR);
 					rangeSelectNode.removeAttribute(Constants.SELECT_PRESELECT_FIRST_OPTION_ATTR);
-					
+
 					logger.debug("Found rangeSelectNode name:{}, rangeStart:{}, rangeEnd:{}", new String[] { name, rangeStart, rangeEnd });
 					boolean rangeStartValid = rangeStart != null && !rangeStart.isEmpty();
 					boolean rangeEndValid = rangeEnd != null && !rangeEnd.isEmpty();
@@ -158,7 +159,7 @@ public class FormParser {
 						logger.debug("RangeSelectNode name:{}, rangeStatement:{}", name, rangeStatement);
 						String rangeResult = (String) context.evaluateString(workingScope, rangeStatement, "Calculate range", 1, null);
 						logger.debug("RangeSelectNode name:{}, rangeResult:{}", name, rangeResult);
-						
+
 						if (!"true".equals(preselectFirstOption)) {
 							TagNode optionNode = new TagNode("option");
 							optionNode.setAttribute("value", "");
@@ -198,11 +199,11 @@ public class FormParser {
 					} else {
 						type = inputTagNode.getAttributeByName(Constants.TYPE_ATTR);
 					}
-					
+
 					if (type != null) {
 
 						if (!(type.equals("radio") && inputPojosMap.containsKey(name))) {
-	
+
 							// Collect all rf.xxx attributes
 							Map<String, String> rfAttributes = new HashMap<String, String>();
 							Map<String, String> attributes = inputTagNode.getAttributes();
@@ -211,12 +212,12 @@ public class FormParser {
 									rfAttributes.put(attName, attributes.get(attName));
 								}
 							}
-	
+
 							InputPojo inputPojo = new InputPojo(name, type, rfAttributes);
 							inputPojosMap.put(name, inputPojo);
 							inputPojos.add(inputPojo);
 						}
-	
+
 						// Push values from the dataDocument into the form html.
 						String inputValue = lookupValueByFieldName(dataDocument, name, docBase);
 						if (inputValue != null) {
@@ -248,6 +249,19 @@ public class FormParser {
 			}
 			formFlow.setCurrentInputPojos(inputPojos);
 
+			@SuppressWarnings("unchecked")
+			List<TagNode> actions = formNode.getElementListHavingAttribute("action", true);
+			for (TagNode actionTagNode : actions) {
+				String actionName = actionTagNode.getAttributeByName("action");
+				FlowAction flowAction = currentActions.get(actionName);
+				if (flowAction != null) {
+					FlowActionType type = flowAction.getType();
+					if (type != null) {
+						actionTagNode.setAttribute("actionType", type.toString());
+					}
+				}
+			}
+
 			// Process auto-complete fields, replace source with proxy path
 			Object[] autoCompleteNodes = formNode.evaluateXPath("//input[@" + Constants.SELECT_SOURCE_ATTR + "]");
 			for (Object autoCompleteNodeO : autoCompleteNodes) {
@@ -273,7 +287,7 @@ public class FormParser {
 		} else {
 			logger.warn("No forms found");
 		}
-		
+
 		// Write out processed document
 		new SimpleHtmlSerializer(htmlCleaner.getProperties()).write(formHtml, writer, "utf-8");
 	}
@@ -281,7 +295,7 @@ public class FormParser {
 	void processIncludes(TagNode html, FormFlow formFlow) throws IOException, FormParserException {
 		doProcessIncludes(html, 0, formFlow);
 	}
-	
+
 	private void doProcessIncludes(TagNode html, int depth, FormFlow formFlow) throws IOException, FormParserException {
 		if (depth < processIncludesMaxDepth) {
 			@SuppressWarnings("unchecked")
@@ -294,7 +308,7 @@ public class FormParser {
 					TagNode includeHtml = htmlCleaner.clean(resourceAsStream);
 					TagNode body = includeHtml.findElementByName("body", false);
 					doProcessIncludes(body, depth + 1, formFlow);
-					
+
 					@SuppressWarnings("unchecked")
 					List<HtmlNode> bodyChildren = body.getChildren();
 					Collections.reverse(bodyChildren);
@@ -324,13 +338,13 @@ public class FormParser {
 		}
 		return inputValue;
 	}
-	
+
 	private TagNode loadDebugBar(ResourceLoader resourceLoader) {
 		try {
 			InputStream debugBarStream = FormParser.class.getResourceAsStream("/debugbar.html");
 			String barHtmlString = new String(new StreamUtils().readStream(debugBarStream));
 			barHtmlString = barHtmlString.replace("{viewDataDocumentUrl}", "");
-			
+
 			TagNode html = htmlCleaner.clean(barHtmlString);
 			TagNode body = (TagNode) html.getChildren().get(1);
 			TagNode div = (TagNode) body.getChildren().get(0);
