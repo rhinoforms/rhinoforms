@@ -204,15 +204,17 @@ function Rhinoforms() {
 			if (mask) {
 				var re = new RegExp(mask);
 				$input.keypress(function(event) {
-					var val = $input.val();
-					var pos = getCursorPos(input);
-					if (pos) {
-						var newVal = val.substring(0, pos.start) + String.fromCharCode(event.which) + val.substring(pos.end);
-						var result = re.test(newVal);
-						return result;
-					} else {
-						// Not supported
-						return true;
+					if (0 != event.charCode) {
+						var val = $input.val();
+						var pos = getCursorPos(input);
+						if (pos) {
+							var newVal = val.substring(0, pos.start) + String.fromCharCode(event.which) + val.substring(pos.end);
+							var result = re.test(newVal);
+							return result;
+						} else {
+							// Not supported
+							return true;
+						}
 					}
 				});
 			}
