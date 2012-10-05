@@ -205,11 +205,15 @@ function Rhinoforms() {
 				var re = new RegExp(mask);
 				$input.keypress(function(event) {
 					var val = $input.val();
-					var selectionStart = input.selectionStart;
-					var selectionEnd = input.selectionEnd;
-					var newVal = val.substring(0, selectionStart) + String.fromCharCode(event.which) + val.substring(selectionEnd);
-					var result = re.test(newVal);
-					return result;
+					var pos = getCursorPos(input);
+					if (pos) {
+						var newVal = val.substring(0, pos.start) + String.fromCharCode(event.which) + val.substring(pos.end);
+						var result = re.test(newVal);
+						return result;
+					} else {
+						// Not supported
+						return true;
+					}
 				});
 			}
 		});
@@ -536,6 +540,31 @@ function Rhinoforms() {
 	
 	this.trace = function(message) {
 		rf_trace(message);
+	}
+	
+	function getCursorPos(input) {
+		if ("selectionStart" in input && document.activeElement == input) {
+			return {
+				start: input.selectionStart,
+				end: input.selectionEnd
+			};
+		} else if (input.createTextRange) {
+			var sel = document.selection.createRange();
+			if (sel.parentElement() === input) {
+				var rng = input.createTextRange();
+				rng.moveToBookmark(sel.getBookmark());
+				for (var len = 0; rng.compareEndPoints("EndToStart", rng) > 0; rng.moveEnd("character", -1)) {
+					len++;
+				}
+				rng.setEndPoint("StartToStart", input.createTextRange());
+				for (var pos = { start: 0, end: len }; rng.compareEndPoints("EndToStart", rng) > 0; rng.moveEnd("character", -1)) {
+					pos.start++;
+					pos.end++;
+				}
+				return pos;
+			}
+		}
+		return null;
 	}
 	
 	this.init();
