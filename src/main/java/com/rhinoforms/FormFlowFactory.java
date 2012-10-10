@@ -22,11 +22,11 @@ public class FormFlowFactory {
 	private DocumentHelper documentHelper;
 	private RemoteSubmissionHelper remoteSubmissionHelper;
 
-	public FormFlowFactory(ResourceLoader resourceLoader, JSMasterScope masterScope) {
+	public FormFlowFactory(ResourceLoader resourceLoader, JSMasterScope masterScope, String contextPath) {
 		this.resourceLoader = resourceLoader;
 		this.masterScope = masterScope;
 		this.documentHelper = new DocumentHelper();
-		this.remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader);
+		this.remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader, contextPath);
 	}
 
 	public FormFlow createFlow(String formFlowPath, String dataDocumentString) throws IOException,

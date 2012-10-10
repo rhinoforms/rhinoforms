@@ -19,7 +19,7 @@ public class RemoteSubmissionHelperTest {
 	@Before
 	public void setup() throws Exception {
 		documentHelper = new DocumentHelper();
-		remoteSubmissionHelper = new RemoteSubmissionHelper(new TestResourceLoader());
+		remoteSubmissionHelper = new RemoteSubmissionHelper(new TestResourceLoader(), "");
 		testConnectionFactory = new TestConnectionFactory();
 		remoteSubmissionHelper.setConnectionFactory(testConnectionFactory);
 		dataDocumentString = "<myData><something>a</something></myData>";

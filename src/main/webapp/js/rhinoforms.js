@@ -11,6 +11,12 @@ function Rhinoforms() {
 	var onFormLoadFunctions = [];
 	var onEveryFormLoadFunctions = [];
 	
+	// For read-only getter
+	var currentAction = null;
+	
+	
+	/** Public methods **/
+	
 	this.init = function() {
 		validationKeywords = {};
 		customTypes = {};
@@ -127,6 +133,28 @@ function Rhinoforms() {
 		})
 	}
 	
+	this.onFormLoad = function(callback) {
+		if (callback instanceof Function) {
+			onFormLoadFunctions.push(callback);
+		} else {
+			throw new TypeError("rhinoforms.onFormLoad() - callback given is not a function.");
+		}
+	}
+	
+	this.onEveryFormLoad = function(callback) {
+		if (callback instanceof Function) {
+			onEveryFormLoadFunctions.push(callback);
+		} else {
+			throw new TypeError("rhinoforms.onEveryFormLoad() - callback given is not a function.");
+		}
+	}
+	
+	this.getCurrentAction = function() {
+		return currentAction;
+	}
+
+	/** Private methods **/
+	
 	function ajaxError(message, jqXHR, textStatus, errorThrown) {
 		if ("text/plain" == jqXHR.getResponseHeader("Content-Type")) {
 			message += ": " + jqXHR.responseText;
@@ -183,7 +211,7 @@ function Rhinoforms() {
 				var customTypeFunction = customTypes[customType.name];
 				customTypeFunction(input, flowId, customType.args);
 			} else {
-				rf.setupError("Input custom-type not found '" + customType.name + "'.")
+				setupError("Input custom-type not found '" + customType.name + "'.")
 			}
 		});
 		
@@ -232,7 +260,9 @@ function Rhinoforms() {
 			var $actionTargetContainer = $container;
 			if (container) {
 				$actionTargetContainer = $(container);
-				suppressDebugBar = true; // We don't want more than one DebugBar
+				if ($actionTargetContainer.size() > 0 && $container.size() > 0 && $container[0] != $actionTargetContainer[0]) {
+					suppressDebugBar = true; // Loading into a different container. We don't want more than one DebugBar.
+				}
 			}
 			doAction(action, type, $form, $actionTargetContainer, { suppressDebugBar: suppressDebugBar, unbind: unbind });
 			return false;
@@ -241,25 +271,10 @@ function Rhinoforms() {
 		$form.addClass("rf-active-form");
 		
 		// Give first input focus
-		$(":input[type!='hidden'][action!='back']:not([disabled])", $container).first().focus();
+		var $forFocus = $(":input[action!='back'][type!='hidden']:enabled", $container);
+		$forFocus.first().focus();
 		
 		doOnFormLoad(formId);
-	}
-	
-	this.onFormLoad = function(callback) {
-		if (callback instanceof Function) {
-			onFormLoadFunctions.push(callback);
-		} else {
-			throw new TypeError("rhinoforms.onFormLoad() - callback given is not a function.");
-		}
-	}
-	
-	this.onEveryFormLoad = function(callback) {
-		if (callback instanceof Function) {
-			onEveryFormLoadFunctions.push(callback);
-		} else {
-			throw new TypeError("rhinoforms.onEveryFormLoad() - callback given is not a function.");
-		}
 	}
 	
 	function doOnFormLoad(formId) {
@@ -278,19 +293,37 @@ function Rhinoforms() {
 		var $form = $("form", $container);
 		var $inputs = $("[rf\\.includeif]", $container);
 		rf_trace("processIncludeIf, inputs:" + $inputs.size());
-		$inputs.each(function(index) {
-			var $input = $(this);
-			var includeIfStatement = $input.attr("rf.includeif");
-			rf_trace("processIncludeIf index:" + index + ", statement:'" + includeIfStatement + "'");
+		if ($inputs.size() > 0) {
 			var fields = getFieldsMap($form);
-			var result = eval(includeIfStatement);
-			rf_trace("processIncludeIf result = " + result + "");
-			if (result) {
-				$input.show();
-			} else {
-				$input.hide();
-			}
-		})
+			$inputs.each(function(index) {
+				var $input = $(this);
+				var includeIfStatement = $input.attr("rf.includeif");
+				rf_trace("processIncludeIf index:" + index + ", statement:'" + includeIfStatement + "'");
+				var result = eval(includeIfStatement);
+				rf_trace("processIncludeIf result = " + result + "");
+				
+				var inputId = $input.attr("id");
+				var $lable;
+				if (inputId) {
+					$lable = $("[for='" + inputId + "']", $container);
+				}
+				
+				if (result) {
+					$input.data("rf.included", true);
+					$input.show();
+					if ($lable) {
+						$lable.show();
+					}
+				} else {
+					$input.data("rf.included", false);
+					$input.hide();
+					if ($lable) {
+						$lable.hide();
+					}
+					clearInvalid($input, $form);
+				}
+			})
+		}
 	}
 	
 	function processCalculated($container) {
@@ -314,6 +347,7 @@ function Rhinoforms() {
 			type = action;
 		}
 		if (type == "back" || type == "cancel" || validateForm($form) == true) {
+			var currentAction = action;
 			// Deactivate current form
 			$form.removeClass("rf-active-form");
 			
@@ -342,10 +376,11 @@ function Rhinoforms() {
 				},
 				error: function(jqXHR, textStatus, errorThrown) {
 					ajaxError("Failed to perform action", jqXHR, textStatus, errorThrown);
+				},
+				complete: function() {
+					currentAction = null;
 				}
 			});
-		} else {
-			//alert("Not valid");
 		}
 	}
 	
@@ -360,32 +395,25 @@ function Rhinoforms() {
 		var $inputs = getInputs($form, fieldName);
 		
 		// Remove invalid messages
-		$inputs.removeClass("invalid");
-		var invalidMessages;
-		if (fieldName) {
-			invalidMessages = $(".invalid-message[forname='" + fieldName + "']", $form)
-		} else {
-			invalidMessages = $(".invalid-message", $form)
-		}
-		invalidMessages.remove();
+		clearInvalid($inputs, $form);
 		
 		if (errors.length > 0) {
 			// Add invalid class to inputs
 			for (var a in errors) {
 				var name = errors[a].name;
 				var message = errors[a].message;
-				var $input = $(":input[name='" + name + "']", $form).addClass("invalid");
+				var $input = $(":input[name='" + name + "']:visible", $form).addClass("invalid");
 				
 				// Add error message against input.
 				var $errorMessageAfterElement = $input;
 				// Only against the last radio element of a set
 				if ($input.attr("type") == "radio") {
-					$errorMessageAfterElement = $("[name='" + $input.attr("name") + "']", $form).last();
+					$errorMessageAfterElement = $("[name='" + $input.attr("name") + "']:visible", $form).last();
 				}
 				// Only once for each name
 				if ($("[forname='" + name + "']", $form).size() == 0) {
 					// After the label if the label is next in the DOM
-					var $label = $errorMessageAfterElement.nextAll("label[for='" + $errorMessageAfterElement.attr("id") + "']").first();
+					var $label = $errorMessageAfterElement.nextAll("label[for='" + $errorMessageAfterElement.attr("id") + "']:visible").first();
 					if ($label.size() != 0) {
 						$errorMessageAfterElement = $label;
 					}
@@ -405,6 +433,18 @@ function Rhinoforms() {
 		}
 	}
 	
+	function clearInvalid($inputs, $form) {
+		$inputs.removeClass("invalid");
+		var $invalidMessages = $();
+		$inputs.each(function() {
+			var name = $(this).attr("name");
+			if (name) {
+				$invalidMessages = $invalidMessages.add(".invalid-message[forname='" + name + "']", $form);
+			}
+		});
+		$invalidMessages.remove();
+	}
+	
 	function getFieldsMap($form, includeValidationAndRfAttributes, fieldName) {
 		var fields = {};
 		var $inputs = getInputs($form, fieldName);
@@ -414,6 +454,8 @@ function Rhinoforms() {
 			var $input = $(this);
 			var name = $input.attr("name");
 			var type = $input.attr("type");
+			var rfIncluded = $input.data("rf.included");
+			var included = typeof rfIncluded == "undefined" || rfIncluded == true;
 			var value;
 			if (type == 'checkbox') {
 				value = $input.prop('checked');
@@ -446,7 +488,7 @@ function Rhinoforms() {
 					fields[name].value = value;
 				}
 			} else {
-				fields[name] = { name:name, value:value, validation:validation, validationFunction:validationFunction, rfAttributes:rfAttributes };
+				fields[name] = { name:name, value:value, validation:validation, validationFunction:validationFunction, rfAttributes:rfAttributes, included:included };
 			}
 		});
 		return fields;
@@ -467,20 +509,22 @@ function Rhinoforms() {
 		var errors = [];
 		for (var a in fields) {
 			var field = fields[a];
-			var error = null;
-			if (field.validation) {
-				error = validateField(field.name, field.value, field.rfAttributes, field.validation);
-			} else if (field.validationFunction) {
-				field.validate = function(validationList) {
-					error = validateField(this.name, this.value, this.rfAttributes, validationList);
+			if (field.included) {
+				var error = null;
+				if (field.validation) {
+					error = validateField(field.name, field.value, field.rfAttributes, field.validation);
+				} else if (field.validationFunction) {
+					field.validate = function(validationList) {
+						error = validateField(this.name, this.value, this.rfAttributes, validationList);
+					}
+					field.validationFunctionRun = function() {
+						eval(field.validationFunction);
+					}
+					field.validationFunctionRun();
 				}
-				field.validationFunctionRun = function() {
-					eval(field.validationFunction);
+				if (error) {
+					errors.push(error);
 				}
-				field.validationFunctionRun();
-			}
-			if (error) {
-				errors.push(error);
 			}
 		}
 		return errors;
@@ -535,12 +579,8 @@ function Rhinoforms() {
 		};
 	}
 	
-	this.setupError = function(message) {
+	function setupError(message) {
 		if (this.alertOnSetupError) alert(message);
-		this.trace(message);
-	}
-	
-	this.trace = function(message) {
 		rf_trace(message);
 	}
 	

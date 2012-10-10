@@ -8,6 +8,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -41,7 +43,7 @@ public class FormParserTest {
 		this.htmlCleaner = new HtmlCleaner();
 		
 		this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
-		this.formFlowFactory = new FormFlowFactory(new TestResourceLoader(), this.masterScope);
+		this.formFlowFactory = new FormFlowFactory(new TestResourceLoader(), this.masterScope, "");
 		this.formFlow = formFlowFactory.createFlow("test-flow1.js", "<myData><fishes><fish><name>One</name></fish><fish><name>Two</name></fish></fishes></myData>");
 		this.formFlow.navigateToFirstForm(documentHelper);
 	}

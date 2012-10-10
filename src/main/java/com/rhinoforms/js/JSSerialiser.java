@@ -63,6 +63,7 @@ public class JSSerialiser {
 				}
 				stringBuilder.append("}");
 			}
+			stringBuilder.append(",included:true");
 			stringBuilder.append("}");
 		}
 		stringBuilder.append("}");

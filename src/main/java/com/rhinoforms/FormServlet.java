@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -39,7 +40,8 @@ public class FormServlet extends HttpServlet {
 
 	@Override
 	public void init() throws ServletException {
-		this.resourceLoader = new ServletResourceLoader(getServletContext());
+		ServletContext servletContext = getServletContext();
+		this.resourceLoader = new ServletResourceLoader(servletContext);
 		this.documentHelper = new DocumentHelper();
 		this.servletHelper = new ServletHelper();
 		this.formParser = new FormParser(resourceLoader);
@@ -56,7 +58,7 @@ public class FormServlet extends HttpServlet {
 		}
 
 		this.formSubmissionHelper = new FormSubmissionHelper(masterScope);
-		this.formFlowFactory = new FormFlowFactory(resourceLoader, masterScope);
+		this.formFlowFactory = new FormFlowFactory(resourceLoader, masterScope, servletContext.getContextPath());
 	}
 
 	@Override

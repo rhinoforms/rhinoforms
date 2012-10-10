@@ -26,7 +26,7 @@ public class JSSerialiserTest {
 		inputPojos.add(new InputPojo("one", "text", new HashMap<String, String>()));
 		String js = jsSerialiser.inputPOJOListToJS(inputPojos);
 //		System.out.println(js.replaceAll("\"", "\\\\\""));
-		Assert.assertEquals("{\"one\":{name:\"one\",value:\"\",rfAttributes:{}}}", js);
+		Assert.assertEquals("{\"one\":{name:\"one\",value:\"\",rfAttributes:{},included:true}}", js);
 	}
 	
 	@Test
@@ -37,7 +37,7 @@ public class JSSerialiserTest {
 		inputPojos.add(new InputPojo("one", "text", rfAttributes));
 		String js = jsSerialiser.inputPOJOListToJS(inputPojos);
 //		System.out.println(js.replaceAll("\"", "\\\\\""));
-		Assert.assertEquals("{\"one\":{name:\"one\",value:\"\",validation:\"required\",rfAttributes:{}}}", js);
+		Assert.assertEquals("{\"one\":{name:\"one\",value:\"\",validation:\"required\",rfAttributes:{},included:true}}", js);
 	}
 	
 	@Test
@@ -48,7 +48,7 @@ public class JSSerialiserTest {
 		inputPojos.add(new InputPojo("one", "text", rfAttributes));
 		String js = jsSerialiser.inputPOJOListToJS(inputPojos);
 //		System.out.println(js.replaceAll("\"", "\\\\\""));
-		Assert.assertEquals("{\"one\":{name:\"one\",value:\"\",validationFunction:\"{ if(fields.veggie.value == false) { this.validate('required'); } }\",rfAttributes:{}}}", js);
+		Assert.assertEquals("{\"one\":{name:\"one\",value:\"\",validationFunction:\"{ if(fields.veggie.value == false) { this.validate('required'); } }\",rfAttributes:{},included:true}}", js);
 	}
 	
 	@Test
@@ -59,7 +59,7 @@ public class JSSerialiserTest {
 		inputPojos.add(new InputPojo("one", "text", rfAttributes));
 		String js = jsSerialiser.inputPOJOListToJS(inputPojos);
 //		System.out.println(js.replaceAll("\"", "\\\\\""));
-		Assert.assertEquals("{\"one\":{name:\"one\",value:\"\",rfAttributes:{\"rf.source\":\"http://somewhere/something?occupation=bricklayer\"}}}", js);
+		Assert.assertEquals("{\"one\":{name:\"one\",value:\"\",rfAttributes:{\"rf.source\":\"http://somewhere/something?occupation=bricklayer\"},included:true}}", js);
 	}
 	
 	@Test
@@ -73,7 +73,7 @@ public class JSSerialiserTest {
 		inputPojos.add(new InputPojo("one", "text", rfAttributes));
 		String js = jsSerialiser.inputPOJOListToJS(inputPojos);
 //		System.out.println(js.replaceAll("\"", "\\\\\""));
-		Assert.assertEquals("{\"one\":{name:\"one\",value:\"\",validation:\"required\",validationFunction:\"{ if(fields.veggie.value == false) { this.validate('required'); } }\",rfAttributes:{\"rf.customType\":\"auto-complete-select\",\"rf.source\":\"http://somewhere/something?occupation=bricklayer\"}}}", js);
+		Assert.assertEquals("{\"one\":{name:\"one\",value:\"\",validation:\"required\",validationFunction:\"{ if(fields.veggie.value == false) { this.validate('required'); } }\",rfAttributes:{\"rf.customType\":\"auto-complete-select\",\"rf.source\":\"http://somewhere/something?occupation=bricklayer\"},included:true}}", js);
 	}
 	
 }

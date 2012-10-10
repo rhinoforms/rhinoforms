@@ -24,6 +24,8 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
+import net.sf.saxon.TransformerFactoryImpl;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -39,19 +41,22 @@ public class RemoteSubmissionHelper {
 	private DocumentHelper documentHelper;
 	private ResourceLoader resourceLoader;
 	private TransformerFactory transformerFactory;
+	private String contextPath;
 	private static final String UTF8 = "UTF-8";
 	private static final String DATA_DOCUMENT_VALUE_KEY = "[dataDocument]";
 	private static final Logger LOGGER = LoggerFactory.getLogger(RemoteSubmissionHelper.class);
 
-	public RemoteSubmissionHelper(ResourceLoader resourceLoader) {
+	public RemoteSubmissionHelper(ResourceLoader resourceLoader, String contextPath) {
 		this.resourceLoader = resourceLoader;
+		this.contextPath = contextPath;
 		connectionFactory = new ConnectionFactoryImpl();
 		documentHelper = new DocumentHelper();
-		transformerFactory = TransformerFactory.newInstance();
+		transformerFactory = TransformerFactoryImpl.newInstance(); // Saxon Impl
 	}
 
 	public void handleSubmission(Submission submission, Document dataDocument) throws RemoteSubmissionHelperException {
 		String url = submission.getUrl();
+		url = url.replaceAll("\\{contextPath\\}", contextPath);
 		String method = submission.getMethod();
 		Map<String, String> data = submission.getData();
 		String preTransform = submission.getPreTransform();
