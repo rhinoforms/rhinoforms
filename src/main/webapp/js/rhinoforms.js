@@ -482,13 +482,16 @@ function Rhinoforms() {
 				}
 			}
 			
-			if (type == 'radio' && fields[name]) {
-				if (value) {
-					// Update existing radio entry rather than replacing
-					fields[name].value = value;
+			if (name) {
+				var mapName = name.replace(/\./g, "_");
+				if (type == 'radio' && fields[mapName]) {
+					if (value) {
+						// Update existing radio entry rather than replacing
+						fields[mapName].value = value;
+					}
+				} else {
+					fields[mapName] = { name:name, value:value, validation:validation, validationFunction:validationFunction, rfAttributes:rfAttributes, included:included };
 				}
-			} else {
-				fields[name] = { name:name, value:value, validation:validation, validationFunction:validationFunction, rfAttributes:rfAttributes, included:included };
 			}
 		});
 		return fields;
