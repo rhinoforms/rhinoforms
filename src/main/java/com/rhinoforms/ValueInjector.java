@@ -17,6 +17,8 @@ import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.SimpleHtmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPatherException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -27,6 +29,8 @@ public class ValueInjector {
 	private static final XPathFactory xPathFactory = XPathFactory.newInstance();
 	private HtmlCleaner htmlCleaner;
 	private SimpleHtmlSerializer simpleHtmlSerializer;
+	
+	final Logger logger = LoggerFactory.getLogger(ValueInjector.class);
 
 	public ValueInjector() {
 		htmlCleaner = new HtmlCleaner();
@@ -44,19 +48,30 @@ public class ValueInjector {
 			String selectPath = forEachNode.getAttributeByName("select");
 			String selectAsName = forEachNode.getAttributeByName("as");
 
-			XPathExpression selectExpression = xPathFactory.newXPath().compile(docBase + "/" + selectPath);
-			NodeList dataNodeList = (NodeList) selectExpression.evaluate(dataDocument, XPathConstants.NODESET);
-			for (int dataNodeindex = 0; dataNodeindex < dataNodeList.getLength(); dataNodeindex++) {
-				Node dataNode = dataNodeList.item(dataNodeindex);
-
-				StringBuilder forEachNodeContents = nodeToStringBuilder(forEachNode);
-				replaceCurlyBrackets(forEachNodeContents, dataDocument, null, dataNode, selectAsName, dataNodeindex + 1);
-				TagNode processedForEachNode = stringBuilderToNode(forEachNodeContents);
-
-				parent.addChildren(processedForEachNode.getChildren());
+			if (selectPath != null && !selectPath.isEmpty()) {
+				String xpath;
+				if (!selectPath.startsWith("/")) {
+					xpath = docBase + "/" + selectPath;
+				} else {
+					xpath = selectPath;
+				}
+				XPathExpression selectExpression = xPathFactory.newXPath().compile(xpath);
+				NodeList dataNodeList = (NodeList) selectExpression.evaluate(dataDocument, XPathConstants.NODESET);
+				for (int dataNodeindex = 0; dataNodeindex < dataNodeList.getLength(); dataNodeindex++) {
+					Node dataNode = dataNodeList.item(dataNodeindex);
+					
+					StringBuilder forEachNodeContents = nodeToStringBuilder(forEachNode);
+					replaceCurlyBrackets(forEachNodeContents, dataDocument, null, dataNode, selectAsName, dataNodeindex + 1);
+					TagNode processedForEachNode = stringBuilderToNode(forEachNodeContents);
+					
+					parent.addChildren(processedForEachNode.getChildren());
+				}
+				parent.removeChild(forEachNode);
+			} else {
+				String message = "'select' attribute is empty or missing";
+				logger.warn("forEach error - {}", message);
+				forEachNode.setAttribute("error", message);
 			}
-
-			parent.removeChild(forEachNode);
 		}
 	}
 

@@ -95,7 +95,7 @@ function Rhinoforms() {
 			}
 			value = value * 1;
 			if (value < decimalA || value > decimalB) {
-				return "Not between " + decimalA + " and " + decimalB + ".";
+				return "Not between " + args.decimalA + " and " + args.decimalB + ".";
 			}
 		});
 

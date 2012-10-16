@@ -30,9 +30,38 @@ public class ValueInjectorTest {
 	}
 
 	@Test
-	public void testRecuringEntityOutput() throws Exception {
-
+	public void testForEachWithDocBaseRelativeXPath() throws Exception {
 		valueInjector.processForEachStatements(formHtml, dataDocument, "/myData/ocean");
+
+		String actual = serialiseHtmlCleanerNode(formHtml);
+		Assert.assertFalse(actual.contains("foreach"));
+		Assert.assertTrue(actual.contains("<span index=\"1\">One</span>"));
+		Assert.assertTrue(actual.contains("<span index=\"2\">Two</span>"));
+	}
+
+	@Test
+	public void testForEachWithAbsoluteXPath() throws Exception {
+		formHtml = htmlCleaner.clean(new FileInputStream("src/test/resources/forEach-absolute-xpath.html"));
+		TagNode forEachNode = formHtml.findElementByName("rf.forEach", true);
+		String selectStatement = forEachNode.getAttributeByName("select");
+		Assert.assertEquals("Select statement is absolute XPath", "/myData/ocean/fishes/fish", selectStatement);
+		
+		valueInjector.processForEachStatements(formHtml, dataDocument, "/myData");
+
+		String actual = serialiseHtmlCleanerNode(formHtml);
+		Assert.assertFalse(actual.contains("foreach"));
+		Assert.assertTrue(actual.contains("<span index=\"1\">One</span>"));
+		Assert.assertTrue(actual.contains("<span index=\"2\">Two</span>"));
+	}
+
+	@Test
+	public void testForEachWithSearchXPath() throws Exception {
+		formHtml = htmlCleaner.clean(new FileInputStream("src/test/resources/forEach-search-xpath.html"));
+		TagNode forEachNode = formHtml.findElementByName("rf.forEach", true);
+		String selectStatement = forEachNode.getAttributeByName("select");
+		Assert.assertEquals("Select statement is search XPath", "//fish", selectStatement);
+
+		valueInjector.processForEachStatements(formHtml, dataDocument, "/myData");
 
 		String actual = serialiseHtmlCleanerNode(formHtml);
 		Assert.assertFalse(actual.contains("foreach"));

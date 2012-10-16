@@ -51,7 +51,7 @@ public class RemoteSubmissionHelper {
 		this.contextPath = contextPath;
 		connectionFactory = new ConnectionFactoryImpl();
 		documentHelper = new DocumentHelper();
-		transformerFactory = TransformerFactoryImpl.newInstance(); // Saxon Impl
+		transformerFactory = new TransformerFactoryImpl(); // Saxon Impl
 	}
 
 	public void handleSubmission(Submission submission, Document dataDocument) throws RemoteSubmissionHelperException {
@@ -65,22 +65,22 @@ public class RemoteSubmissionHelper {
 		LOGGER.debug("Handling '{}' submission to '{}'", method, url);
 
 		String dataDocumentString;
-		String errorMessage = null;
+		String message = null;
 		try {
 			if (preTransform != null) {
-				errorMessage = "Error while transforming Data Document using preTransform for submission.";
+				message = "transforming Data Document using preTransform for submission.";
 				Transformer transformer = getTransformer(preTransform);
 				StringWriter requestDataAfterTransformWriter = new StringWriter();
 				transformer.transform(new DOMSource(dataDocument), new StreamResult(requestDataAfterTransformWriter));
 				dataDocumentString = requestDataAfterTransformWriter.toString();
 			} else {
-				errorMessage = "Error while transforming Data Document into a String for submission.";
+				message = "transforming Data Document into a String for submission.";
 				dataDocumentString = documentHelper.documentToString(dataDocument);
 			}
 		} catch (TransformerException e) {
-			throw new RemoteSubmissionHelperException(errorMessage, e);
+			throw new RemoteSubmissionHelperException("Error while " + message, e);
 		} catch (IOException e) {
-			throw new RemoteSubmissionHelperException(errorMessage, e);
+			throw new RemoteSubmissionHelperException("Error while " + message, e);
 		}
 
 		StringBuilder requestDataBuilder = new StringBuilder();

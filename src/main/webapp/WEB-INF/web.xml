@@ -7,6 +7,8 @@
 <web-app>
 
 	<display-name>Rhinoforms</display-name>
+	
+	<distributable/>
 
 	<servlet>
 		<servlet-name>FormServlet</servlet-name>
@@ -18,7 +20,5 @@
 		<servlet-name>FormServlet</servlet-name>
 		<url-pattern>/rhinoforms/*</url-pattern>
 	</servlet-mapping>
-	
-	<distributable/>
 
 </web-app>
