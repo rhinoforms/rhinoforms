@@ -24,16 +24,15 @@ public class FormFlow implements Serializable {
 	private List<InputPojo> currentInputPojos;
 	private Map<String, FieldSourceProxy> fieldSourceProxies;
 	private String resourcesBase;
-	private RemoteSubmissionHelper remoteSubmissionHelper;
+	private transient RemoteSubmissionHelper remoteSubmissionHelper;
 
 	private static final long serialVersionUID = -5683469121328756822L;
 
-	public FormFlow(RemoteSubmissionHelper remoteSubmissionHelper) {
+	public FormFlow() {
 		this.flowId = (int) (Math.random() * 100000000f) + "";
 		this.formLists = new HashMap<String, List<Form>>();
 		this.navigationStack = new Stack<FlowNavigationLevel>();
 		this.fieldSourceProxies = new HashMap<String, FieldSourceProxy>();
-		this.remoteSubmissionHelper = remoteSubmissionHelper;
 		this.libraries = new ArrayList<String>();
 	}
 
@@ -62,7 +61,11 @@ public class FormFlow implements Serializable {
 		Submission submission = flowAction.getSubmission();
 		if (submission != null) {
 			try {
-				remoteSubmissionHelper.handleSubmission(submission, dataDocument);
+				Map<String, String> xsltParameters = new HashMap<String, String>();
+				xsltParameters.put("rf.flowId", flowId);
+				xsltParameters.put("rf.formId", getCurrentFormId());
+				xsltParameters.put("rf.actionName", action);
+				remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
 			} catch (RemoteSubmissionHelperException e) {
 				throw new ActionError("Remote submission failed.", e);
 			}
@@ -319,6 +322,10 @@ public class FormFlow implements Serializable {
 
 	public void setResourcesBase(String resourcesBase) {
 		this.resourcesBase = resourcesBase;
+	}
+	
+	public void setRemoteSubmissionHelper(RemoteSubmissionHelper remoteSubmissionHelper) {
+		this.remoteSubmissionHelper = remoteSubmissionHelper;
 	}
 
 }

@@ -1,12 +1,14 @@
 package com.rhinoforms;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class FlowNavigationLevel {
+public class FlowNavigationLevel implements Serializable {
 
 	private List<Form> currentFormList;
 	private Form currentForm;
 	private String docBase;
+	private static final long serialVersionUID = -8322834501530178520L;
 
 	public FlowNavigationLevel(List<Form> currentFormList, Form currentForm) {
 		this.currentFormList = currentFormList;

@@ -1,6 +1,8 @@
 package com.rhinoforms;
 
 import java.net.URLDecoder;
+import java.util.HashMap;
+import java.util.Map;
 
 import junit.framework.Assert;
 
@@ -15,6 +17,7 @@ public class RemoteSubmissionHelperTest {
 	private DocumentHelper documentHelper;
 	private TestConnectionFactory testConnectionFactory;
 	private String dataDocumentString;
+	private Map<String, String> xsltParameters;
 	
 	@Before
 	public void setup() throws Exception {
@@ -24,6 +27,7 @@ public class RemoteSubmissionHelperTest {
 		remoteSubmissionHelper.setConnectionFactory(testConnectionFactory);
 		dataDocumentString = "<myData><something>a</something></myData>";
 		dataDocument = TestUtil.createDocument(dataDocumentString);
+		xsltParameters = new HashMap<String, String>();
 	}
 	
 	@Test
@@ -32,7 +36,7 @@ public class RemoteSubmissionHelperTest {
 		submission.getData().put("xml", "[dataDocument]");
 		testConnectionFactory.setResultXmlString("<submissionResult>one</submissionResult>");
 		
-		remoteSubmissionHelper.handleSubmission(submission, dataDocument);
+		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
 		
 		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
 		Assert.assertEquals("xml=<myData><something>a</something></myData>", URLDecoder.decode(submittedData, "UTF-8"));
@@ -47,7 +51,7 @@ public class RemoteSubmissionHelperTest {
 		submission.setResultInsertPoint("/myData/submissionResult");
 		testConnectionFactory.setResultXmlString("<data>one</data>");
 		
-		remoteSubmissionHelper.handleSubmission(submission, dataDocument);
+		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
 		
 		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
 		Assert.assertEquals("xml=" + dataDocumentString, URLDecoder.decode(submittedData, "UTF-8"));
@@ -62,7 +66,7 @@ public class RemoteSubmissionHelperTest {
 		submission.setResultInsertPoint("/myData/submissionResult");
 		testConnectionFactory.setResultXmlString("<data>one</data>");
 		
-		remoteSubmissionHelper.handleSubmission(submission, dataDocument);
+		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
 		
 		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
 		Assert.assertEquals("xml=" + dataDocumentString, URLDecoder.decode(submittedData, "UTF-8"));
@@ -70,7 +74,7 @@ public class RemoteSubmissionHelperTest {
 		Assert.assertEquals("<myData><something>a</something><submissionResult><data>one</data></submissionResult></myData>", dataDocumentStringAfterSubmission);
 		
 		testConnectionFactory.resetByteArrayOutputStream();
-		remoteSubmissionHelper.handleSubmission(submission, dataDocument);
+		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
 		
 		submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
 		dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
@@ -87,7 +91,7 @@ public class RemoteSubmissionHelperTest {
 		testConnectionFactory.setTestResponseMessage("Something went very wrong.");
 		
 		try {
-			remoteSubmissionHelper.handleSubmission(submission, dataDocument);
+			remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
 			Assert.fail("Should have thrown Exception");
 		} catch (RemoteSubmissionHelperException e) {
 			// Pass
@@ -103,7 +107,7 @@ public class RemoteSubmissionHelperTest {
 		submission.setResultInsertPoint("/myData/submissionResult");
 		testConnectionFactory.setResultXmlString("<data>one</data>");
 		
-		remoteSubmissionHelper.handleSubmission(submission, dataDocument);
+		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
 		
 		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
 		Assert.assertEquals("xml=<serverData><abc>a</abc></serverData>", URLDecoder.decode(submittedData, "UTF-8"));
@@ -119,7 +123,7 @@ public class RemoteSubmissionHelperTest {
 		submission.setResultInsertPoint("/myData/submissionResult");
 		testConnectionFactory.setResultXmlString("<serverData><wrapper><premium123>10.00</premium123></wrapper></serverData>");
 		
-		remoteSubmissionHelper.handleSubmission(submission, dataDocument);
+		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
 		
 		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
 		Assert.assertEquals("myXml=" + dataDocumentString, URLDecoder.decode(submittedData, "UTF-8"));

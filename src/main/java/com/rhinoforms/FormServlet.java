@@ -36,6 +36,7 @@ public class FormServlet extends HttpServlet {
 	private ServletHelper servletHelper;
 	private FormSubmissionHelper formSubmissionHelper;
 	private FormParser formParser;
+	private RemoteSubmissionHelper remoteSubmissionHelper;
 	private static final Logger LOGGER = LoggerFactory.getLogger(FormServlet.class);
 
 	@Override
@@ -58,7 +59,9 @@ public class FormServlet extends HttpServlet {
 		}
 
 		this.formSubmissionHelper = new FormSubmissionHelper(masterScope);
-		this.formFlowFactory = new FormFlowFactory(resourceLoader, masterScope, servletContext.getContextPath());
+		this.formFlowFactory = new FormFlowFactory(resourceLoader, masterScope);
+		
+		this.remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader, servletContext.getContextPath());
 	}
 
 	@Override
@@ -75,7 +78,6 @@ public class FormServlet extends HttpServlet {
 				String proxyPath = pathInfo.substring(proxyPathPrefix.length());
 				FormFlow formFlow = getFlow(request);
 				if (formFlow != null) {
-
 					FieldSourceProxy fieldSourceProxy = formFlow.getFieldSourceProxy(proxyPath);
 
 					@SuppressWarnings("unchecked")
@@ -173,6 +175,7 @@ public class FormServlet extends HttpServlet {
 					// Find next form
 					String nextUrl = null;
 					if (action != null) {
+						formFlow.setRemoteSubmissionHelper(remoteSubmissionHelper);
 						nextUrl = formFlow.doAction(action, actionParams, documentHelper);
 					}
 

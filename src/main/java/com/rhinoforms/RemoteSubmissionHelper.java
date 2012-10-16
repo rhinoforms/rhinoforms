@@ -54,7 +54,7 @@ public class RemoteSubmissionHelper {
 		transformerFactory = new TransformerFactoryImpl(); // Saxon Impl
 	}
 
-	public void handleSubmission(Submission submission, Document dataDocument) throws RemoteSubmissionHelperException {
+	public void handleSubmission(Submission submission, Document dataDocument, Map<String, String> xsltParameters) throws RemoteSubmissionHelperException {
 		String url = submission.getUrl();
 		url = url.replaceAll("\\{contextPath\\}", contextPath);
 		String method = submission.getMethod();
@@ -70,6 +70,10 @@ public class RemoteSubmissionHelper {
 			if (preTransform != null) {
 				message = "transforming Data Document using preTransform for submission.";
 				Transformer transformer = getTransformer(preTransform);
+				for (String paramKey : xsltParameters.keySet()) {
+					transformer.setParameter(paramKey, xsltParameters.get(paramKey));
+				}
+
 				StringWriter requestDataAfterTransformWriter = new StringWriter();
 				transformer.transform(new DOMSource(dataDocument), new StreamResult(requestDataAfterTransformWriter));
 				dataDocumentString = requestDataAfterTransformWriter.toString();

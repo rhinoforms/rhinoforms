@@ -27,7 +27,7 @@ public class FormFlowTest {
 		
 		Context jsContext = Context.enter();
 		this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
-		this.formFlowFactory = new FormFlowFactory(resourceLoader, this.masterScope, "");
+		this.formFlowFactory = new FormFlowFactory(resourceLoader, this.masterScope);
 		this.formFlow = formFlowFactory.createFlow("test-flow1.js", "<myData/>");
 	}
 	
