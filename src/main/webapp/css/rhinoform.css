@@ -19,6 +19,9 @@ input[type='radio']+label {
 	margin: 0 5px;
 }
 
+.invalid-message-cleared {
+	visibility: hidden;
+}
 
 /** Auto-complete **/
 .rf-dropdown {

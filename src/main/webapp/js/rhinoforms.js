@@ -442,7 +442,9 @@ function Rhinoforms() {
 				$invalidMessages = $invalidMessages.add(".invalid-message[forname='" + name + "']", $form);
 			}
 		});
-		$invalidMessages.remove();
+		
+		// not removing elements as this can make action button jump up the page before mouseup.
+		$invalidMessages.addClass("invalid-message-cleared");
 	}
 	
 	function getFieldsMap($form, includeValidationAndRfAttributes, fieldName) {
