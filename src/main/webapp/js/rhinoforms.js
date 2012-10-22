@@ -411,13 +411,14 @@ function Rhinoforms() {
 					$errorMessageAfterElement = $("[name='" + $input.attr("name") + "']:visible", $form).last();
 				}
 				// Only once for each name
-				if ($("[forname='" + name + "']", $form).size() == 0) {
+				var invalidMessages = $("[forname='" + name + "']", $form);
+				if (invalidMessages.not(".invalid-message-cleared").size() == 0) {
 					// After the label if the label is next in the DOM
 					var $label = $errorMessageAfterElement.nextAll("label[for='" + $errorMessageAfterElement.attr("id") + "']:visible").first();
 					if ($label.size() != 0) {
 						$errorMessageAfterElement = $label;
 					}
-
+					invalidMessages.remove();
 					$errorMessageAfterElement.after($("<span>").addClass("invalid-message").attr("forname", name).text(message));
 				}
 			}
