@@ -33,7 +33,7 @@ public class ApplicationContext {
 		SingleSourceResourceLoader formResourceLoader;
 		
 		if (formResourcesSource != null && !formResourcesSource.isEmpty()) {
-			formResourceLoader = new ResourceLoaderFactory().createResourceLoader(formResourcesSource);
+			formResourceLoader = new ResourceLoaderFactory(servletContext).createResourceLoader(formResourcesSource);
 		} else {
 			formResourceLoader = new ClasspathResourceLoader();
 		}
