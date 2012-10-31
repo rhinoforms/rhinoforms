@@ -38,7 +38,7 @@ public class JSMasterScope {
 		if (librariesToPreload != null && !librariesToPreload.isEmpty()) {
 			Context jsContext = getCurrentContext();
 			for (String libraryToPreload : librariesToPreload) {
-				InputStream resourceAsStream = resourceLoader.getResourceAsStream(libraryToPreload);
+				InputStream resourceAsStream = resourceLoader.getFormResourceAsStream(libraryToPreload);
 				if (resourceAsStream != null) {
 					jsContext.evaluateReader(workingScope, new InputStreamReader(resourceAsStream), libraryToPreload, 1, null);
 				} else {

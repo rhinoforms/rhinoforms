@@ -1,7 +1,6 @@
 package com.rhinoforms;
 
 import static com.rhinoforms.TestUtil.createDocument;
-import static com.rhinoforms.TestUtil.readFileContents;
 import static com.rhinoforms.TestUtil.serialiseHtmlCleanerNode;
 
 import java.io.ByteArrayOutputStream;
@@ -20,6 +19,8 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.w3c.dom.Document;
 
+import com.rhinoforms.resourceloader.ResourceLoader;
+import com.rhinoforms.resourceloader.ResourceLoaderImpl;
 import com.rhinoforms.serverside.InputPojo;
 
 public class FormParserTest {
@@ -30,18 +31,18 @@ public class FormParserTest {
 	private DocumentHelper documentHelper;
 	private HtmlCleaner htmlCleaner;
 	private FormFlowFactory formFlowFactory;
-	private TestResourceLoader resourceLoader;
+	private ResourceLoader resourceLoader;
 
 	@Before
 	public void setup() throws Exception {
 		Context jsContext = Context.enter();
-		this.resourceLoader = new TestResourceLoader();
+		this.resourceLoader = new ResourceLoaderImpl(new TestResourceLoader(), new TestResourceLoader());
 		this.formParser = new FormParser(resourceLoader);
 		this.documentHelper = new DocumentHelper();
 		this.htmlCleaner = new HtmlCleaner();
 		
 		this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
-		this.formFlowFactory = new FormFlowFactory(new TestResourceLoader(), this.masterScope);
+		this.formFlowFactory = new FormFlowFactory(this.resourceLoader, this.masterScope);
 		this.formFlow = formFlowFactory.createFlow("test-flow1.js", "<myData><fishes><fish><name>One</name></fish><fish><name>Two</name></fish></fishes></myData>");
 		this.formFlow.navigateToFirstForm(documentHelper);
 	}
@@ -54,7 +55,7 @@ public class FormParserTest {
 	@Test
 	public void testIgnoreFieldsWithNoName() throws Exception {
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		formParser.parseForm(readFileContents("src/test/resources/fields-with-no-name.html"), formFlow, new PrintWriter(outputStream), masterScope, false);
+		formParser.parseForm(new FileInputStream("src/test/resources/fields-with-no-name.html"), formFlow, new PrintWriter(outputStream), masterScope, false);
 	}
 
 	@Test
@@ -63,7 +64,7 @@ public class FormParserTest {
 		this.formFlow.navigateToFirstForm(documentHelper);
 		
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		formParser.parseForm(readFileContents("src/test/resources/all-input-types.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope, false);
+		formParser.parseForm(new FileInputStream("src/test/resources/all-input-types.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope, false);
 		
 		List<InputPojo> inputPojos = formFlow.getCurrentInputPojos();
 		
@@ -85,7 +86,7 @@ public class FormParserTest {
 		this.formFlow.navigateToFirstForm(documentHelper);
 		
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		formParser.parseForm(readFileContents("src/test/resources/all-input-types.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope, false);
+		formParser.parseForm(new FileInputStream("src/test/resources/all-input-types.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope, false);
 		
 		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
 		Assert.assertTrue("Option should have value and label from CSV.", parsedFormHtml.contains("<option value=\"1\">Single</option>"));
@@ -97,7 +98,7 @@ public class FormParserTest {
 		this.formFlow.navigateToFirstForm(documentHelper);
 		
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		formParser.parseForm(readFileContents("src/test/resources/all-input-types.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope, false);
+		formParser.parseForm(new FileInputStream("src/test/resources/all-input-types.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope, false);
 		
 		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
 		Assert.assertTrue("Option should have value and label from CSV.", parsedFormHtml.contains("<option value=\"1\">Single</option>"));
@@ -107,7 +108,7 @@ public class FormParserTest {
 	@Test
 	public void testSelectRangePreselectFirstOptionDefaultFalse() throws Exception {
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		formParser.parseForm(readFileContents("src/test/resources/select-range.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope, false);
+		formParser.parseForm(new FileInputStream("src/test/resources/select-range.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope, false);
 		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
 		String[] split = parsedFormHtml.split("<option[^<]*");
 		Assert.assertEquals(8, split.length);
@@ -117,7 +118,7 @@ public class FormParserTest {
 	@Test
 	public void testSelectRangePreselectFirstOptionTrue() throws Exception {
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		formParser.parseForm(readFileContents("src/test/resources/select-range-preselect-true.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope, false);
+		formParser.parseForm(new FileInputStream("src/test/resources/select-range-preselect-true.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope, false);
 		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
 		String[] split = parsedFormHtml.split("<option[^<]*");
 		Assert.assertEquals(7, split.length);
@@ -162,7 +163,7 @@ public class FormParserTest {
 		RhinoformsProperties.getInstance().setShowDebugBar(true);
 		this.formParser = new FormParser(resourceLoader);
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		formParser.parseForm(readFileContents("src/test/resources/empty-form.html"), formFlow, new PrintWriter(outputStream), masterScope, false);
+		formParser.parseForm(new FileInputStream("src/test/resources/empty-form.html"), formFlow, new PrintWriter(outputStream), masterScope, false);
 		String string = outputStream.toString();
 		System.out.println(string);
 		Assert.assertTrue(string.contains("<div class=\"rf-debugbar\">"));

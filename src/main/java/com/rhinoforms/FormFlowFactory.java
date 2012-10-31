@@ -54,7 +54,7 @@ public class FormFlowFactory {
 				} else {
 					if (defaultInitalData != null) {
 						try {
-							dataDocument = documentHelper.streamToDocument(resourceLoader.getResourceAsStream(formFlow.getDefaultInitialData()));
+							dataDocument = documentHelper.streamToDocument(resourceLoader.getFormResourceAsStream(formFlow.getDefaultInitialData()));
 						} catch (DocumentHelperException e) {
 							throw new FormFlowFactoryException("Error parsing default initial data document", e);
 						}
@@ -97,7 +97,7 @@ public class FormFlowFactory {
 		jsContext.evaluateReader(scope, new InputStreamReader(FormFlowFactory.class.getResourceAsStream(scriptPath)), scriptPath, 1,
 				null);
 
-		InputStreamReader inputStreamReader = new InputStreamReader(resourceLoader.getResourceAsStream(formFlowJSDefinitionPath));
+		InputStreamReader inputStreamReader = new InputStreamReader(resourceLoader.getFormResourceAsStream(formFlowJSDefinitionPath));
 		BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append("loadFlow(");

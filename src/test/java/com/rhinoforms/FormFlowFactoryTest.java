@@ -12,17 +12,20 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 
+import com.rhinoforms.resourceloader.ResourceLoaderException;
+import com.rhinoforms.resourceloader.ResourceLoaderImpl;
+
 public class FormFlowFactoryTest {
 
 	private FormFlowFactory formFlowFactory;
 	private JSMasterScope masterScope;
 
 	@Before
-	public void setup() throws IOException {
-		TestResourceLoader resourceLoader = new TestResourceLoader();
+	public void setup() throws IOException, ResourceLoaderException {
+		ResourceLoaderImpl resourceLoader = new ResourceLoaderImpl(new TestResourceLoader(), new TestResourceLoader());
 		Context jsContext = Context.enter();
 		this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
-		this.formFlowFactory = new FormFlowFactory(new TestResourceLoader(), this.masterScope);
+		this.formFlowFactory = new FormFlowFactory(resourceLoader, this.masterScope);
 	}
 	
 	@After

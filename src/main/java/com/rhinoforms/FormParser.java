@@ -56,13 +56,13 @@ public class FormParser {
 		cleanerProperties.setAllowHtmlInsideAttributes(true);
 		this.htmlCleaner = new HtmlCleaner(cleanerProperties);
 		showDebugBar = RhinoformsProperties.getInstance().isShowDebugBar();
-		debugBarNode = loadDebugBar(resourceLoader);
+		debugBarNode = loadDebugBar();
 	}
 
-	public void parseForm(String formContents, FormFlow formFlow, PrintWriter writer, JSMasterScope masterScope, boolean suppressDebugBar)
+	public void parseForm(InputStream formStream, FormFlow formFlow, PrintWriter writer, JSMasterScope masterScope, boolean suppressDebugBar)
 			throws XPatherException, XPathExpressionException, IOException, ResourceLoaderException, FormParserException {
 
-		TagNode formHtml = htmlCleaner.clean(formContents);
+		TagNode formHtml = htmlCleaner.clean(formStream);
 		String flowID = formFlow.getId();
 
 		Document dataDocument = formFlow.getDataDocument();
@@ -127,7 +127,7 @@ public class FormParser {
 			for (TagNode includeNode : includeNodes) {
 				String srcAttribute = includeNode.getAttributeByName("src");
 				srcAttribute = formFlow.resolveResourcePathIfRelative(srcAttribute);
-				InputStream resourceAsStream = resourceLoader.getResourceAsStream(srcAttribute);
+				InputStream resourceAsStream = resourceLoader.getFormResourceAsStream(srcAttribute);
 				if (resourceAsStream != null) {
 					TagNode includeHtml = htmlCleaner.clean(resourceAsStream);
 					TagNode body = includeHtml.findElementByName("body", false);
@@ -370,7 +370,7 @@ public class FormParser {
 		return inputValue;
 	}
 
-	private TagNode loadDebugBar(ResourceLoader resourceLoader) {
+	private TagNode loadDebugBar() {
 		try {
 			InputStream debugBarStream = FormParser.class.getResourceAsStream("/debugbar.html");
 			String barHtmlString = new String(new StreamUtils().readStream(debugBarStream));

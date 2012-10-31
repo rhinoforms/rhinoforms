@@ -184,9 +184,9 @@ public class RemoteSubmissionHelper {
 		}
 	}
 
-	private Transformer getTransformer(String preTransform) throws FileNotFoundException, TransformerFactoryConfigurationError,
+	private Transformer getTransformer(String preTransform) throws IOException, TransformerFactoryConfigurationError,
 			TransformerConfigurationException {
-		InputStream preTransformStream = resourceLoader.getResourceAsStream(preTransform);
+		InputStream preTransformStream = resourceLoader.getFormResourceAsStream(preTransform);
 		if (preTransformStream != null) {
 			Transformer transformer = transformerFactory.newTransformer(new StreamSource(preTransformStream));
 			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");

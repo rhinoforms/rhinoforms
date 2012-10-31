@@ -1,10 +1,12 @@
 package com.rhinoforms.resourceloader;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 
 public interface ResourceLoader {
 
-	InputStream getResourceAsStream(String path) throws FileNotFoundException;
+	InputStream getWebappResourceAsStream(String path) throws IOException;
+	
+	InputStream getFormResourceAsStream(String path) throws IOException;
 	
 }

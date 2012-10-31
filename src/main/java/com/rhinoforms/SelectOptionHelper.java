@@ -22,7 +22,7 @@ public class SelectOptionHelper {
 		List<SelectOptionPojo> options = new ArrayList<SelectOptionPojo>();
 		boolean csv = source.toLowerCase().endsWith(".csv");
 		try {
-			InputStream resourceAsStream = resourceLoader.getResourceAsStream(source);
+			InputStream resourceAsStream = resourceLoader.getFormResourceAsStream(source);
 			if (resourceAsStream != null) {
 				BufferedReader reader = new BufferedReader(new InputStreamReader(resourceAsStream));
 				while (reader.ready()) {

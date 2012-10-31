@@ -45,7 +45,7 @@ public class RhinoFormsMasterScopeFactory {
 
 	private void loadScript(String scriptPath, ScriptableObject sharedScope, Context jsContext, ResourceLoader resourceLoader)
 			throws FileNotFoundException, IOException {
-		InputStream resourceAsStream = resourceLoader.getResourceAsStream(scriptPath);
+		InputStream resourceAsStream = resourceLoader.getWebappResourceAsStream(scriptPath);
 		jsContext.evaluateReader(sharedScope, new InputStreamReader(resourceAsStream), scriptPath, 1, null);
 	}
 	

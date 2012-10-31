@@ -14,6 +14,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 
 import com.rhinoforms.js.NetUtil;
+import com.rhinoforms.resourceloader.ResourceLoaderImpl;
 import com.rhinoforms.serverside.InputPojo;
 
 public class FormSubmissionHelperTest {
@@ -37,8 +38,8 @@ public class FormSubmissionHelperTest {
 			}
 		};
 		
-		
-		masterScope = masterScopeFactory.createMasterScope(context, new TestResourceLoader());
+		ResourceLoaderImpl resourceLoader = new ResourceLoaderImpl(new TestResourceLoader(), new TestResourceLoader());
+		masterScope = masterScopeFactory.createMasterScope(context, resourceLoader);
 		formSubmissionHelper = new FormSubmissionHelper(masterScope);
 		workingScope = masterScope.createWorkingScope();
 	}

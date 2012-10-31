@@ -10,6 +10,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.w3c.dom.Document;
 
+import com.rhinoforms.resourceloader.ResourceLoaderImpl;
+
 public class RemoteSubmissionHelperTest {
 	
 	private RemoteSubmissionHelper remoteSubmissionHelper;
@@ -22,7 +24,8 @@ public class RemoteSubmissionHelperTest {
 	@Before
 	public void setup() throws Exception {
 		documentHelper = new DocumentHelper();
-		remoteSubmissionHelper = new RemoteSubmissionHelper(new TestResourceLoader(), "");
+		ResourceLoaderImpl resourceLoader = new ResourceLoaderImpl(new TestResourceLoader(), new TestResourceLoader());
+		remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader, "");
 		testConnectionFactory = new TestConnectionFactory();
 		remoteSubmissionHelper.setConnectionFactory(testConnectionFactory);
 		dataDocumentString = "<myData><something>a</something></myData>";

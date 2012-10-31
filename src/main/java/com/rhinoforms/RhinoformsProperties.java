@@ -8,6 +8,7 @@ public class RhinoformsProperties {
 
 	private static RhinoformsProperties instance;
 	private boolean showDebugBar;
+	private String formResourceLoader;
 	
 	public static RhinoformsProperties getInstance() {
 		if (instance == null) {
@@ -20,6 +21,26 @@ public class RhinoformsProperties {
 		return instance;
 	}
 
+	public boolean isShowDebugBar() {
+		return showDebugBar;
+	}
+	
+	public void setShowDebugBar(boolean showDebugBar) {
+		this.showDebugBar = showDebugBar;
+	}
+	
+	public String getFormResourceLoader() {
+		return formResourceLoader;
+	}
+	
+	public void setFormResourceLoader(String formResourcesSource) {
+		this.formResourceLoader = formResourcesSource;
+	}
+	
+	static void setInstance(RhinoformsProperties instance) {
+		RhinoformsProperties.instance = instance;
+	}
+	
 	private static RhinoformsProperties createInstance() {
 		RhinoformsProperties rhinoformsProperties = new RhinoformsProperties();
 		String filename = "/Rhinoforms.properties";
@@ -29,6 +50,7 @@ public class RhinoformsProperties {
 			try {
 				properties.load(propertiesStream);
 				rhinoformsProperties.setShowDebugBar("true".equalsIgnoreCase(properties.getProperty("showDebugBar")));
+				rhinoformsProperties.setFormResourceLoader(properties.getProperty("formResourcesSource"));
 				return rhinoformsProperties;
 			} catch (IOException e) {
 				throw new RuntimeException("Failed to load " + filename);
@@ -36,18 +58,6 @@ public class RhinoformsProperties {
 		} else {
 			throw new RuntimeException("Failed to find " + filename);
 		}
-	}
-	
-	static void setInstance(RhinoformsProperties instance) {
-		RhinoformsProperties.instance = instance;
-	}
-	
-	public boolean isShowDebugBar() {
-		return showDebugBar;
-	}
-	
-	public void setShowDebugBar(boolean showDebugBar) {
-		this.showDebugBar = showDebugBar;
 	}
 	
 }

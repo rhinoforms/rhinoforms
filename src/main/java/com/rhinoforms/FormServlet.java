@@ -1,13 +1,13 @@
 package com.rhinoforms;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
 import com.rhinoforms.resourceloader.ResourceLoader;
-import com.rhinoforms.resourceloader.ServletResourceLoader;
+import com.rhinoforms.resourceloader.ResourceLoaderException;
 import com.rhinoforms.util.ServletHelper;
 import com.rhinoforms.util.StringUtils;
 
@@ -37,19 +37,25 @@ public class FormServlet extends HttpServlet {
 	private FormSubmissionHelper formSubmissionHelper;
 	private FormParser formParser;
 	private RemoteSubmissionHelper remoteSubmissionHelper;
+	private ApplicationContext applicationContext;
 	private static final Logger LOGGER = LoggerFactory.getLogger(FormServlet.class);
 
 	@Override
 	public void init() throws ServletException {
 		ServletContext servletContext = getServletContext();
-		this.resourceLoader = new ServletResourceLoader(servletContext);
 		this.documentHelper = new DocumentHelper();
 		this.servletHelper = new ServletHelper();
-		this.formParser = new FormParser(resourceLoader);
 
 		Context jsContext = Context.enter();
 		try {
+			this.applicationContext = new ApplicationContext(servletContext);
+			this.resourceLoader = applicationContext.getResourceLoader();
+			this.formParser = new FormParser(resourceLoader);
 			this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
+		} catch (ResourceLoaderException e) {
+			String message = "Failed to create ResourceLoader.";
+			LOGGER.error(message, e);
+			throw new ServletException(message);
 		} catch (IOException e) {
 			String message = "Failed to create master scope.";
 			LOGGER.error(message, e);
@@ -229,11 +235,10 @@ public class FormServlet extends HttpServlet {
 		String currentFormId = formFlow.getCurrentFormId();
 		response.setHeader("rf.formId", currentFormId);
 
-		RequestDispatcher requestDispatcher = getServletContext().getRequestDispatcher(formUrl);
-		FormResponseWrapper formResponseWrapper = new FormResponseWrapper(response, formParser);
-		requestDispatcher.forward(request, formResponseWrapper);
 		try {
-			formResponseWrapper.parseResponseAndWrite(getServletContext(), formFlow, masterScope, suppressDebugBar);
+			InputStream formStream = resourceLoader.getFormResourceAsStream(formUrl);
+			response.setContentType("text/html");
+			formParser.parseForm(formStream, formFlow, response.getWriter(), masterScope, suppressDebugBar);
 		} catch (Exception e) {
 			String message = "Failed to load next form.";
 			LOGGER.error(message, e);
