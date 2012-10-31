@@ -46,6 +46,14 @@ public class JSSerialiserTest {
 	}
 	
 	@Test
+	public void testValueWithSpecialCharacter() throws Exception {
+		ArrayList<InputPojo> inputPojos = new ArrayList<InputPojo>();
+		inputPojos.add(new InputPojo("one", "text", "\""));
+		String js = jsSerialiser.inputPOJOListToJS(inputPojos);
+		Assert.assertEquals("{\"one\":{name:\"one\",value:\"\\\"\",rfAttributes:{},included:true}}", js);
+	}
+	
+	@Test
 	public void testValAtt() throws Exception {
 		ArrayList<InputPojo> inputPojos = new ArrayList<InputPojo>();
 		HashMap<String, String> rfAttributes = new HashMap<String, String>();

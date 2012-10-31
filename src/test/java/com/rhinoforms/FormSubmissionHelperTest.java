@@ -64,6 +64,19 @@ public class FormSubmissionHelperTest {
 	}
 	
 	@Test
+	public void testValidationWithSpecialCharacter() throws Exception {
+		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
+		HashMap<String, String> rfAttributes = new HashMap<String, String>();
+		rfAttributes.put(Constants.VALIDATION_ATTR, "required");
+		InputPojo married = new InputPojo("name", "text", rfAttributes);
+		married.setValue("\"");
+		inputs.add(married);
+		
+		Set<String> fieldsInError = formSubmissionHelper.validateInput(inputs, workingScope);
+		Assert.assertEquals(0, fieldsInError.size());
+	}
+	
+	@Test
 	public void testValidationKeyword_date() throws Exception {
 		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
 		HashMap<String, String> rfAttributes = new HashMap<String, String>();

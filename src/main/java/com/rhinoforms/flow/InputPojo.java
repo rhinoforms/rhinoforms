@@ -1,6 +1,7 @@
 package com.rhinoforms.flow;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.rhinoforms.Constants;
@@ -20,8 +21,10 @@ public class InputPojo implements Serializable {
 		value = "";
 	}
 
-	public InputPojo(String name, String value) {
+	public InputPojo(String name, String type, String value) {
 		this.name = name;
+		this.type = type;
+		this.rfAttributes = new HashMap<String, String>();
 		this.value = value;
 	}
 

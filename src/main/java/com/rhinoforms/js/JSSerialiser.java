@@ -36,7 +36,7 @@ public class JSSerialiser {
 					stringBuilder.append(inputPOJO.getValue());
 				} else {
 					stringBuilder.append("\"");
-					stringBuilder.append(inputPOJO.getValue());
+					stringBuilder.append(inputPOJO.getValue().replace("\"", "\\\""));
 					stringBuilder.append("\"");
 				}
 				if (inputPOJO.getValidation() != null) {
