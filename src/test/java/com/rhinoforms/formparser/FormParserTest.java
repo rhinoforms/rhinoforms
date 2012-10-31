@@ -23,11 +23,11 @@ import com.rhinoforms.RhinoformsProperties;
 import com.rhinoforms.TestResourceLoader;
 import com.rhinoforms.flow.FormFlow;
 import com.rhinoforms.flow.FormFlowFactory;
+import com.rhinoforms.flow.InputPojo;
 import com.rhinoforms.js.JSMasterScope;
 import com.rhinoforms.js.RhinoFormsMasterScopeFactory;
 import com.rhinoforms.resourceloader.ResourceLoader;
 import com.rhinoforms.resourceloader.ResourceLoaderImpl;
-import com.rhinoforms.serverside.InputPojo;
 import com.rhinoforms.xml.DocumentHelper;
 
 public class FormParserTest {

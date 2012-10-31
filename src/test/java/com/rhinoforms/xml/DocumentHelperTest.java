@@ -16,8 +16,7 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
-import com.rhinoforms.serverside.InputPojo;
-import com.rhinoforms.xml.DocumentHelper;
+import com.rhinoforms.flow.InputPojo;
 
 public class DocumentHelperTest {
 

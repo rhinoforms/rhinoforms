@@ -9,7 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.rhinoforms.Constants;
-import com.rhinoforms.serverside.InputPojo;
+import com.rhinoforms.flow.InputPojo;
 
 public class JSSerialiserTest {
 

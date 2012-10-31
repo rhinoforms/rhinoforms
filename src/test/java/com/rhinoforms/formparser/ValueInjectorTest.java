@@ -13,8 +13,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.w3c.dom.Document;
 
-import com.rhinoforms.formparser.ValueInjector;
-
 public class ValueInjectorTest {
 
 	private ValueInjector valueInjector;

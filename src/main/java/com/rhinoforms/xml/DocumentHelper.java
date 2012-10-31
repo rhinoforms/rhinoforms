@@ -30,7 +30,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.rhinoforms.serverside.InputPojo;
+import com.rhinoforms.flow.InputPojo;
 
 public class DocumentHelper {
 

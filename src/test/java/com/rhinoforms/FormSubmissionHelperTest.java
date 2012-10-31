@@ -13,11 +13,11 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 
+import com.rhinoforms.flow.InputPojo;
 import com.rhinoforms.js.JSMasterScope;
 import com.rhinoforms.js.RhinoFormsMasterScopeFactory;
 import com.rhinoforms.js.TestRhinoFormsMasterScopeFactory;
 import com.rhinoforms.resourceloader.ResourceLoaderImpl;
-import com.rhinoforms.serverside.InputPojo;
 
 public class FormSubmissionHelperTest {
 

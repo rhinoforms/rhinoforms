@@ -34,11 +34,11 @@ import com.rhinoforms.flow.FieldSourceProxy;
 import com.rhinoforms.flow.FlowAction;
 import com.rhinoforms.flow.FlowActionType;
 import com.rhinoforms.flow.FormFlow;
+import com.rhinoforms.flow.InputPojo;
 import com.rhinoforms.flow.ProxyFactory;
 import com.rhinoforms.js.JSMasterScope;
 import com.rhinoforms.resourceloader.ResourceLoader;
 import com.rhinoforms.resourceloader.ResourceLoaderException;
-import com.rhinoforms.serverside.InputPojo;
 import com.rhinoforms.util.StreamUtils;
 
 public class FormParser {

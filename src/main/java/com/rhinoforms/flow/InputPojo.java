@@ -1,4 +1,4 @@
-package com.rhinoforms.serverside;
+package com.rhinoforms.flow;
 
 import java.io.Serializable;
 import java.util.Map;

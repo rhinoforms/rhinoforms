@@ -9,7 +9,6 @@ import java.util.Stack;
 
 import org.w3c.dom.Document;
 
-import com.rhinoforms.serverside.InputPojo;
 import com.rhinoforms.xml.DocumentHelper;
 import com.rhinoforms.xml.DocumentHelperException;
 
