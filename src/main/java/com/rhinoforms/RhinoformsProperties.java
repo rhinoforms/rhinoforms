@@ -50,7 +50,7 @@ public class RhinoformsProperties {
 			try {
 				properties.load(propertiesStream);
 				rhinoformsProperties.setShowDebugBar("true".equalsIgnoreCase(properties.getProperty("showDebugBar")));
-				rhinoformsProperties.setFormResourceLoader(properties.getProperty("formResourcesSource"));
+				rhinoformsProperties.setFormResourceLoader(properties.getProperty("formResourceLoader"));
 				return rhinoformsProperties;
 			} catch (IOException e) {
 				throw new RuntimeException("Failed to load " + filename);
