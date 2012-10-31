@@ -5,8 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
-import com.rhinoforms.resourceloader.SingleSourceResourceLoader;
 import com.rhinoforms.resourceloader.ResourceLoaderException;
+import com.rhinoforms.resourceloader.SingleSourceResourceLoader;
 
 public class TestResourceLoader implements SingleSourceResourceLoader {
 

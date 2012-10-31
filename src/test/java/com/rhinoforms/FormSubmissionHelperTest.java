@@ -13,7 +13,9 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 
-import com.rhinoforms.js.NetUtil;
+import com.rhinoforms.js.JSMasterScope;
+import com.rhinoforms.js.RhinoFormsMasterScopeFactory;
+import com.rhinoforms.js.TestRhinoFormsMasterScopeFactory;
 import com.rhinoforms.resourceloader.ResourceLoaderImpl;
 import com.rhinoforms.serverside.InputPojo;
 
@@ -31,12 +33,7 @@ public class FormSubmissionHelperTest {
 		testNetUtil = new TestNetUtil();
 		
 		// Modified factory which uses testNetUtil
-		RhinoFormsMasterScopeFactory masterScopeFactory = new RhinoFormsMasterScopeFactory() {
-			@Override
-			NetUtil createNetUtil(JSMasterScope masterScope) {
-				return testNetUtil;
-			}
-		};
+		RhinoFormsMasterScopeFactory masterScopeFactory = new TestRhinoFormsMasterScopeFactory(testNetUtil);
 		
 		ResourceLoaderImpl resourceLoader = new ResourceLoaderImpl(new TestResourceLoader(), new TestResourceLoader());
 		masterScope = masterScopeFactory.createMasterScope(context, resourceLoader);

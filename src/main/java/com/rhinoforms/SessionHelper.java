@@ -2,6 +2,8 @@ package com.rhinoforms;
 
 import javax.servlet.http.HttpSession;
 
+import com.rhinoforms.flow.FormFlow;
+
 public class SessionHelper {
 
 	public static void setFlow(FormFlow formFlow, HttpSession session) {
