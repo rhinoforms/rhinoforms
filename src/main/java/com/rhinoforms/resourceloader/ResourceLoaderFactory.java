@@ -2,9 +2,13 @@ package com.rhinoforms.resourceloader;
 
 import javax.servlet.ServletContext;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ResourceLoaderFactory {
 	
 	private ServletContext servletContext;
+	private static final Logger LOGGER = LoggerFactory.getLogger(ResourceLoaderFactory.class);
 
 	public ResourceLoaderFactory(ServletContext servletContext) {
 		this.servletContext = servletContext;
@@ -18,9 +22,11 @@ public class ResourceLoaderFactory {
 			
 			SingleSourceResourceLoader newResourceLoader;
 			if (singleSourceResourceLoaderClassName.equals("com.rhinoforms.resourceloader.DevResourceLoader")) {
+				LOGGER.info("Using DevResourceLoader as the formResourceLoader.");
 				newResourceLoader = new DevResourceLoader(servletContext);
 			} else {
 				try {
+					LOGGER.info("Loading formResourceLoader class '" + singleSourceResourceLoaderClassName + "'.");
 					@SuppressWarnings("unchecked")
 					Class<SingleSourceResourceLoader> resourceLoaderClass = (Class<SingleSourceResourceLoader>) Class
 					.forName(singleSourceResourceLoaderClassName);
@@ -33,6 +39,7 @@ public class ResourceLoaderFactory {
 					throw new RuntimeException("Failed to create ResourceLoader.", e);
 				}
 			}
+			LOGGER.info("Initialising formResourceLoader.");
 			newResourceLoader.initialise(formResourcesSource);
 			return newResourceLoader;
 		} else {

@@ -8,5 +8,7 @@ public interface ResourceLoader {
 	InputStream getWebappResourceAsStream(String path) throws IOException;
 	
 	InputStream getFormResourceAsStream(String path) throws IOException;
+
+	void formResourcesChanged() throws ResourceLoaderException;
 	
 }

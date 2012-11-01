@@ -22,5 +22,12 @@ public class ResourceLoaderImpl implements ResourceLoader {
 	public InputStream getFormResourceAsStream(String path) throws IOException {
 		return formResourceLoader.getResourceAsStream(path);
 	}
+	
+	@Override
+	public void formResourcesChanged() throws ResourceLoaderException {
+		if (formResourceLoader instanceof CachingResourceLoader) {
+			((CachingResourceLoader)formResourceLoader).resourcesChanged();
+		}
+	}
 
 }

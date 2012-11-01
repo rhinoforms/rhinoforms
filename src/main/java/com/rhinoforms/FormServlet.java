@@ -52,6 +52,9 @@ public class FormServlet extends HttpServlet {
 	private RemoteSubmissionHelper remoteSubmissionHelper;
 	private ApplicationContext applicationContext;
 	private static final Logger LOGGER = LoggerFactory.getLogger(FormServlet.class);
+	private static final String PROXY_PATH_PREFIX = "/proxy/";
+	private static final String VIEW_DATA_DOC_PATH_PREFIX = "/data-document/";
+	private static final String FORM_RESOURCES_CHANGED_PREFIX = "/form-resources-changed";
 
 	@Override
 	public void init() throws ServletException {
@@ -79,7 +82,7 @@ public class FormServlet extends HttpServlet {
 
 		this.formSubmissionHelper = new FormSubmissionHelper(masterScope);
 		this.formFlowFactory = new FormFlowFactory(resourceLoader, masterScope);
-		
+
 		this.remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader, servletContext.getContextPath());
 	}
 
@@ -88,79 +91,23 @@ public class FormServlet extends HttpServlet {
 		String pathInfo = request.getPathInfo();
 		HttpSession session = request.getSession();
 
-		if (pathInfo != null) {
-			LOGGER.debug("pathInfo = {}", pathInfo);
-			String proxyPathPrefix = "/proxy/";
-			String viewDataDocPathPrefix = "/data-document/";
-			if (pathInfo.startsWith(proxyPathPrefix)) {
-				// Proxy request
-				String proxyPath = pathInfo.substring(proxyPathPrefix.length());
-				FormFlow formFlow = getFlow(request);
-				if (formFlow != null) {
-					FieldSourceProxy fieldSourceProxy = formFlow.getFieldSourceProxy(proxyPath);
-
-					@SuppressWarnings("unchecked")
-					Map<String, String[]> parameterMapMultiValue = request.getParameterMap();
-					Map<String, String> parameterMap = servletHelper.mapOfArraysToMapOfFirstValues(parameterMapMultiValue);
-					Set<String> paramsToRemove = new HashSet<String>();
-					// remove rf.xx values
-					for (String paramName : parameterMap.keySet()) {
-						if (paramName.startsWith("rf.")) {
-							paramsToRemove.add(paramName);
-						}
-					}
-					for (String paramToRemove : paramsToRemove) {
-						parameterMap.remove(paramToRemove);
-					}
-					try {
-						fieldSourceProxy.makeRequest(parameterMap, response);
-					} catch (FieldSourceProxyException e) {
-						String message = "Failed to perform proxy request.";
-						LOGGER.debug(message, e);
-						sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
-					}
-				} else {
-					String message = "Your session has expired.";
-					LOGGER.debug(message);
-					sendError(HttpServletResponse.SC_FORBIDDEN, message, response);
-				}
-			} else if (pathInfo.startsWith(viewDataDocPathPrefix)) {
-				String flowId = pathInfo.substring(viewDataDocPathPrefix.length());
-				FormFlow formFlow = SessionHelper.getFlow(flowId, session);
-				if (formFlow != null) {
-					Document dataDocument = formFlow.getDataDocument();
-					try {
-						response.setContentType("text/xml");
-						documentHelper.documentToWriterPretty(dataDocument, response.getWriter(), false);
-					} catch (TransformerException e) {
-						throw new ServletException("Failed to display dataDocument", e);
-					}
-				} else {
-					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "No flow found with ID '" + flowId + "'");
-				}
-			}
+		// Method switch based on request URL
+		if (pathInfo == null) {
+			// New flow request
+			doGetCreateFormFlow(request, response, session);
 		} else {
-			// Create requested form flow
-			String formFlowPath = request.getParameter(Constants.FLOW_PATH_PARAM);
-			String initData = request.getParameter(Constants.INIT_DATA_PARAM);
-
-			Context.enter();
-			try {
-				FormFlow newFormFlow = formFlowFactory.createFlow(formFlowPath, initData);
-				SessionHelper.setFlow(newFormFlow, session);
-				String formUrl = newFormFlow.navigateToFirstForm(documentHelper);
-				boolean suppressDebugBar = StringUtils.isStringTrueNullSafe(request.getParameter(Constants.SUPPRESS_DEBUG_BAR_PARAM));
-				forwardToAndParseForm(request, response, newFormFlow, formUrl, suppressDebugBar);
-			} catch (FormFlowFactoryException e) {
-				String message = "Failed to create form flow.";
-				LOGGER.error(message, e);
-				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
-			} catch (ActionError e) {
-				String message = "Failed to navigate to the first form.";
-				LOGGER.error(message, e);
-				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
-			} finally {
-				Context.exit();
+			LOGGER.debug("pathInfo = {}", pathInfo);
+			if (pathInfo.startsWith(VIEW_DATA_DOC_PATH_PREFIX)) {
+				// View DataDocument request
+				String remainingPathInfo = pathInfo.substring(VIEW_DATA_DOC_PATH_PREFIX.length());
+				doGetShowDataDocument(response, session, remainingPathInfo);
+			} else if (pathInfo.startsWith(PROXY_PATH_PREFIX)) {
+				// Proxy request
+				String remainingPathInfo = pathInfo.substring(PROXY_PATH_PREFIX.length());
+				doGetProxyRequest(request, response, remainingPathInfo);
+			} else if (pathInfo.startsWith(FORM_RESOURCES_CHANGED_PREFIX)) {
+				// Form resources changed notification request
+				doGetFormResourcesChangedNotification(response);
 			}
 		}
 	}
@@ -175,12 +122,12 @@ public class FormServlet extends HttpServlet {
 			Map<String, String[]> parameterMapMultiValue = request.getParameterMap();
 			Map<String, String> parameterMap = servletHelper.mapOfArraysToMapOfFirstValues(parameterMapMultiValue);
 
-			formFlow = getFlow(request);
+			formFlow = getFlowFromSession(request);
 
 			if (formFlow != null) {
 				Map<String, String> actionParams = new HashMap<String, String>();
 				String action = formSubmissionHelper.collectActionParameters(actionParams, parameterMap);
-				
+
 				FlowAction flowAction = formFlow.getCurrentActions().get(action);
 				Set<String> fieldsInError = null;
 				if (flowAction != null) {
@@ -229,21 +176,34 @@ public class FormServlet extends HttpServlet {
 		}
 	}
 
-	private FormFlow getFlow(HttpServletRequest request) throws ServletException {
-		String parameter = request.getParameter(Constants.FLOW_ID_FIELD_NAME);
-		if (parameter != null && parameter.matches("\\d+")) {
-			String flowId = parameter;
-			HttpSession session = request.getSession();
-			FormFlow formFlow = SessionHelper.getFlow(flowId, session);
-			return formFlow;
-		} else {
-			throw new ServletException("Missing " + Constants.FLOW_ID_FIELD_NAME + ".");
+	private void doGetCreateFormFlow(HttpServletRequest request, HttpServletResponse response, HttpSession session) throws IOException,
+			ServletException {
+		String formFlowPath = request.getParameter(Constants.FLOW_PATH_PARAM);
+		String initData = request.getParameter(Constants.INIT_DATA_PARAM);
+
+		Context.enter();
+		try {
+			FormFlow newFormFlow = formFlowFactory.createFlow(formFlowPath, initData);
+			SessionHelper.setFlow(newFormFlow, session);
+			String formUrl = newFormFlow.navigateToFirstForm(documentHelper);
+			boolean suppressDebugBar = StringUtils.isStringTrueNullSafe(request.getParameter(Constants.SUPPRESS_DEBUG_BAR_PARAM));
+			forwardToAndParseForm(request, response, newFormFlow, formUrl, suppressDebugBar);
+		} catch (FormFlowFactoryException e) {
+			String message = "Failed to create form flow.";
+			LOGGER.error(message, e);
+			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
+		} catch (ActionError e) {
+			String message = "Failed to navigate to the first form.";
+			LOGGER.error(message, e);
+			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
+		} finally {
+			Context.exit();
 		}
 	}
 
-	private void forwardToAndParseForm(HttpServletRequest request, HttpServletResponse response, FormFlow formFlow, String formUrl, boolean suppressDebugBar)
-			throws ServletException, IOException {
-		
+	private void forwardToAndParseForm(HttpServletRequest request, HttpServletResponse response, FormFlow formFlow, String formUrl,
+			boolean suppressDebugBar) throws ServletException, IOException {
+
 		formUrl = formFlow.resolveResourcePathIfRelative(formUrl);
 		String currentFormId = formFlow.getCurrentFormId();
 		response.setHeader("rf.formId", currentFormId);
@@ -258,7 +218,78 @@ public class FormServlet extends HttpServlet {
 			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 		}
 	}
-	
+
+	private void doGetShowDataDocument(HttpServletResponse response, HttpSession session, String flowId) throws IOException,
+			ServletException {
+		FormFlow formFlow = SessionHelper.getFlow(flowId, session);
+		if (formFlow != null) {
+			Document dataDocument = formFlow.getDataDocument();
+			try {
+				response.setContentType("text/xml");
+				documentHelper.documentToWriterPretty(dataDocument, response.getWriter(), false);
+			} catch (TransformerException e) {
+				throw new ServletException("Failed to display dataDocument", e);
+			}
+		} else {
+			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "No flow found with ID '" + flowId + "'");
+		}
+	}
+
+	private void doGetProxyRequest(HttpServletRequest request, HttpServletResponse response, String proxyPath) throws ServletException,
+			IOException {
+		FormFlow formFlow = getFlowFromSession(request);
+		if (formFlow != null) {
+			FieldSourceProxy fieldSourceProxy = formFlow.getFieldSourceProxy(proxyPath);
+
+			@SuppressWarnings("unchecked")
+			Map<String, String[]> parameterMapMultiValue = request.getParameterMap();
+			Map<String, String> parameterMap = servletHelper.mapOfArraysToMapOfFirstValues(parameterMapMultiValue);
+			Set<String> paramsToRemove = new HashSet<String>();
+			// remove rf.xx values
+			for (String paramName : parameterMap.keySet()) {
+				if (paramName.startsWith("rf.")) {
+					paramsToRemove.add(paramName);
+				}
+			}
+			for (String paramToRemove : paramsToRemove) {
+				parameterMap.remove(paramToRemove);
+			}
+			try {
+				fieldSourceProxy.makeRequest(parameterMap, response);
+			} catch (FieldSourceProxyException e) {
+				String message = "Failed to perform proxy request.";
+				LOGGER.debug(message, e);
+				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
+			}
+		} else {
+			String message = "Your session has expired.";
+			LOGGER.debug(message);
+			sendError(HttpServletResponse.SC_FORBIDDEN, message, response);
+		}
+	}
+
+	private void doGetFormResourcesChangedNotification(HttpServletResponse response) throws IOException {
+		try {
+			resourceLoader.formResourcesChanged();
+			response.getWriter().write("Successfully notified Resource Loader.");
+		} catch (ResourceLoaderException e) {
+			LOGGER.error(e.getMessage(), e);
+			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), response);
+		}
+	}
+
+	private FormFlow getFlowFromSession(HttpServletRequest request) throws ServletException {
+		String parameter = request.getParameter(Constants.FLOW_ID_FIELD_NAME);
+		if (parameter != null && parameter.matches("\\d+")) {
+			String flowId = parameter;
+			HttpSession session = request.getSession();
+			FormFlow formFlow = SessionHelper.getFlow(flowId, session);
+			return formFlow;
+		} else {
+			throw new ServletException("Missing " + Constants.FLOW_ID_FIELD_NAME + ".");
+		}
+	}
+
 	private void sendError(int errorCode, String message, HttpServletResponse response) throws IOException {
 		response.setStatus(errorCode);
 		response.setContentType("text/plain");
