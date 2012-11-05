@@ -30,6 +30,7 @@ public interface Constants {
 	String CALCULATED_ATTR = "rf.calculated";
 	String INCLUDE_ELEMENT = "rf.include";
 	String FOR_EACH_ELEMENT = "rf.forEach";
-
+	String ACTION_ATTR = "rf.action";
+	String ACTION_TYPE_ATTR = "rf.actionType";
 	
 }

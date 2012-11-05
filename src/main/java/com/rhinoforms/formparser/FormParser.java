@@ -210,14 +210,14 @@ public class FormParser {
 
 	private void processActions(Map<String, FlowAction> currentActions, TagNode formNode) {
 		@SuppressWarnings("unchecked")
-		List<TagNode> actions = formNode.getElementListHavingAttribute("action", true);
+		List<TagNode> actions = formNode.getElementListHavingAttribute(Constants.ACTION_ATTR, true);
 		for (TagNode actionTagNode : actions) {
-			String actionName = actionTagNode.getAttributeByName("action");
+			String actionName = actionTagNode.getAttributeByName(Constants.ACTION_ATTR);
 			FlowAction flowAction = currentActions.get(actionName);
 			if (flowAction != null) {
 				FlowActionType type = flowAction.getType();
 				if (type != null) {
-					actionTagNode.setAttribute("actionType", type.toString());
+					actionTagNode.setAttribute(Constants.ACTION_TYPE_ATTR, type.toString());
 				}
 			}
 		}

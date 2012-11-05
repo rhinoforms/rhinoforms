@@ -249,13 +249,13 @@ function Rhinoforms() {
 		});
 		
 		// Wire action buttons
-		$form.attr("action", "javascript: void(0)");
-		$("[action]", $form).click(function() {
+		$form.attr("rf.action", "javascript: void(0)");
+		$("[rf\\.action]", $form).click(function() {
 			var $this = $(this);
-			var action = $this.attr("action");
-			var type = $this.attr("actionType");
-			var container = $this.attr("container");
-			var unbind = $this.attr("unbind");
+			var action = $this.attr("rf.action");
+			var type = $this.attr("rf.actionType");
+			var container = $this.attr("rf.container");
+			var unbind = $this.attr("rf.unbind");
 			var suppressDebugBar = false;
 			var $actionTargetContainer = $container;
 			if (container) {

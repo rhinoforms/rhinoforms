@@ -1,1 +1,0 @@
-Next button should be of type 'submit', other buttons of type 'button'. That way pressing enter will always submit the form.

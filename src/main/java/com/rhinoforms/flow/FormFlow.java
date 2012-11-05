@@ -206,7 +206,8 @@ public class FormFlow implements Serializable {
 			StringBuilder builder = new StringBuilder();
 			builder.append("Action not valid for the current form. ");
 			builder.append("Current formId: ").append(getCurrentNavigationLevel().getCurrentForm().getId()).append(", ");
-			builder.append("valid actions: ").append(actions.keySet());
+			builder.append("valid actions: ").append(actions.keySet()).append(", ");
+			builder.append("requested action: ").append(action);
 			throw new ActionError(builder.toString());
 		}
 	}
