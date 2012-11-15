@@ -188,6 +188,10 @@ public class DocumentHelper {
 		documentToWriter(document, writer, false, true);
 	}
 	
+	public void documentToWriter(Node document, Writer writer, boolean omitXmlDeclaration) throws TransformerException {
+		documentToWriter(document, writer, false, omitXmlDeclaration);
+	}
+	
 	public void documentToWriterPretty(Node document, Writer writer) throws TransformerException {
 		documentToWriter(document, writer, true, true);
 	}

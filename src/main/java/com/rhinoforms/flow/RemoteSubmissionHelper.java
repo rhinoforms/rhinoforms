@@ -70,7 +70,7 @@ public class RemoteSubmissionHelper {
 		try {
 			if (preTransform != null) {
 				message = "transforming Data Document using preTransform for submission.";
-				Transformer transformer = getTransformer(preTransform);
+				Transformer transformer = getTransformer(preTransform, submission.isOmitXmlDeclaration());
 				for (String paramKey : xsltParameters.keySet()) {
 					transformer.setParameter(paramKey, xsltParameters.get(paramKey));
 				}
@@ -80,7 +80,9 @@ public class RemoteSubmissionHelper {
 				dataDocumentString = requestDataAfterTransformWriter.toString();
 			} else {
 				message = "transforming Data Document into a String for submission.";
-				dataDocumentString = documentHelper.documentToString(dataDocument);
+				StringWriter stringWriter = new StringWriter();
+				documentHelper.documentToWriter(dataDocument, stringWriter, submission.isOmitXmlDeclaration());
+				dataDocumentString = stringWriter.toString();
 			}
 		} catch (TransformerException e) {
 			throw new RemoteSubmissionHelperException("Error while " + message, e);
@@ -151,7 +153,7 @@ public class RemoteSubmissionHelper {
 					
 					Node nodeToImport = null;
 					if (postTransform != null) {
-						Transformer transformer = getTransformer(postTransform);
+						Transformer transformer = getTransformer(postTransform, true);
 						DOMResult domResult = new DOMResult();
 						transformer.transform(new DOMSource(resultDocument), domResult);
 						nodeToImport = domResult.getNode().getChildNodes().item(0);
@@ -185,12 +187,14 @@ public class RemoteSubmissionHelper {
 		}
 	}
 
-	private Transformer getTransformer(String preTransform) throws IOException, TransformerFactoryConfigurationError,
+	private Transformer getTransformer(String preTransform, boolean omitXmlDeclaration) throws IOException, TransformerFactoryConfigurationError,
 			TransformerConfigurationException {
 		InputStream preTransformStream = resourceLoader.getFormResourceAsStream(preTransform);
 		if (preTransformStream != null) {
 			Transformer transformer = transformerFactory.newTransformer(new StreamSource(preTransformStream));
-			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+			if (omitXmlDeclaration) {
+				transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+			}
 			return transformer;
 		} else {
 			throw new FileNotFoundException(preTransform);

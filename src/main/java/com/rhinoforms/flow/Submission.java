@@ -12,12 +12,14 @@ public class Submission implements Serializable {
 	private String resultInsertPoint;
 	private String preTransform;
 	private String postTransform;
+	private boolean omitXmlDeclaration;
 	private static final long serialVersionUID = -6314856649818697445L;
 
 	public Submission(String url) {
 		this.url = url;
 		data = new HashMap<String, String>();
 		method = "POST";
+		omitXmlDeclaration = false;
 	}
 
 	public String getUrl() {
@@ -62,6 +64,14 @@ public class Submission implements Serializable {
 
 	public void setPostTransform(String postTransform) {
 		this.postTransform = postTransform;
+	}
+	
+	public boolean isOmitXmlDeclaration() {
+		return omitXmlDeclaration;
+	}
+	
+	public void setOmitXmlDeclaration(boolean omitXmlDeclaration) {
+		this.omitXmlDeclaration = omitXmlDeclaration;
 	}
 
 }

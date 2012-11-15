@@ -40,6 +40,7 @@ public class RemoteSubmissionHelperTest {
 	@Test
 	public void testSimplestHandleSubmission() throws Exception {
 		Submission submission = new Submission("http://localhost/dummyURL");
+		submission.setOmitXmlDeclaration(true);
 		submission.getData().put("xml", "[dataDocument]");
 		testConnectionFactory.setResultXmlString("<submissionResult>one</submissionResult>");
 		
@@ -52,8 +53,23 @@ public class RemoteSubmissionHelperTest {
 	}
 	
 	@Test
+	public void testSimplestHandleSubmissionWithXmlDeclaration() throws Exception {
+		Submission submission = new Submission("http://localhost/dummyURL");
+		submission.getData().put("xml", "[dataDocument]");
+		testConnectionFactory.setResultXmlString("<submissionResult>one</submissionResult>");
+		
+		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
+		
+		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
+		Assert.assertEquals("xml=<?xml version=\"1.0\" encoding=\"UTF-8\"?><myData><something>a</something></myData>", URLDecoder.decode(submittedData, "UTF-8"));
+		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
+		Assert.assertEquals("<myData><something>a</something></myData>", dataDocumentStringAfterSubmission);
+	}
+	
+	@Test
 	public void testHandleSubmissionInsertResult() throws Exception {
 		Submission submission = new Submission("http://localhost/dummyURL");
+		submission.setOmitXmlDeclaration(true);
 		submission.getData().put("xml", "[dataDocument]");
 		submission.setResultInsertPoint("/myData/submissionResult");
 		testConnectionFactory.setResultXmlString("<data>one</data>");
@@ -69,6 +85,7 @@ public class RemoteSubmissionHelperTest {
 	@Test
 	public void testHandleSubmissionInsertResultReplaceExisting() throws Exception {
 		Submission submission = new Submission("http://localhost/dummyURL");
+		submission.setOmitXmlDeclaration(true);
 		submission.getData().put("xml", "[dataDocument]");
 		submission.setResultInsertPoint("/myData/submissionResult");
 		testConnectionFactory.setResultXmlString("<data>one</data>");
@@ -91,6 +108,7 @@ public class RemoteSubmissionHelperTest {
 	@Test
 	public void testHandleSubmissionBadResult() {
 		Submission submission = new Submission("http://localhost/dummyURL");
+		submission.setOmitXmlDeclaration(true);
 		submission.getData().put("xml", "[dataDocument]");
 		submission.setResultInsertPoint("/myData");
 		testConnectionFactory.setResultXmlString("<submissionResult>one</submissionResult>");
@@ -109,6 +127,7 @@ public class RemoteSubmissionHelperTest {
 	@Test
 	public void testHandleSubmissionPreTransform() throws Exception {
 		Submission submission = new Submission("http://localhost/dummyURL");
+		submission.setOmitXmlDeclaration(true);
 		submission.setPreTransform("xslt/toServerFormat.xsl");
 		submission.getData().put("xml", "[dataDocument]");
 		submission.setResultInsertPoint("/myData/submissionResult");
@@ -123,8 +142,25 @@ public class RemoteSubmissionHelperTest {
 	}
 	
 	@Test
+	public void testHandleSubmissionPreTransformWithXmlDeclaration() throws Exception {
+		Submission submission = new Submission("http://localhost/dummyURL");
+		submission.setPreTransform("xslt/toServerFormat.xsl");
+		submission.getData().put("xml", "[dataDocument]");
+		submission.setResultInsertPoint("/myData/submissionResult");
+		testConnectionFactory.setResultXmlString("<data>one</data>");
+		
+		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
+		
+		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
+		Assert.assertEquals("xml=<?xml version=\"1.0\" encoding=\"UTF-8\"?><serverData><abc>a</abc></serverData>", URLDecoder.decode(submittedData, "UTF-8"));
+		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
+		Assert.assertEquals("<myData><something>a</something><submissionResult><data>one</data></submissionResult></myData>", dataDocumentStringAfterSubmission);
+	}
+	
+	@Test
 	public void testHandleSubmissionPostTransform() throws Exception {
 		Submission submission = new Submission("http://localhost/dummyURL");
+		submission.setOmitXmlDeclaration(true);
 		submission.getData().put("myXml", "[dataDocument]");
 		submission.setPostTransform("xslt/fromServerFormat.xsl");
 		submission.setResultInsertPoint("/myData/submissionResult");

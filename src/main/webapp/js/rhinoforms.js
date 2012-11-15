@@ -249,7 +249,7 @@ function Rhinoforms() {
 		});
 		
 		// Wire action buttons
-		$form.attr("rf.action", "javascript: void(0)");
+		$form.attr("action", "javascript: void(0)");
 		$("[rf\\.action]", $form).click(function() {
 			var $this = $(this);
 			var action = $this.attr("rf.action");
@@ -271,7 +271,7 @@ function Rhinoforms() {
 		$form.addClass("rf-active-form");
 		
 		// Give first input focus
-		var $forFocus = $(":input[action!='back'][type!='hidden']:enabled", $container);
+		var $forFocus = $(":input[rf\\.action!='back'][type!='hidden']:enabled", $container);
 		$forFocus.first().focus();
 		
 		doOnFormLoad(formId);
