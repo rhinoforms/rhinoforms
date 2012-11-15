@@ -130,6 +130,7 @@ public class RemoteSubmissionHelper {
 			HttpURLConnection connection = connectionFactory.openConnection(url);
 
 			connection.setRequestMethod(method.toUpperCase());
+			connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 
 			if (method.equals("POST") && !requestDataString.isEmpty()) {
 				connection.setDoOutput(true);
