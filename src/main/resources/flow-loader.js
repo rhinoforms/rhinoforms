@@ -72,6 +72,9 @@ function loadFlow(flowMap) {
 					if (actionSubmission.method) {
 						submissionJ.setMethod(actionSubmission.method);
 					}
+					if (actionSubmission.rawXmlRequest && (actionSubmission.rawXmlRequest == true || actionSubmission.rawXmlRequest.toLowerCase() == "true")) {
+						submissionJ.setRawXmlRequest(true);
+					}
 					var data = actionSubmission.data;
 					if (data) {
 						var dataMapJ = submissionJ.getData();

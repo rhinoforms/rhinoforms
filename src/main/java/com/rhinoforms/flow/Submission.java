@@ -13,6 +13,7 @@ public class Submission implements Serializable {
 	private String preTransform;
 	private String postTransform;
 	private boolean omitXmlDeclaration;
+	private boolean rawXmlRequest;
 	private static final long serialVersionUID = -6314856649818697445L;
 
 	public Submission(String url) {
@@ -72,6 +73,14 @@ public class Submission implements Serializable {
 	
 	public void setOmitXmlDeclaration(boolean omitXmlDeclaration) {
 		this.omitXmlDeclaration = omitXmlDeclaration;
+	}
+	
+	public boolean isRawXmlRequest() {
+		return rawXmlRequest;
+	}
+	
+	public void setRawXmlRequest(boolean rawXmlRequest) {
+		this.rawXmlRequest = rawXmlRequest;
 	}
 
 }

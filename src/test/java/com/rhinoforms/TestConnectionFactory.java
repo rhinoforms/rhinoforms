@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
 
@@ -17,6 +19,7 @@ public class TestConnectionFactory implements ConnectionFactory {
 	private int testResponseCode = 200;
 	private String testResponseMessage = "";
 	private ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+	private Map<String, String> requestProperties = new HashMap<String, String>();
 	
 	@Override
 	public HttpURLConnection openConnection(String url) throws MalformedURLException, IOException {
@@ -55,6 +58,11 @@ public class TestConnectionFactory implements ConnectionFactory {
 				return new ByteArrayInputStream(resultXmlString.getBytes());
 			}
 			
+			@Override
+			public void setRequestProperty(String key, String value) {
+				requestProperties.put(key, value);
+			}
+			
 		};
 	}
 	
@@ -76,6 +84,10 @@ public class TestConnectionFactory implements ConnectionFactory {
 	
 	public void resetByteArrayOutputStream() {
 		byteArrayOutputStream.reset();
+	}
+	
+	public Map<String, String> getRequestProperties() {
+		return requestProperties;
 	}
 	
 }

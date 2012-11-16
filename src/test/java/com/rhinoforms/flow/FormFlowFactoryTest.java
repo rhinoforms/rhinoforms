@@ -108,10 +108,34 @@ public class FormFlowFactoryTest {
 		Assert.assertNotNull(submission);
 		Assert.assertEquals("http://localhost/dummy-url", submission.getUrl());
 		Assert.assertEquals("POST", submission.getMethod());
+		Assert.assertEquals(false, submission.isRawXmlRequest());
 		Map<String, String> data = submission.getData();
 		Assert.assertEquals(2, data.size());
 		Assert.assertEquals("10", data.get("type"));
 		Assert.assertEquals("[dataDocument]", data.get("paramA"));
+		Assert.assertEquals("/myData/submissionResult", submission.getResultInsertPoint());
+		Assert.assertEquals(null, submission.getPreTransform());
+		Assert.assertEquals(null, submission.getPostTransform());
+	}
+	
+	@Test
+	public void testCreateFlowRawSubmission() throws Exception {
+		FormFlow formFlow = formFlowFactory.createFlow("test-flow1-submission-raw.js", null);
+		Map<String, List<Form>> formLists = formFlow.getFormLists();
+		List<Form> list = formLists.get("main");
+		Iterator<Form> iterator = list.iterator();
+		Form nextForm = iterator.next();
+		Map<String, FlowAction> actions = nextForm.getActions();
+		FlowAction flowActionToServer = actions.get("sendToMyServer");
+		Assert.assertNotNull(flowActionToServer);
+		
+		Submission submission = flowActionToServer.getSubmission();
+		Assert.assertNotNull(submission);
+		Assert.assertEquals("http://localhost/dummy-url", submission.getUrl());
+		Assert.assertEquals("POST", submission.getMethod());
+		Assert.assertEquals(true, submission.isRawXmlRequest());
+		Map<String, String> data = submission.getData();
+		Assert.assertTrue(data.isEmpty());
 		Assert.assertEquals("/myData/submissionResult", submission.getResultInsertPoint());
 		Assert.assertEquals(null, submission.getPreTransform());
 		Assert.assertEquals(null, submission.getPostTransform());

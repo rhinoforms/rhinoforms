@@ -33,6 +33,7 @@ import org.w3c.dom.NodeList;
 import com.rhinoforms.net.ConnectionFactory;
 import com.rhinoforms.net.ConnectionFactoryImpl;
 import com.rhinoforms.resourceloader.ResourceLoader;
+import com.rhinoforms.util.StreamUtils;
 import com.rhinoforms.xml.DocumentHelper;
 import com.rhinoforms.xml.DocumentHelperException;
 
@@ -55,13 +56,15 @@ public class RemoteSubmissionHelper {
 		transformerFactory = new TransformerFactoryImpl(); // Saxon Impl
 	}
 
-	public void handleSubmission(Submission submission, Document dataDocument, Map<String, String> xsltParameters) throws RemoteSubmissionHelperException {
+	public void handleSubmission(Submission submission, Document dataDocument, Map<String, String> xsltParameters)
+			throws RemoteSubmissionHelperException {
 		String url = submission.getUrl();
 		url = url.replaceAll("\\{contextPath\\}", contextPath);
 		String method = submission.getMethod();
 		Map<String, String> data = submission.getData();
 		String preTransform = submission.getPreTransform();
 		String postTransform = submission.getPostTransform();
+		boolean rawXmlRequest = submission.isRawXmlRequest();
 
 		LOGGER.debug("Handling '{}' submission to '{}'", method, url);
 
@@ -90,49 +93,45 @@ public class RemoteSubmissionHelper {
 			throw new RemoteSubmissionHelperException("Error while " + message, e);
 		}
 
-		StringBuilder requestDataBuilder = new StringBuilder();
-		if (!data.isEmpty()) {
-			try {
-				boolean first = true;
-				for (String key : data.keySet()) {
-					if (first) {
-						first = false;
-					} else {
-						requestDataBuilder.append("&");
+		String requestDataString;
+		try {
+			if (!rawXmlRequest) {
+				StringBuilder requestDataBuilder = new StringBuilder();
+				if (!data.isEmpty()) {
+					boolean first = true;
+					for (String key : data.keySet()) {
+						if (first) {
+							first = false;
+						} else {
+							requestDataBuilder.append("&");
+						}
+						requestDataBuilder.append(URLEncoder.encode(key, UTF8));
+						requestDataBuilder.append("=");
+						String dataValue = data.get(key);
+						if (DATA_DOCUMENT_VALUE_KEY.equals(dataValue)) {
+							dataValue = dataDocumentString;
+						}
+						requestDataBuilder.append(URLEncoder.encode(dataValue, UTF8));
 					}
-					requestDataBuilder.append(URLEncoder.encode(key, UTF8));
-					requestDataBuilder.append("=");
-					String dataValue = data.get(key);
-					if (DATA_DOCUMENT_VALUE_KEY.equals(dataValue)) {
-						dataValue = dataDocumentString;
-					}
-					requestDataBuilder.append(URLEncoder.encode(dataValue, UTF8));
 				}
-			} catch (UnsupportedEncodingException e) {
-				throw new RemoteSubmissionHelperException("Failed to encode values for submission", e);
-			}
-		}
-		String requestDataString = requestDataBuilder.toString();
-
-		// If data not being sent in body, add as URL parameters
-		if (!method.equals("POST")) {
-			if (!url.contains("?")) {
-				url += "?";
+				requestDataString = requestDataBuilder.toString();
 			} else {
-				url += "&";
+				requestDataString = URLEncoder.encode(dataDocumentString, UTF8);
 			}
-			url += requestDataString;
+		} catch (UnsupportedEncodingException e) {
+			throw new RemoteSubmissionHelperException("Failed to encode values for submission", e);
 		}
 
 		LOGGER.debug("Submission data: {}", requestDataString);
-		
+
 		try {
 			HttpURLConnection connection = connectionFactory.openConnection(url);
 
 			connection.setRequestMethod(method.toUpperCase());
-			connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+			
 
-			if (method.equals("POST") && !requestDataString.isEmpty()) {
+			if (method.equals("POST")) {
+				connection.setRequestProperty("Content-Type", rawXmlRequest ? "application/xml" : "application/x-www-form-urlencoded");
 				connection.setDoOutput(true);
 				OutputStream outputStream = connection.getOutputStream();
 				OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream);
@@ -143,36 +142,43 @@ public class RemoteSubmissionHelper {
 			int responseCode = connection.getResponseCode();
 			if (responseCode == 200) {
 				String resultInsertPoint = submission.getResultInsertPoint();
-				if (resultInsertPoint != null) {
-					InputStream inputStream = connection.getInputStream();
-					
-					Document resultDocument = documentHelper.streamToDocument(inputStream);
+				String contentType = connection.getContentType();
+				LOGGER.info("Response content type: {}", contentType);
+				InputStream inputStream = connection.getInputStream();
+				try {
+					if (resultInsertPoint != null) {
+						Document resultDocument = documentHelper.streamToDocument(inputStream);
 
-					if (LOGGER.isDebugEnabled()) {
-						LOGGER.debug("Result document: {}", documentHelper.documentToString(resultDocument));
-					}
-					
-					Node nodeToImport = null;
-					if (postTransform != null) {
-						Transformer transformer = getTransformer(postTransform, true);
-						DOMResult domResult = new DOMResult();
-						transformer.transform(new DOMSource(resultDocument), domResult);
-						nodeToImport = domResult.getNode().getChildNodes().item(0);
 						if (LOGGER.isDebugEnabled()) {
-							LOGGER.debug("Transformed result: {}", documentHelper.documentToString(nodeToImport));
+							LOGGER.debug("Result document: {}", documentHelper.documentToString(resultDocument));
 						}
-					} else {
-						nodeToImport = resultDocument.getChildNodes().item(0);
-					}
 
-					Node importedNode = dataDocument.importNode(nodeToImport, true);
-					Node insertPointNode = documentHelper.lookupOrCreateNode(dataDocument, resultInsertPoint);
-					
-					NodeList childNodes = insertPointNode.getChildNodes();
-					for (int i = 0; i < childNodes.getLength(); i++) {
-						insertPointNode.removeChild(childNodes.item(i));
+						Node nodeToImport = null;
+						if (postTransform != null) {
+							Transformer transformer = getTransformer(postTransform, true);
+							DOMResult domResult = new DOMResult();
+							transformer.transform(new DOMSource(resultDocument), domResult);
+							nodeToImport = domResult.getNode().getChildNodes().item(0);
+							if (LOGGER.isDebugEnabled()) {
+								LOGGER.debug("Transformed result: {}", documentHelper.documentToString(nodeToImport));
+							}
+						} else {
+							nodeToImport = resultDocument.getChildNodes().item(0);
+						}
+
+						Node importedNode = dataDocument.importNode(nodeToImport, true);
+						Node insertPointNode = documentHelper.lookupOrCreateNode(dataDocument, resultInsertPoint);
+
+						NodeList childNodes = insertPointNode.getChildNodes();
+						for (int i = 0; i < childNodes.getLength(); i++) {
+							insertPointNode.removeChild(childNodes.item(i));
+						}
+						insertPointNode.appendChild(importedNode);
+					} else {
+						LOGGER.info("Response body: {}", new String(new StreamUtils().readStream(connection.getInputStream())));
 					}
-					insertPointNode.appendChild(importedNode);
+				} finally {
+					inputStream.close();
 				}
 			} else {
 				throw new RemoteSubmissionHelperException("Bad response from target service. Status:" + responseCode + ", message:"
@@ -188,8 +194,8 @@ public class RemoteSubmissionHelper {
 		}
 	}
 
-	private Transformer getTransformer(String preTransform, boolean omitXmlDeclaration) throws IOException, TransformerFactoryConfigurationError,
-			TransformerConfigurationException {
+	private Transformer getTransformer(String preTransform, boolean omitXmlDeclaration) throws IOException,
+			TransformerFactoryConfigurationError, TransformerConfigurationException {
 		InputStream preTransformStream = resourceLoader.getFormResourceAsStream(preTransform);
 		if (preTransformStream != null) {
 			Transformer transformer = transformerFactory.newTransformer(new StreamSource(preTransformStream));

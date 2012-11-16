@@ -46,6 +46,7 @@ public class RemoteSubmissionHelperTest {
 		
 		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
 		
+		Assert.assertEquals("application/x-www-form-urlencoded", testConnectionFactory.getRequestProperties().get("Content-Type"));
 		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
 		Assert.assertEquals("xml=<myData><something>a</something></myData>", URLDecoder.decode(submittedData, "UTF-8"));
 		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
@@ -60,8 +61,24 @@ public class RemoteSubmissionHelperTest {
 		
 		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
 		
+		Assert.assertEquals("application/x-www-form-urlencoded", testConnectionFactory.getRequestProperties().get("Content-Type"));
 		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
 		Assert.assertEquals("xml=<?xml version=\"1.0\" encoding=\"UTF-8\"?><myData><something>a</something></myData>", URLDecoder.decode(submittedData, "UTF-8"));
+		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
+		Assert.assertEquals("<myData><something>a</something></myData>", dataDocumentStringAfterSubmission);
+	}
+	
+	@Test
+	public void testHandleRawSubmissionWithXmlDeclaration() throws Exception {
+		Submission submission = new Submission("http://localhost/dummyURL");
+		submission.setRawXmlRequest(true);
+		testConnectionFactory.setResultXmlString("<submissionResult>one</submissionResult>");
+		
+		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
+		
+		Assert.assertEquals("application/xml", testConnectionFactory.getRequestProperties().get("Content-Type"));
+		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
+		Assert.assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?><myData><something>a</something></myData>", URLDecoder.decode(submittedData, "UTF-8"));
 		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
 		Assert.assertEquals("<myData><something>a</something></myData>", dataDocumentStringAfterSubmission);
 	}
@@ -76,6 +93,7 @@ public class RemoteSubmissionHelperTest {
 		
 		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
 		
+		Assert.assertEquals("application/x-www-form-urlencoded", testConnectionFactory.getRequestProperties().get("Content-Type"));
 		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
 		Assert.assertEquals("xml=" + dataDocumentString, URLDecoder.decode(submittedData, "UTF-8"));
 		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
@@ -92,6 +110,7 @@ public class RemoteSubmissionHelperTest {
 		
 		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
 		
+		Assert.assertEquals("application/x-www-form-urlencoded", testConnectionFactory.getRequestProperties().get("Content-Type"));
 		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
 		Assert.assertEquals("xml=" + dataDocumentString, URLDecoder.decode(submittedData, "UTF-8"));
 		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
@@ -120,6 +139,7 @@ public class RemoteSubmissionHelperTest {
 			Assert.fail("Should have thrown Exception");
 		} catch (RemoteSubmissionHelperException e) {
 			// Pass
+			Assert.assertEquals("application/x-www-form-urlencoded", testConnectionFactory.getRequestProperties().get("Content-Type"));
 			Assert.assertEquals("Bad response from target service. Status:500, message:Something went very wrong.", e.getMessage());
 		}
 	}
@@ -135,6 +155,7 @@ public class RemoteSubmissionHelperTest {
 		
 		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
 		
+		Assert.assertEquals("application/x-www-form-urlencoded", testConnectionFactory.getRequestProperties().get("Content-Type"));
 		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
 		Assert.assertEquals("xml=<serverData><abc>a</abc></serverData>", URLDecoder.decode(submittedData, "UTF-8"));
 		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
@@ -151,6 +172,7 @@ public class RemoteSubmissionHelperTest {
 		
 		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
 		
+		Assert.assertEquals("application/x-www-form-urlencoded", testConnectionFactory.getRequestProperties().get("Content-Type"));
 		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
 		Assert.assertEquals("xml=<?xml version=\"1.0\" encoding=\"UTF-8\"?><serverData><abc>a</abc></serverData>", URLDecoder.decode(submittedData, "UTF-8"));
 		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
@@ -168,6 +190,7 @@ public class RemoteSubmissionHelperTest {
 		
 		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
 		
+		Assert.assertEquals("application/x-www-form-urlencoded", testConnectionFactory.getRequestProperties().get("Content-Type"));
 		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
 		Assert.assertEquals("myXml=" + dataDocumentString, URLDecoder.decode(submittedData, "UTF-8"));
 		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
