@@ -78,7 +78,7 @@ public class RemoteSubmissionHelperTest {
 		
 		Assert.assertEquals("application/xml", testConnectionFactory.getRequestProperties().get("Content-Type"));
 		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
-		Assert.assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?><myData><something>a</something></myData>", URLDecoder.decode(submittedData, "UTF-8"));
+		Assert.assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?><myData><something>a</something></myData>", submittedData);
 		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
 		Assert.assertEquals("<myData><something>a</something></myData>", dataDocumentStringAfterSubmission);
 	}

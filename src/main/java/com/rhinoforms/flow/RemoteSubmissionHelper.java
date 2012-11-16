@@ -116,7 +116,7 @@ public class RemoteSubmissionHelper {
 				}
 				requestDataString = requestDataBuilder.toString();
 			} else {
-				requestDataString = URLEncoder.encode(dataDocumentString, UTF8);
+				requestDataString = dataDocumentString;
 			}
 		} catch (UnsupportedEncodingException e) {
 			throw new RemoteSubmissionHelperException("Failed to encode values for submission", e);
