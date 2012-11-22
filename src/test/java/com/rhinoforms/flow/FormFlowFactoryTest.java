@@ -67,7 +67,7 @@ public class FormFlowFactoryTest {
 		
 		Submission submission = flowActionToServer.getSubmission();
 		Assert.assertNotNull(submission);
-		Assert.assertEquals("http://localhost/dummy-url", submission.getUrl());
+		Assert.assertEquals("Url injected from properties file", "http://localhost/dummy-url", submission.getUrl());
 		Assert.assertEquals("POST", submission.getMethod());
 		Map<String, String> data = submission.getData();
 		Assert.assertEquals(2, data.size());

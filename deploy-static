@@ -1,4 +1,4 @@
 sudo cp src/main/webapp/*.* /var/lib/tomcat6/webapps/rhinoforms/
 sudo cp -r src/main/webapp/js src/main/webapp/forms src/main/webapp/css /var/lib/tomcat6/webapps/rhinoforms/
 sudo chown -R tomcat6:tomcat6 /var/lib/tomcat6/webapps/rhinoforms/
-tail -n0 -f /var/log/tomcat6/rhinoforms.log /var/log/tomcat6/catalina.out
+#tail -n0 -f /var/log/tomcat6/rhinoforms.log /var/log/tomcat6/catalina.out

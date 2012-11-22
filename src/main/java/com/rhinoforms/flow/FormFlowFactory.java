@@ -4,8 +4,10 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Properties;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
@@ -13,6 +15,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.w3c.dom.Document;
 
+import com.rhinoforms.formparser.ValueInjector;
 import com.rhinoforms.js.JSMasterScope;
 import com.rhinoforms.resourceloader.ResourceLoader;
 import com.rhinoforms.xml.DocumentHelper;
@@ -23,11 +26,13 @@ public class FormFlowFactory {
 	private ResourceLoader resourceLoader;
 	private JSMasterScope masterScope;
 	private DocumentHelper documentHelper;
+	private ValueInjector valueInjector;
 
 	public FormFlowFactory(ResourceLoader resourceLoader, JSMasterScope masterScope) {
 		this.resourceLoader = resourceLoader;
 		this.masterScope = masterScope;
 		this.documentHelper = new DocumentHelper();
+		this.valueInjector = new ValueInjector();
 	}
 
 	public FormFlow createFlow(String formFlowPath, String dataDocumentString) throws IOException,
@@ -94,6 +99,9 @@ public class FormFlowFactory {
 
 	private void loadFlowFromJSDefinition(FormFlow formFlow, String formFlowJSDefinitionPath, Scriptable scope, Context jsContext)
 			throws IOException, FileNotFoundException {
+		
+		Properties flowProperties = loadFlowProperties(formFlowJSDefinitionPath);
+		
 		Object wrappedFormFlow = Context.javaToJS(formFlow, scope);
 		ScriptableObject.putProperty(scope, "formFlow", wrappedFormFlow);
 		String scriptPath = "/flow-loader.js";
@@ -102,14 +110,17 @@ public class FormFlowFactory {
 
 		InputStreamReader inputStreamReader = new InputStreamReader(resourceLoader.getFormResourceAsStream(formFlowJSDefinitionPath));
 		BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append("loadFlow(");
+		StringBuilder flowStringBuilder = new StringBuilder();
 		while (bufferedReader.ready()) {
-			stringBuilder.append(bufferedReader.readLine());
+			flowStringBuilder.append(bufferedReader.readLine());
 		}
-		stringBuilder.append(")");
 
-		String newFlowJsExpresion = stringBuilder.toString();
+		valueInjector.processFlowDefinitionCurlyBrackets(flowStringBuilder, flowProperties);
+		
+		flowStringBuilder.insert(0, "loadFlow(");
+		flowStringBuilder.append(")");
+		
+		String newFlowJsExpresion = flowStringBuilder.toString();
 		jsContext.evaluateString(scope, newFlowJsExpresion, formFlowJSDefinitionPath, 1, null);
 		
 		List<String> libraries = formFlow.getLibraries();
@@ -121,5 +132,20 @@ public class FormFlowFactory {
 			formFlow.setDefaultInitialData(formFlow.resolveResourcePathIfRelative(formFlow.getDefaultInitialData()));
 		}
 	}
-
+	
+	private Properties loadFlowProperties(String formFlowJSDefinitionPath) throws IOException {
+		String flowPropertiesPath = formFlowJSDefinitionPath.replace(".js", ".properties");
+		try {
+			InputStream formPropertiesStream = resourceLoader.getFormResourceAsStream(flowPropertiesPath);
+			if (formPropertiesStream != null) {
+				Properties properties = new Properties();
+				properties.load(formPropertiesStream);
+				return properties;
+			}
+		} catch (FileNotFoundException e) {
+			// No problem, properties file is optional
+		}
+		return null;
+	}
+	
 }

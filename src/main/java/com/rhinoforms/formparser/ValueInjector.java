@@ -3,6 +3,7 @@ package com.rhinoforms.formparser;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -164,6 +165,20 @@ public class ValueInjector {
 		simpleHtmlSerializer.write(node, new OutputStreamWriter(outputStream), "utf-8");
 		String actual = new String(outputStream.toByteArray());
 		return actual;
+	}
+
+	public void processFlowDefinitionCurlyBrackets(StringBuilder flowStringBuilder, Properties flowProperties) {
+		Matcher matcher = CURLY_BRACKET_CONTENTS_PATTERN.matcher(flowStringBuilder);
+		while (matcher.matches()) {
+			String group = matcher.group(1);
+			String property = flowProperties.getProperty(group);
+			if (property != null) {
+				int groupStart = flowStringBuilder.indexOf("{{" + group + "}}");
+				int groupEnd = groupStart + group.length() + 4;
+				flowStringBuilder.replace(groupStart, groupEnd, property);
+				matcher = CURLY_BRACKET_CONTENTS_PATTERN.matcher(flowStringBuilder);
+			}
+		}
 	}
 
 }

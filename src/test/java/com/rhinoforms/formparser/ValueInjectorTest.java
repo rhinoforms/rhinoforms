@@ -4,6 +4,7 @@ import static com.rhinoforms.TestUtil.createDocument;
 import static com.rhinoforms.TestUtil.serialiseHtmlCleanerNode;
 
 import java.io.FileInputStream;
+import java.util.Properties;
 
 import junit.framework.Assert;
 
@@ -104,7 +105,22 @@ public class ValueInjectorTest {
 		TagNode node = valueInjector.stringBuilderToNode(new StringBuilder(html));
 		StringBuilder stringBuilder = valueInjector.nodeToStringBuilder(node);
 		Assert.assertEquals(html, stringBuilder.toString());
-
+	}
+	
+	@Test
+	public void testProcessFlowDefinitionCurlyBrackets() {
+		String initialFlowDef = "{ docBase: '{{baseNode}}', formLists: { main: [ { id: 'customer', url: '/forms/simplest/{{firstForm}}', actions: [ 'finish' ] } ] } }";
+		String expectedFlowDef = "{ docBase: '/myDocBase', formLists: { main: [ { id: 'customer', url: '/forms/simplest/simplest.html', actions: [ 'finish' ] } ] } }";
+		StringBuilder flowStringBuilder = new StringBuilder(initialFlowDef);
+		Properties flowProperties = new Properties();
+		flowProperties.setProperty("baseNode", "/myDocBase");
+		flowProperties.setProperty("firstForm", "simplest.html");
+		
+		Assert.assertEquals(initialFlowDef, flowStringBuilder.toString());
+		
+		valueInjector.processFlowDefinitionCurlyBrackets(flowStringBuilder, flowProperties);
+		
+		Assert.assertEquals(expectedFlowDef, flowStringBuilder.toString());
 	}
 
 }

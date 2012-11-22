@@ -13,7 +13,7 @@
 							name: "send-to-my-server",
 							submission: {
 								preTransform: "xslt/toServerFormat.xsl",
-								url: "http://localhost/dummy-url",
+								url: "{{dummy-submission-url}}",
 								method: "post",
 								data: {
 									type: "10",
