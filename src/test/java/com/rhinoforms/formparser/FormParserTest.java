@@ -166,6 +166,35 @@ public class FormParserTest {
 	}
 	
 	@Test
+	public void testPerpetuateIncludeIfStatementsToInputs() throws Exception {
+		this.formFlow = formFlowFactory.createFlow("test-flow1.js", "<myData><terms>disagree</terms><title>Miss</title><canWalkOnHands>true</canWalkOnHands></myData>");
+		this.formFlow.navigateToFirstForm(documentHelper);
+		
+		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+		formParser.parseForm(new FileInputStream("src/test/resources/perpetuate-includeIf-test.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope, false);
+		
+		List<InputPojo> inputPojos = formFlow.getCurrentInputPojos();
+		
+		Assert.assertEquals(4, inputPojos.size());
+		
+		InputPojo terms = inputPojos.get(0);
+		Assert.assertEquals("terms", terms.getName());
+		Assert.assertEquals("{ false }", terms.getRfAttributes().get("rf.includeif"));
+		
+		InputPojo title = inputPojos.get(3);
+		Assert.assertEquals("title", title.getName());
+		Assert.assertEquals("{ true }", title.getRfAttributes().get("rf.includeif"));
+		
+		InputPojo firstName = inputPojos.get(1);
+		Assert.assertEquals("firstName", firstName.getName());
+		Assert.assertEquals("{ true }", firstName.getRfAttributes().get("rf.includeif"));
+		
+		InputPojo canWalkOnHands = inputPojos.get(2);
+		Assert.assertEquals("canWalkOnHands", canWalkOnHands.getName());
+		Assert.assertEquals(null, canWalkOnHands.getRfAttributes().get("rf.includeif"));
+	}
+	
+	@Test
 	public void testDebugBar() throws Exception {
 		RhinoformsProperties.getInstance().setShowDebugBar(true);
 		this.formParser = new FormParser(resourceLoader);

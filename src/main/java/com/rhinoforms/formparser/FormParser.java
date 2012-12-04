@@ -95,6 +95,8 @@ public class FormParser {
 		if (rfFormNodes.length > 0) {
 			logger.debug("{} forms found.", rfFormNodes.length);
 			TagNode formNode = (TagNode) rfFormNodes[0];
+			
+			perpetuateIncludeIfStatementsToInputs(formHtml);
 
 			// Process dynamic select elements
 			processSelectSource(formNode, formFlow);
@@ -155,6 +157,29 @@ public class FormParser {
 			}
 		} else {
 			throw new FormParserException("Exceeded maximum nested " + Constants.INCLUDE_ELEMENT + " depth of " + processIncludesMaxDepth);
+		}
+	}
+
+	private void perpetuateIncludeIfStatementsToInputs(TagNode formHtml) throws XPatherException {
+		Object[] includeIfNodes = formHtml.evaluateXPath("//*[@" + Constants.INCLUDE_IF_ATTR + "]");
+		for (Object includeIfNodeO : includeIfNodes) {
+			TagNode includeIfNode = (TagNode) includeIfNodeO;
+			String name = includeIfNode.getName();
+			if (!name.equals("input") && !name.equals("select")) {
+				String parentIncludeIf = includeIfNode.getAttributeByName(Constants.INCLUDE_IF_ATTR);
+
+				@SuppressWarnings("unchecked")
+				List<TagNode> inputs = includeIfNode.getElementListByName("input", true);
+				@SuppressWarnings("unchecked")
+				List<TagNode> selects = includeIfNode.getElementListByName("select", true);
+				inputs.addAll(selects);
+				for (TagNode inputTagNode : inputs) {
+					String inputIncludeIf = inputTagNode.getAttributeByName(Constants.INCLUDE_IF_ATTR);
+					if (inputIncludeIf == null) {
+						inputTagNode.setAttribute(Constants.INCLUDE_IF_ATTR, parentIncludeIf);
+					}
+				}
+			}
 		}
 	}
 

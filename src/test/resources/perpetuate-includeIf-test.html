@@ -1,0 +1,17 @@
+<form rhinoforms="true">
+	<div class="field" rf.includeif="{ false }">
+		<input id="input_terms" type="radio" name="terms" value="agree" rf.validation="required"/>
+		<input id="input_terms" type="radio" name="terms" value="disagree"/>
+	</div>
+	
+	<div class="field" rf.includeif="{ false }">
+		<select id="input_title" name="title" rf.validation="required" rf.source="titles.txt" rf.preselectFirstOption="false" rf.includeif="{ true }"></select>
+		<input id="input_firstName" type="text" name="firstName" rf.validation="required" rf.includeif="{ true }"/>
+	</div>
+	
+	<div class="field">
+		<input id="input_canWalkOnHands" type="checkbox" name="canWalkOnHands"/>
+	</div>
+	
+	<input type="submit" action="next" value="Next"/>
+</form>
