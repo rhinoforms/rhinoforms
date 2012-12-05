@@ -350,6 +350,7 @@ function Rhinoforms() {
 			var currentAction = action;
 			// Deactivate current form
 			$form.removeClass("rf-active-form");
+			$(".invalid-message-cleared", $form).remove();
 			
 			if (!(options && options.unbind && options.unbind.toLowerCase() == "false")) {
 				$(":input", $form).unbind();

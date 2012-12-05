@@ -67,7 +67,11 @@ public class FormSubmissionHelper {
 			if (inputPojo.getType().equalsIgnoreCase("checkbox")) {
 				inputPojo.setValue(parameterMap.get(inputPojo.getName()) != null ? "true" : "false");
 			} else {
-				inputPojo.setValue(parameterMap.get(inputPojo.getName()));
+				String value = parameterMap.get(inputPojo.getName());
+				if (value == null) {
+					value = "";
+				}
+				inputPojo.setValue(value);
 			}
 		}
 		
