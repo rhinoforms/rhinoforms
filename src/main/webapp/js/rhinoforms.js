@@ -328,7 +328,8 @@ function Rhinoforms() {
 							var doClearInvalid = true;
 							if ($element.attr("type") == "radio") {
 								$('input[type="radio"][name="' + $element.attr('name') + '"]').each(function() {
-									if(true == $(this).data("rf.included")) {
+									var otherIncluded = $(this).data("rf.included");
+									if(typeof otherIncluded == "undefined" || otherIncluded == true) {
 										doClearInvalid = false;
 									}
 								});
