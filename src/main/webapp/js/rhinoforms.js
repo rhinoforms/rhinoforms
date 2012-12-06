@@ -291,38 +291,55 @@ function Rhinoforms() {
 	function processIncludeIf($container) {
 		var rf = this;
 		var $form = $("form", $container);
-		var $inputs = $("[rf\\.includeif]", $container);
-		rf_trace("processIncludeIf, inputs:" + $inputs.size());
-		if ($inputs.size() > 0) {
+		var $elements = $("[rf\\.includeif]", $container);
+		rf_trace("processIncludeIf, elements:" + $elements.size());
+		if ($elements.size() > 0) {
 			var fields = getFieldsMap($form);
-			$inputs.each(function(index) {
-				var $input = $(this);
-				var includeIfStatement = $input.attr("rf.includeif");
+			$elements.each(function(index) {
+				var $element = $(this);
+				var includeIfStatement = $element.attr("rf.includeif");
 				rf_trace("processIncludeIf index:" + index + ", statement:'" + includeIfStatement + "'");
 				var result = eval(includeIfStatement);
 				rf_trace("processIncludeIf result = " + result + "");
 				
-				var inputId = $input.attr("id");
-				var $lable;
-				if (inputId) {
-					$lable = $("[for='" + inputId + "']", $container);
-				}
-				
-				if (result) {
-					$input.data("rf.included", true);
-					$input.show();
-					if ($lable) {
-						$lable.show();
+				var origResult = $element.data("rf.included");
+				if (result != origResult) {
+					var elementIsInput = isInput($element);
+					if (result) {
+						$element.data("rf.included", true);
+						$element.show();
+						
+						if (elementIsInput) {
+							var $lable = getLabel($element, $container);
+							if ($lable) {
+								$lable.show();
+							}
+						}
+					} else {
+						$element.data("rf.included", false);
+						$element.hide();
+						
+						if (elementIsInput) {
+							var $lable = getLabel($element, $container);
+							if ($lable) {
+								$lable.hide();
+							}
+							
+							var doClearInvalid = true;
+							if ($element.attr("type") == "radio") {
+								$('input[type="radio"][name="' + $element.attr('name') + '"]').each(function() {
+									if(true == $(this).data("rf.included")) {
+										doClearInvalid = false;
+									}
+								});
+							}
+							if (doClearInvalid) {
+								clearInvalid($element, $form);
+							}
+						}
 					}
-				} else {
-					$input.data("rf.included", false);
-					$input.hide();
-					if ($lable) {
-						$lable.hide();
-					}
-					clearInvalid($input, $form);
 				}
-			})
+			});
 		}
 	}
 	
@@ -506,6 +523,19 @@ function Rhinoforms() {
 			return $(":input[name='" + fieldName + "']", $form);
 		} else {
 			return $(":input", $form);
+		}
+	}
+	
+	function isInput($element) {
+		return $element.filter(":input").size() == 1;
+	}
+	
+	function getLabel($input, $container) {
+		var inputId = $input.attr("id");
+		if (inputId) {
+			return $("[for='" + inputId + "']", $container);
+		} else {
+			return null;
 		}
 	}
 	
