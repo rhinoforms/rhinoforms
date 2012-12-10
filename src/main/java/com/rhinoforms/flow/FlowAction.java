@@ -2,6 +2,7 @@ package com.rhinoforms.flow;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class FlowAction implements Serializable {
@@ -10,7 +11,7 @@ public class FlowAction implements Serializable {
 	private String target;
 	private String type;
 	private Map<String, String> params;
-	private Submission submission;
+	private List<Submission> submissions;
 	private boolean clearTargetFormDocBase;
 	private static final long serialVersionUID = -7126508228396096955L;
 	
@@ -62,12 +63,12 @@ public class FlowAction implements Serializable {
 		this.params = params;
 	}
 
-	public Submission getSubmission() {
-		return submission;
+	public List<Submission> getSubmissions() {
+		return submissions;
 	}
 	
-	public void setSubmission(Submission submission) {
-		this.submission = submission;
+	public void setSubmissions(List<Submission> submissions) {
+		this.submissions = submissions;
 	}
 	
 	public boolean isClearTargetFormDocBase() {

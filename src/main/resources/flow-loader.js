@@ -28,6 +28,7 @@ function loadFlow(flowMap) {
 				var actionTarget = "";
 				var actionType = null;
 				var actionSubmission = null;
+				var actionSubmissions = null;
 				var actionClearTargetFormDocBase = false;
 				if (action instanceof Object) {
 					actionName = action.name;
@@ -39,6 +40,9 @@ function loadFlow(flowMap) {
 					}
 					if (action.submission) {
 						actionSubmission = action.submission;
+					}
+					if (action.submissions) {
+						actionSubmissions = action.submissions;
 					}
 					if (action.clearTargetFormDocBase && (action.clearTargetFormDocBase == true || action.clearTargetFormDocBase.toLowerCase() == "true")) {
 						actionClearTargetFormDocBase = true;
@@ -67,31 +71,45 @@ function loadFlow(flowMap) {
 				if (actionType) {
 					flowActionJ.setType(actionType);
 				}
-				if (actionSubmission) {
-					var submissionJ = new com.rhinoforms.flow.Submission(actionSubmission.url);
-					if (actionSubmission.method) {
-						submissionJ.setMethod(actionSubmission.method);
+				if (actionSubmission || actionSubmissions) {
+					if (!actionSubmissions) {
+						actionSubmissions = [];
 					}
-					if (actionSubmission.rawXmlRequest && (actionSubmission.rawXmlRequest == true || actionSubmission.rawXmlRequest.toLowerCase() == "true")) {
-						submissionJ.setRawXmlRequest(true);
+					if (actionSubmission) {
+						actionSubmissions.unshift(actionSubmission);
 					}
-					var data = actionSubmission.data;
-					if (data) {
-						var dataMapJ = submissionJ.getData();
-						for (var prop in data) {
-							dataMapJ.put(prop, data[prop]);
+					var submissionsListJ = new java.util.ArrayList();
+					for (var s = 0; s < actionSubmissions.length; s++) {
+						var thisSubmission = actionSubmissions[s];
+						var submissionJ = new com.rhinoforms.flow.Submission(thisSubmission.url);
+						if (thisSubmission.method) {
+							submissionJ.setMethod(thisSubmission.method);
 						}
+						if (thisSubmission.rawXmlRequest && (thisSubmission.rawXmlRequest == true || thisSubmission.rawXmlRequest.toLowerCase() == "true")) {
+							submissionJ.setRawXmlRequest(true);
+						}
+						var data = thisSubmission.data;
+						if (data) {
+							var dataMapJ = submissionJ.getData();
+							for (var prop in data) {
+								dataMapJ.put(prop, data[prop]);
+							}
+						}
+						if (thisSubmission.resultInsertPoint) {
+							submissionJ.setResultInsertPoint(thisSubmission.resultInsertPoint);
+						}
+						if (thisSubmission.dropRootNode && (thisSubmission.dropRootNode == false || thisSubmission.dropRootNode.toLowerCase() == "false")) {
+							submissionJ.setDropRootNode(false);
+						}
+						if (thisSubmission.preTransform) {
+							submissionJ.setPreTransform(formFlow.resolveResourcePathIfRelative(thisSubmission.preTransform));
+						}
+						if (thisSubmission.postTransform) {
+							submissionJ.setPostTransform(formFlow.resolveResourcePathIfRelative(thisSubmission.postTransform));
+						}
+						submissionsListJ.add(submissionJ);
 					}
-					if (actionSubmission.resultInsertPoint) {
-						submissionJ.setResultInsertPoint(actionSubmission.resultInsertPoint);
-					}
-					if (actionSubmission.preTransform) {
-						submissionJ.setPreTransform(formFlow.resolveResourcePathIfRelative(actionSubmission.preTransform));
-					}
-					if (actionSubmission.postTransform) {
-						submissionJ.setPostTransform(formFlow.resolveResourcePathIfRelative(actionSubmission.postTransform));
-					}
-					flowActionJ.setSubmission(submissionJ);
+					flowActionJ.setSubmissions(submissionsListJ);
 				}
 				flowActionJ.setClearTargetFormDocBase(actionClearTargetFormDocBase);
 				actionsJ.put(actionName, flowActionJ);

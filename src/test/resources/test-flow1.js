@@ -22,6 +22,14 @@
 								postTransform: "xslt/fromServerFormat.xsl",
 								resultInsertPoint: "/myData/submissionResult"
 							},
+							submissions: [
+								{
+									url: "{{dummy-submission-url}}",
+								},
+								{
+									url: "{{dummy-submission-url}}",
+								}
+							],
 							clearTargetFormDocBase: "true"
 						},
 						{

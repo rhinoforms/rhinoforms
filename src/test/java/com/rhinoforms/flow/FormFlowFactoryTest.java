@@ -55,7 +55,7 @@ public class FormFlowFactoryTest {
 		Map<String, String> params = flowAction.getParams();
 		Assert.assertEquals(1, params.size());
 		Assert.assertEquals("next", params.get("fishIndex"));
-		Assert.assertNull(flowAction.getSubmission());
+		Assert.assertNull(flowAction.getSubmissions());
 		
 		Assert.assertEquals(1, nextForm.getIndexInList());
 		nextForm = iterator.next();
@@ -65,7 +65,9 @@ public class FormFlowFactoryTest {
 		FlowAction flowActionToServer = actions.get("send-to-my-server");
 		Assert.assertNotNull(flowActionToServer);
 		
-		Submission submission = flowActionToServer.getSubmission();
+		List<Submission> submissions = flowActionToServer.getSubmissions();
+		Assert.assertEquals(3, submissions.size());
+		Submission submission = submissions.get(0);
 		Assert.assertNotNull(submission);
 		Assert.assertEquals("Url injected from properties file", "http://localhost/dummy-url", submission.getUrl());
 		Assert.assertEquals("POST", submission.getMethod());
@@ -78,6 +80,9 @@ public class FormFlowFactoryTest {
 		Assert.assertEquals("xslt/fromServerFormat.xsl", submission.getPostTransform());
 		Assert.assertTrue(flowActionToServer.isClearTargetFormDocBase());
 		
+		Submission submission2 = submissions.get(1);
+		Assert.assertEquals(0, submission2.getData().size());
+		
 		FlowAction cancelAction = actions.get("cancel-back-to-one");
 		Assert.assertEquals(FlowActionType.CANCEL, cancelAction.getType());
 		Assert.assertEquals("one", cancelAction.getTarget());
@@ -87,7 +92,7 @@ public class FormFlowFactoryTest {
 		Form form = anotherList.get(0);
 		Assert.assertEquals("editFish", form.getId());
 		Assert.assertEquals("fishes/fish[fishIndex]", form.getDocBase());
-		Assert.assertNull(form.getActions().get("cancel").getSubmission());
+		Assert.assertNull(form.getActions().get("cancel").getSubmissions());
 		List<String> libraries = formFlow.getLibraries();
 		Assert.assertEquals(1, libraries.size());
 		Assert.assertEquals("js/testUtil.js", libraries.get(0));
@@ -104,7 +109,7 @@ public class FormFlowFactoryTest {
 		FlowAction flowActionToServer = actions.get("sendToMyServer");
 		Assert.assertNotNull(flowActionToServer);
 		
-		Submission submission = flowActionToServer.getSubmission();
+		Submission submission = flowActionToServer.getSubmissions().get(0);
 		Assert.assertNotNull(submission);
 		Assert.assertEquals("http://localhost/dummy-url", submission.getUrl());
 		Assert.assertEquals("POST", submission.getMethod());
@@ -129,7 +134,7 @@ public class FormFlowFactoryTest {
 		FlowAction flowActionToServer = actions.get("sendToMyServer");
 		Assert.assertNotNull(flowActionToServer);
 		
-		Submission submission = flowActionToServer.getSubmission();
+		Submission submission = flowActionToServer.getSubmissions().get(0);
 		Assert.assertNotNull(submission);
 		Assert.assertEquals("http://localhost/dummy-url", submission.getUrl());
 		Assert.assertEquals("POST", submission.getMethod());

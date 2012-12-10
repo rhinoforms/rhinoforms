@@ -59,16 +59,18 @@ public class FormFlow implements Serializable {
 		
 		FlowNavigationLevel currentNavigationLevel = getCurrentNavigationLevel();
 		
-		Submission submission = flowAction.getSubmission();
-		if (submission != null) {
-			try {
-				Map<String, String> xsltParameters = new HashMap<String, String>();
-				xsltParameters.put("rf.flowId", flowId);
-				xsltParameters.put("rf.formId", getCurrentFormId());
-				xsltParameters.put("rf.actionName", action);
-				remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
-			} catch (RemoteSubmissionHelperException e) {
-				throw new ActionError("Remote submission failed.", e);
+		List<Submission> submissions = flowAction.getSubmissions();
+		if (submissions != null) {
+			for (Submission submission : submissions) {
+				try {
+					Map<String, String> xsltParameters = new HashMap<String, String>();
+					xsltParameters.put("rf.flowId", flowId);
+					xsltParameters.put("rf.formId", getCurrentFormId());
+					xsltParameters.put("rf.actionName", action);
+					remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
+				} catch (RemoteSubmissionHelperException e) {
+					throw new ActionError("Remote submission failed.", e);
+				}
 			}
 		}
 		
