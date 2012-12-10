@@ -29,7 +29,7 @@ public class RemoteSubmissionHelperTest {
 	public void setup() throws Exception {
 		documentHelper = new DocumentHelper();
 		ResourceLoaderImpl resourceLoader = new ResourceLoaderImpl(new TestResourceLoader(), new TestResourceLoader());
-		remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader, "");
+		remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader);
 		testConnectionFactory = new TestConnectionFactory();
 		remoteSubmissionHelper.setConnectionFactory(testConnectionFactory);
 		dataDocumentString = "<myData><something>a</something></myData>";

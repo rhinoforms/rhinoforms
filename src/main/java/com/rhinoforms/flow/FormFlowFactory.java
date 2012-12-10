@@ -25,12 +25,14 @@ public class FormFlowFactory {
 
 	private ResourceLoader resourceLoader;
 	private JSMasterScope masterScope;
+	private String servletContextPath;
 	private DocumentHelper documentHelper;
 	private ValueInjector valueInjector;
 
-	public FormFlowFactory(ResourceLoader resourceLoader, JSMasterScope masterScope) {
+	public FormFlowFactory(ResourceLoader resourceLoader, JSMasterScope masterScope, String servletContextPath) {
 		this.resourceLoader = resourceLoader;
 		this.masterScope = masterScope;
+		this.servletContextPath = servletContextPath;
 		this.documentHelper = new DocumentHelper();
 		this.valueInjector = new ValueInjector();
 	}
@@ -98,9 +100,12 @@ public class FormFlowFactory {
 	}
 
 	private void loadFlowFromJSDefinition(FormFlow formFlow, String formFlowJSDefinitionPath, Scriptable scope, Context jsContext)
-			throws IOException, FileNotFoundException {
+			throws IOException, FileNotFoundException, FormFlowFactoryException {
 		
 		Properties flowProperties = loadFlowProperties(formFlowJSDefinitionPath);
+		if (flowProperties != null) {
+			flowProperties.put("contextPath", servletContextPath);
+		}
 		
 		Object wrappedFormFlow = Context.javaToJS(formFlow, scope);
 		ScriptableObject.putProperty(scope, "formFlow", wrappedFormFlow);

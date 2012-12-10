@@ -23,7 +23,7 @@ public class RemoteSubmissionHelperIntegrationTestManual {
 	
 	public RemoteSubmissionHelperIntegrationTestManual() throws Exception {
 		ResourceLoaderImpl resourceLoader = new ResourceLoaderImpl(new TestResourceLoader(), new TestResourceLoader());
-		remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader, "");
+		remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader);
 		dataDocumentString = "<myData><something>aaa</something></myData>";
 		dataDocument = TestUtil.createDocument(dataDocumentString);
 		xsltParameters = new HashMap<String, String>();

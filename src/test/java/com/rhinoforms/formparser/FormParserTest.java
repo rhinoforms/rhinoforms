@@ -49,7 +49,7 @@ public class FormParserTest {
 		this.htmlCleaner = new HtmlCleaner();
 		
 		this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
-		this.formFlowFactory = new FormFlowFactory(this.resourceLoader, this.masterScope);
+		this.formFlowFactory = new FormFlowFactory(this.resourceLoader, this.masterScope, "rhinoforms");
 		this.formFlow = formFlowFactory.createFlow("test-flow1.js", "<myData><fishes><fish><name>One</name></fish><fish><name>Two</name></fish></fishes></myData>");
 		this.formFlow.navigateToFirstForm(documentHelper);
 	}

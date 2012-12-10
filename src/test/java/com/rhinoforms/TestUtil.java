@@ -24,9 +24,13 @@ public class TestUtil {
 	public static String readFileContents(String filePath) throws IOException {
 		StringBuilder builder = new StringBuilder();
 		BufferedReader reader = new BufferedReader(new FileReader(filePath));
-		while (reader.ready()) {
-			builder.append(reader.readLine());
-			builder.append("\n");
+		try {
+			while (reader.ready()) {
+				builder.append(reader.readLine());
+				builder.append("\n");
+			}
+		} finally {
+			reader.close();
 		}
 		return builder.toString();
 	}

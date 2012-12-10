@@ -43,14 +43,12 @@ public class RemoteSubmissionHelper {
 	private DocumentHelper documentHelper;
 	private ResourceLoader resourceLoader;
 	private TransformerFactory transformerFactory;
-	private String contextPath;
 	private static final String UTF8 = "UTF-8";
 	private static final String DATA_DOCUMENT_VALUE_KEY = "[dataDocument]";
 	private static final Logger LOGGER = LoggerFactory.getLogger(RemoteSubmissionHelper.class);
 
-	public RemoteSubmissionHelper(ResourceLoader resourceLoader, String contextPath) {
+	public RemoteSubmissionHelper(ResourceLoader resourceLoader) {
 		this.resourceLoader = resourceLoader;
-		this.contextPath = contextPath;
 		connectionFactory = new ConnectionFactoryImpl();
 		documentHelper = new DocumentHelper();
 		transformerFactory = new TransformerFactoryImpl(); // Saxon Impl
@@ -59,7 +57,6 @@ public class RemoteSubmissionHelper {
 	public void handleSubmission(Submission submission, Document dataDocument, Map<String, String> xsltParameters)
 			throws RemoteSubmissionHelperException {
 		String url = submission.getUrl();
-		url = url.replaceAll("\\{contextPath\\}", contextPath);
 		String method = submission.getMethod();
 		Map<String, String> data = submission.getData();
 		String preTransform = submission.getPreTransform();
@@ -128,7 +125,6 @@ public class RemoteSubmissionHelper {
 			HttpURLConnection connection = connectionFactory.openConnection(url);
 
 			connection.setRequestMethod(method.toUpperCase());
-			
 
 			if (method.equals("POST")) {
 				connection.setRequestProperty("Content-Type", rawXmlRequest ? "application/xml" : "application/x-www-form-urlencoded");

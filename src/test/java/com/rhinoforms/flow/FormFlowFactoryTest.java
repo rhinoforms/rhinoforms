@@ -28,7 +28,7 @@ public class FormFlowFactoryTest {
 		ResourceLoaderImpl resourceLoader = new ResourceLoaderImpl(new TestResourceLoader(), new TestResourceLoader());
 		Context jsContext = Context.enter();
 		this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
-		this.formFlowFactory = new FormFlowFactory(resourceLoader, this.masterScope);
+		this.formFlowFactory = new FormFlowFactory(resourceLoader, this.masterScope, "");
 	}
 	
 	@After

@@ -25,6 +25,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.rhinoforms.Constants;
+import com.rhinoforms.flow.FormFlowFactoryException;
 
 public class ValueInjector {
 
@@ -172,7 +173,7 @@ public class ValueInjector {
 		return actual;
 	}
 
-	public void processFlowDefinitionCurlyBrackets(StringBuilder flowStringBuilder, Properties flowProperties) {
+	public void processFlowDefinitionCurlyBrackets(StringBuilder flowStringBuilder, Properties flowProperties) throws FormFlowFactoryException {
 		Matcher matcher = CURLY_BRACKET_CONTENTS_PATTERN.matcher(flowStringBuilder);
 		while (matcher.matches()) {
 			String group = matcher.group(1);
@@ -182,6 +183,8 @@ public class ValueInjector {
 				int groupEnd = groupStart + group.length() + 4;
 				flowStringBuilder.replace(groupStart, groupEnd, property);
 				matcher = CURLY_BRACKET_CONTENTS_PATTERN.matcher(flowStringBuilder);
+			} else {
+				throw new FormFlowFactoryException("Property not found '" + group + "'");
 			}
 		}
 	}

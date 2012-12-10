@@ -81,9 +81,9 @@ public class FormServlet extends HttpServlet {
 		}
 
 		this.formSubmissionHelper = new FormSubmissionHelper(masterScope);
-		this.formFlowFactory = new FormFlowFactory(resourceLoader, masterScope);
+		this.formFlowFactory = new FormFlowFactory(resourceLoader, masterScope, servletContext.getContextPath());
 
-		this.remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader, servletContext.getContextPath());
+		this.remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader);
 	}
 
 	@Override
