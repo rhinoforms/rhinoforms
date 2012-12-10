@@ -39,7 +39,20 @@ public class ValueInjectorTest {
 		Assert.assertTrue(actual.contains("<span index=\"1\">One</span>"));
 		Assert.assertTrue(actual.contains("<span index=\"2\">Two</span>"));
 	}
+	
+	@Test
+	public void testForEachWithDocBaseRelativeXPathTextNodes() throws Exception {
+		formHtml = htmlCleaner.clean(new FileInputStream("src/test/resources/fishes-text-nodes.html"));
+		dataDocument = createDocument("<myData><fishes><fish_one>One</fish_one><fish_two>Two</fish_two><fish_three/></fishes></myData>");
+		valueInjector.processForEachStatements(formHtml, dataDocument, "/myData");
 
+		String actual = serialiseHtmlCleanerNode(formHtml);
+		System.out.println(actual);
+		Assert.assertFalse(actual.contains("foreach"));
+		Assert.assertTrue(actual.contains("<span>One</span>"));
+		Assert.assertTrue(actual.contains("<span>Two</span>"));
+	}
+	
 	@Test
 	public void testForEachWithAbsoluteXPath() throws Exception {
 		formHtml = htmlCleaner.clean(new FileInputStream("src/test/resources/forEach-absolute-xpath.html"));

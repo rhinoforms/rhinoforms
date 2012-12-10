@@ -106,7 +106,12 @@ public class ValueInjector {
 			if (group.equals(Constants.FLOW_ID_FIELD_NAME) && flowID != null) {
 				value = flowID;
 			} else {
-				if (contextNode != null && group.startsWith(contextName + ".")) {
+				if (contextNode != null && group.equals(contextName)) {
+					Node firstChild = contextNode.getFirstChild();
+					if (firstChild != null) {
+						value = firstChild.getTextContent();
+					}
+				} else if (contextNode != null && group.startsWith(contextName + ".")) {
 					if (group.equals(contextName + ".index")) {
 						value = "" + contextindex;
 					} else {
