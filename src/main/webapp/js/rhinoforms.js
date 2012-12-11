@@ -219,7 +219,7 @@ function Rhinoforms() {
 			var input = this;
 			var $input = $(input);
 			$input.blur(function() {
-				if ($input.val()) {
+				if ($input.hasClass("invalid") || $input.val()) {
 					validateForm($container, $input.attr("name"));
 				}
 			});
