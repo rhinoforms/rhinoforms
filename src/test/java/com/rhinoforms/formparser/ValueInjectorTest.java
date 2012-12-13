@@ -47,10 +47,16 @@ public class ValueInjectorTest {
 		valueInjector.processForEachStatements(formHtml, dataDocument, "/myData");
 
 		String actual = serialiseHtmlCleanerNode(formHtml);
-		System.out.println(actual);
 		Assert.assertFalse(actual.contains("foreach"));
 		Assert.assertTrue(actual.contains("<span>One</span>"));
 		Assert.assertTrue(actual.contains("<span>Two</span>"));
+		String expected = "<html><head></head><body><div class=\"before\">\n" +
+			" <span>One</span>\n" +
+			" <span>Two</span>\n" +
+			" <span>{{aFish}}</span>\n" +
+			"\n" +
+			"<div class=\"after\"></div></div></body></html>";
+		Assert.assertEquals(expected, actual);
 	}
 	
 	@Test
@@ -93,7 +99,6 @@ public class ValueInjectorTest {
 		Assert.assertTrue("Placeholder replaced with dataDocument content.", actual.contains("<span class=\"ocean\">Pacific</span>"));
 		Assert.assertTrue(actual.contains("Fish count: 2"));
 		Assert.assertTrue(actual.contains("First fish: One"));
-		System.out.println(actual);
 	}
 	
 	@Test

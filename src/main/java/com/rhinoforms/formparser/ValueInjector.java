@@ -3,6 +3,8 @@ package com.rhinoforms.formparser;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,7 +16,9 @@ import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.io.output.StringBuilderWriter;
 import org.htmlcleaner.CleanerProperties;
+import org.htmlcleaner.ContentNode;
 import org.htmlcleaner.HtmlCleaner;
+import org.htmlcleaner.HtmlNode;
 import org.htmlcleaner.SimpleHtmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPatherException;
@@ -61,20 +65,40 @@ public class ValueInjector {
 				}
 				XPathExpression selectExpression = xPathFactory.newXPath().compile(xpath);
 				NodeList dataNodeList = (NodeList) selectExpression.evaluate(dataDocument, XPathConstants.NODESET);
+				StringBuilder forEachNodeContents = nodeToStringBuilder(forEachNode);
 				for (int dataNodeindex = 0; dataNodeindex < dataNodeList.getLength(); dataNodeindex++) {
 					Node dataNode = dataNodeList.item(dataNodeindex);
+					StringBuilder thisForEachNodeContents = new StringBuilder(forEachNodeContents);
+					replaceCurlyBrackets(thisForEachNodeContents, dataDocument, null, dataNode, selectAsName, dataNodeindex + 1);
+					TagNode processedForEachNode = stringBuilderToNode(thisForEachNodeContents);
 					
-					StringBuilder forEachNodeContents = nodeToStringBuilder(forEachNode);
-					replaceCurlyBrackets(forEachNodeContents, dataDocument, null, dataNode, selectAsName, dataNodeindex + 1);
-					TagNode processedForEachNode = stringBuilderToNode(forEachNodeContents);
-					
-					parent.addChildren(processedForEachNode.getChildren());
+					@SuppressWarnings("unchecked")
+					List<HtmlNode> children = processedForEachNode.getChildren();
+					trimFirstNewline(children);
+					for (HtmlNode child : children) {
+						parent.insertChildBefore(forEachNode, child);
+					}
 				}
 				parent.removeChild(forEachNode);
 			} else {
 				String message = "'select' attribute is empty or missing";
 				logger.warn("forEach error - {}", message);
 				forEachNode.setAttribute("error", message);
+			}
+		}
+	}
+
+	private void trimFirstNewline(List<HtmlNode> children) {
+		if (!children.isEmpty()) {
+			HtmlNode htmlNode = children.get(0);
+			if (htmlNode instanceof ContentNode) {	
+				ContentNode contentNode = (ContentNode) htmlNode;
+				StringBuilder content = contentNode.getContent();
+				if (content.length() >= 1 && content.substring(0, 1).equals("\n")) {
+					content.delete(0, 1);
+				} else if (content.length() >= 2 && content.substring(0, 2).equals("\r\n")) {
+					content.delete(0, 2);
+				}
 			}
 		}
 	}
