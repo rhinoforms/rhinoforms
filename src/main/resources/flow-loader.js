@@ -48,6 +48,11 @@ function loadFlow(flowMap) {
 						actionClearTargetFormDocBase = true;
 					}
 				} else {
+					if (form.actions[actionIndex].indexOf(":") == -1 && form.actions[actionIndex].indexOf("(") != -1) {
+						/** Action target is implicit. Adding colon before bracket so target params are picked up. **/
+						form.actions[actionIndex] = form.actions[actionIndex].replace("(", ":(");
+					}
+						
 					var actionParts = form.actions[actionIndex].split(':');
 					actionName = actionParts[0];
 					if (actionParts.length > 1) {

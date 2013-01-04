@@ -40,7 +40,7 @@ public class FormFlowFactoryTest {
 	public void testCreateFlow() throws Exception {
 		FormFlow formFlow = formFlowFactory.createFlow("test-flow1.js", null);
 		Map<String, List<Form>> formLists = formFlow.getFormLists();
-		Assert.assertEquals(3, formLists.keySet().size());
+		Assert.assertEquals(4, formLists.keySet().size());
 		List<Form> list = formLists.get("main");
 		Assert.assertEquals(3, list.size());
 		Iterator<Form> iterator = list.iterator();
@@ -50,7 +50,7 @@ public class FormFlowFactoryTest {
 		nextForm = iterator.next();
 		Assert.assertEquals("two", nextForm.getId());
 		Map<String, FlowAction> actions = nextForm.getActions();
-		Assert.assertEquals(4, actions.size());
+		Assert.assertEquals(5, actions.size());
 		FlowAction flowAction = actions.get("add");
 		Map<String, String> params = flowAction.getParams();
 		Assert.assertEquals(1, params.size());
@@ -96,6 +96,14 @@ public class FormFlowFactoryTest {
 		List<String> libraries = formFlow.getLibraries();
 		Assert.assertEquals(1, libraries.size());
 		Assert.assertEquals("js/testUtil.js", libraries.get(0));
+		
+		List<Form> indexTestList = formLists.get("indexTestList");
+		Form indexTestA = indexTestList.get(0);
+		Map<String, FlowAction> indexTestActions = indexTestA.getActions();
+		FlowAction indexTestAction = indexTestActions.get("next");
+		Assert.assertNotNull(indexTestAction);
+		Assert.assertEquals(FlowActionType.NEXT, indexTestAction.getType());
+		Assert.assertEquals("next", indexTestAction.getParams().get("fishIndex"));
 	}
 	
 	@Test

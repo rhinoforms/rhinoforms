@@ -126,7 +126,15 @@ public class FormFlowTest {
 		Assert.assertEquals("Already set param has not been overridden ", "next", filteredActionParams.get("fishIndex"));
 		Assert.assertEquals("No extra params have got through from the frontend", 2, filteredActionParams.size());
 	}
-
+	
+	@Test
+	public void testActionParamsWithoutActionTarget() throws Exception {
+		Assert.assertEquals("one.html", formFlow.navigateToFirstForm(documentHelper));
+		Assert.assertEquals("two.html", formFlow.doAction("next", actionParams, documentHelper));
+		Assert.assertEquals("editFish.html", formFlow.doAction("indexTest", actionParams, documentHelper));
+		Assert.assertEquals("editFish.html", formFlow.doAction("next", actionParams, documentHelper));
+	}
+	
 	@Test
 	public void testNavDocBaseWithIndexTwoDeep() throws Exception {
 		Assert.assertEquals("one.html", formFlow.navigateToFirstForm(documentHelper));

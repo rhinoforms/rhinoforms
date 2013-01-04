@@ -4,7 +4,7 @@
 	formLists: {
 		main: [
 				{ id: "one", url: "one.html", actions: [ "next" ] },
-				{ id: "two", url: "two.html", actions: [ "back", "add:anotherList.editFish(fishIndex=next)", "edit:anotherList.editFish(fishIndex=?)", "next" ] },
+				{ id: "two", url: "two.html", actions: [ "back", "add:anotherList.editFish(fishIndex=next)", "edit:anotherList.editFish(fishIndex=?)", "indexTest:indexTestList.indexTestA", "next" ] },
 				{ id: "three", url: "three.html",
 					actions: [
 						"back",
@@ -46,6 +46,10 @@
 		],
 		gills: [
 			{ id: "editGill", docBase: "gills/gill[gillIndex]", url: "editGill.html", actions: [ "cancel", "next" ] }
+		],
+		indexTestList: [
+			{ id: "indexTestA", docBase: "fishes", url: "editFish.html", actions: [ "next(fishIndex=next)" ] },
+			{ id: "indexTestB", docBase: "fishes", url: "editFish.html" }
 		]
 	}
 }
