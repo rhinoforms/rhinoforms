@@ -1,4 +1,4 @@
-package com.rhinoforms;
+package com.rhinoforms.flow;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletResponse;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
@@ -22,9 +23,7 @@ import org.mozilla.javascript.WrappedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rhinoforms.flow.FlowActionType;
-import com.rhinoforms.flow.FormFlow;
-import com.rhinoforms.flow.InputPojo;
+import com.rhinoforms.Constants;
 import com.rhinoforms.js.JSMasterScope;
 import com.rhinoforms.js.JSSerialiser;
 import com.rhinoforms.xml.DocumentHelper;
@@ -42,6 +41,34 @@ public class FormSubmissionHelper {
 		this.masterScope = masterScope;
 		this.jsSerialiser = new JSSerialiser();
 		this.documentHelper = new DocumentHelper();
+	}
+	
+	public FormSubmissionResult handlePost(FormFlow formFlow, Map<String, String> parameterMap)
+			throws ServletException, IOException, ActionError {
+		FormSubmissionResult formSubmissionResult = new FormSubmissionResult();
+		
+		Map<String, String> actionParams = new HashMap<String, String>();
+		String action = collectActionParameters(actionParams, parameterMap);
+
+		FlowAction flowAction = formFlow.getCurrentActions().get(action);
+		Set<String> fieldsInError = null;
+		if (flowAction != null) {
+			FlowActionType actionType = flowAction.getType();
+			if (actionType != FlowActionType.CANCEL) {
+				fieldsInError = validateAndPersist(formFlow, actionType, parameterMap);
+			}
+		}
+
+		if (fieldsInError == null || fieldsInError.isEmpty()) {
+			// Find next form
+			if (action != null) {
+				String nextUrl = formFlow.doAction(action, actionParams, documentHelper);
+				formSubmissionResult.setNextUrl(nextUrl);
+			}
+		} else {
+			formSubmissionResult.setError(HttpServletResponse.SC_BAD_REQUEST, "Validation error.");
+		}
+		return formSubmissionResult;
 	}
 	
 	public String collectActionParameters(Map<String, String> actionParams, Map<String, String> parameterMap) {

@@ -3,7 +3,6 @@ package com.rhinoforms;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -24,11 +23,11 @@ import org.w3c.dom.Document;
 import com.rhinoforms.flow.ActionError;
 import com.rhinoforms.flow.FieldSourceProxy;
 import com.rhinoforms.flow.FieldSourceProxyException;
-import com.rhinoforms.flow.FlowAction;
-import com.rhinoforms.flow.FlowActionType;
 import com.rhinoforms.flow.FormFlow;
 import com.rhinoforms.flow.FormFlowFactory;
 import com.rhinoforms.flow.FormFlowFactoryException;
+import com.rhinoforms.flow.FormSubmissionHelper;
+import com.rhinoforms.flow.FormSubmissionResult;
 import com.rhinoforms.flow.RemoteSubmissionHelper;
 import com.rhinoforms.formparser.FormParser;
 import com.rhinoforms.js.JSMasterScope;
@@ -115,36 +114,21 @@ public class FormServlet extends HttpServlet {
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		HttpSession session = request.getSession();
-		Context.enter();
-		FormFlow formFlow = null;
-		try {
-			@SuppressWarnings("unchecked")
-			Map<String, String[]> parameterMapMultiValue = request.getParameterMap();
-			Map<String, String> parameterMap = servletHelper.mapOfArraysToMapOfFirstValues(parameterMapMultiValue);
+		@SuppressWarnings("unchecked")
+		Map<String, String[]> parameterMapMultiValue = request.getParameterMap();
+		Map<String, String> parameterMap = servletHelper.mapOfArraysToMapOfFirstValues(parameterMapMultiValue);
+		
+		FormFlow formFlow = getFlowFromSession(request);
+		
+		if (formFlow != null) {
+			formFlow.setRemoteSubmissionHelper(remoteSubmissionHelper);
 
-			formFlow = getFlowFromSession(request);
-
-			if (formFlow != null) {
-				Map<String, String> actionParams = new HashMap<String, String>();
-				String action = formSubmissionHelper.collectActionParameters(actionParams, parameterMap);
-
-				FlowAction flowAction = formFlow.getCurrentActions().get(action);
-				Set<String> fieldsInError = null;
-				if (flowAction != null) {
-					FlowActionType actionType = flowAction.getType();
-					if (actionType != FlowActionType.CANCEL) {
-						fieldsInError = formSubmissionHelper.validateAndPersist(formFlow, actionType, parameterMap);
-					}
-				}
-
-				if (fieldsInError == null || fieldsInError.isEmpty()) {
-					// Find next form
-					String nextUrl = null;
-					if (action != null) {
-						formFlow.setRemoteSubmissionHelper(remoteSubmissionHelper);
-						nextUrl = formFlow.doAction(action, actionParams, documentHelper);
-					}
-
+			Context.enter();
+			try {
+				FormSubmissionResult submissionResult = formSubmissionHelper.handlePost(formFlow, parameterMap);
+				
+				if (!submissionResult.isError()) {
+					String nextUrl = submissionResult.getNextUrl();
 					if (nextUrl != null) {
 						boolean suppressDebugBar = StringUtils.isStringTrueNullSafe(parameterMap.get(Constants.SUPPRESS_DEBUG_BAR_PARAM));
 						forwardToAndParseForm(request, response, formFlow, nextUrl, suppressDebugBar);
@@ -157,22 +141,22 @@ public class FormServlet extends HttpServlet {
 						documentHelper.documentToWriterPretty(formFlow.getDataDocument(), writer);
 					}
 				} else {
-					sendError(HttpServletResponse.SC_BAD_REQUEST, "Validation error.", response);
+					sendError(submissionResult.getHttpErrorCode(), submissionResult.getErrorMessage(), response);
 				}
-			} else {
-				sendError(HttpServletResponse.SC_FORBIDDEN, "Your session has expired.", response);
+			} catch (ActionError e) {
+				SessionHelper.removeFlow(formFlow, session);
+				String message = "Failed to perform action, form session suspended.";
+				LOGGER.error(message, e);
+				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
+			} catch (TransformerException e) {
+				String message = "Failed to output the underlaying xml data.";
+				LOGGER.error(message, e);
+				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
+			} finally {
+				Context.exit();
 			}
-		} catch (ActionError e) {
-			SessionHelper.removeFlow(formFlow, session);
-			String message = "Failed to perform action, form session suspended.";
-			LOGGER.error(message, e);
-			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
-		} catch (TransformerException e) {
-			String message = "Failed to output the underlaying xml data.";
-			LOGGER.error(message, e);
-			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
-		} finally {
-			Context.exit();
+		} else {
+			sendError(HttpServletResponse.SC_FORBIDDEN, "Your session has expired.", response);
 		}
 	}
 

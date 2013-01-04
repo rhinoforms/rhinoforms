@@ -1,4 +1,4 @@
-package com.rhinoforms;
+package com.rhinoforms.flow;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,7 +13,9 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 
-import com.rhinoforms.flow.InputPojo;
+import com.rhinoforms.Constants;
+import com.rhinoforms.TestNetUtil;
+import com.rhinoforms.TestResourceLoader;
 import com.rhinoforms.js.JSMasterScope;
 import com.rhinoforms.js.RhinoFormsMasterScopeFactory;
 import com.rhinoforms.js.TestRhinoFormsMasterScopeFactory;
