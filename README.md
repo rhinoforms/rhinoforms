@@ -1,4 +1,4 @@
 Rhinoforms
 ===========
 
-Welcome to Rhinoforms. See the wiki for more info: https://github.com/kaicode/rhinoforms/wiki
+Welcome to Rhinoforms. More info here: [rhinoforms.com](http://rhinoforms.com)
