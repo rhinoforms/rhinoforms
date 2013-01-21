@@ -3,7 +3,6 @@ package com.rhinoforms.formparser;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -50,6 +49,7 @@ public class ValueInjector {
 	public void processForEachStatements(TagNode formHtml, Document dataDocument, String docBase) throws XPatherException,
 			XPathExpressionException, IOException {
 		Object[] forEachNodes = formHtml.evaluateXPath("//" + Constants.FOR_EACH_ELEMENT);
+		logger.debug("Processing {} nodes. Found: {}", Constants.FOR_EACH_ELEMENT, forEachNodes.length);
 		for (Object forEachNodeO : forEachNodes) {
 			TagNode forEachNode = (TagNode) forEachNodeO;
 			TagNode parent = forEachNode.getParent();

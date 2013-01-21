@@ -201,8 +201,16 @@ public class FormParserTest {
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		formParser.parseForm(new FileInputStream("src/test/resources/empty-form.html"), formFlow, new PrintWriter(outputStream), masterScope, false);
 		String string = outputStream.toString();
-		System.out.println(string);
 		Assert.assertTrue(string.contains("<div class=\"rf-debugbar\">"));
+	}
+	
+	@Test
+	public void testIncludeWithForLoop() throws Exception {
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		formParser.parseForm(new FileInputStream("src/test/resources/include-with-forloop-test/include-with-forloop-test.html"), formFlow, new PrintWriter(outputStream), masterScope, false);
+		String html = outputStream.toString();
+		Assert.assertTrue(html.contains("<p>One</p>"));
+		Assert.assertFalse(html.contains("forEach"));
 	}
 
 }

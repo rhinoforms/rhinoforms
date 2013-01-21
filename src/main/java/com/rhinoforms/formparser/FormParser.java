@@ -2,6 +2,7 @@ package com.rhinoforms.formparser;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -88,6 +89,7 @@ public class FormParser {
 
 		// Process rf.forEach statements
 		valueInjector.processForEachStatements(formHtml, dataDocument, docBase);
+		
 		valueInjector.processRemainingCurlyBrackets(formHtml, dataDocument, docBase, flowID);
 
 		// Process first Rhinoforms form in doc
@@ -137,6 +139,7 @@ public class FormParser {
 			for (TagNode includeNode : includeNodes) {
 				String srcAttribute = includeNode.getAttributeByName("src");
 				srcAttribute = formFlow.resolveResourcePathIfRelative(srcAttribute);
+				logger.debug("Processing include. Resolved resource path '{}'", srcAttribute);
 				InputStream resourceAsStream = resourceLoader.getFormResourceAsStream(srcAttribute);
 				if (resourceAsStream != null) {
 					TagNode includeHtml = htmlCleaner.clean(resourceAsStream);
@@ -148,6 +151,9 @@ public class FormParser {
 					Collections.reverse(bodyChildren);
 					TagNode includeParent = includeNode.getParent();
 					for (HtmlNode bodyChild : bodyChildren) {
+						// Having to call addChild and then removeChild because insertChildAfter does not seem to set the new child's 'parent' node.
+						includeParent.addChild(bodyChild);
+						includeParent.removeChild(bodyChild);
 						includeParent.insertChildAfter(includeNode, bodyChild);
 					}
 					includeParent.removeChild(includeNode);
