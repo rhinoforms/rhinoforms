@@ -120,6 +120,9 @@ function Rhinoforms() {
 				},
 			success: function(html) {
 				var formId = jqXHR.getResponseHeader("rf.formId");
+				if ("false" == jqXHR.getResponseHeader("rf.disableInputsOnSubmit")) {
+					$container.data("rf.disableInputsOnSubmit", false);
+				}
 				insertForm(html, $container, formId);
 				if (callback) {
 					if (typeof callback === 'function') {
@@ -379,9 +382,14 @@ function Rhinoforms() {
 			if (options && options.suppressDebugBar) {
 				suppressDebugBarString = "&rf.suppressDebugBar=true";
 			}
+			
+			var serialisedForm = $form.serialize();
+			if (false != $container.data("rf.disableInputsOnSubmit")) {
+				disableForm($form);
+			}
 			var jqXHR = $.ajax({
 				url: servletUrl,
-				data: $form.serialize() + "&rf.action=" + action + suppressDebugBarString,
+				data: serialisedForm + "&rf.action=" + action + suppressDebugBarString,
 				type: "POST",
 				success: function(data) {
 					switch (jqXHR.getResponseHeader("rf.responseType")) {
@@ -401,6 +409,10 @@ function Rhinoforms() {
 				}
 			});
 		}
+	}
+	
+	function disableForm($form) {
+		$(":input", $form).attr("disabled", "disabled");
 	}
 	
 	function validateForm($form, fieldName) {

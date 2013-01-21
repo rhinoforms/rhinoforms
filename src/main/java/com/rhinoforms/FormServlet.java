@@ -169,6 +169,11 @@ public class FormServlet extends HttpServlet {
 		try {
 			FormFlow newFormFlow = formFlowFactory.createFlow(formFlowPath, initData);
 			SessionHelper.setFlow(newFormFlow, session);
+			
+			if (!newFormFlow.isDisableInputsOnSubmit()) {
+				response.setHeader("rf.disableInputsOnSubmit", "false");
+			}
+			
 			String formUrl = newFormFlow.navigateToFirstForm(documentHelper);
 			boolean suppressDebugBar = StringUtils.isStringTrueNullSafe(request.getParameter(Constants.SUPPRESS_DEBUG_BAR_PARAM));
 			forwardToAndParseForm(request, response, newFormFlow, formUrl, suppressDebugBar);

@@ -15,6 +15,13 @@ function loadFlow(flowMap) {
 			librariesJ.add(libraries[l]);
 		}
 	}
+	if (flowMap.options) {
+		if (typeof flowMap.options.disableInputsOnSubmit != "undefined") {
+			if ("false" == flowMap.options.disableInputsOnSubmit || flowMap.options.disableInputsOnSubmit == false) {
+				formFlow.setDisableInputsOnSubmit(false);
+			}
+		}
+	}
 	var formLists = flowMap.formLists;
 	for (formListName in formLists) {
 		var formArray = formLists[formListName];

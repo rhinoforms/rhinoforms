@@ -26,6 +26,8 @@ public class FormFlow implements Serializable {
 	private Map<String, FieldSourceProxy> fieldSourceProxies;
 	private String resourcesBase;
 	private transient RemoteSubmissionHelper remoteSubmissionHelper;
+	
+	private boolean disableInputsOnSubmit;
 
 	private static final long serialVersionUID = -5683469121328756822L;
 
@@ -35,6 +37,8 @@ public class FormFlow implements Serializable {
 		this.navigationStack = new Stack<FlowNavigationLevel>();
 		this.fieldSourceProxies = new HashMap<String, FieldSourceProxy>();
 		this.libraries = new ArrayList<String>();
+		
+		this.disableInputsOnSubmit = true;
 	}
 
 	public String navigateToFirstForm(DocumentHelper documentHelper) throws ActionError {
@@ -332,4 +336,12 @@ public class FormFlow implements Serializable {
 		this.remoteSubmissionHelper = remoteSubmissionHelper;
 	}
 
+	public void setDisableInputsOnSubmit(boolean disableInputsOnSubmit) {
+		this.disableInputsOnSubmit = disableInputsOnSubmit;
+	}
+	
+	public boolean isDisableInputsOnSubmit() {
+		return disableInputsOnSubmit;
+	}
+	
 }
