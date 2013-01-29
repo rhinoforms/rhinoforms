@@ -8,6 +8,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
@@ -28,7 +29,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.rhinoforms.Constants;
+import com.rhinoforms.flow.FormFlow;
 import com.rhinoforms.flow.FormFlowFactoryException;
+import com.rhinoforms.xml.DocumentHelper;
 
 public class ValueInjector {
 
@@ -36,18 +39,20 @@ public class ValueInjector {
 	private static final XPathFactory xPathFactory = XPathFactory.newInstance();
 	private HtmlCleaner htmlCleaner;
 	private SimpleHtmlSerializer simpleHtmlSerializer;
+	private DocumentHelper documentHelper;
 	
-	final Logger logger = LoggerFactory.getLogger(ValueInjector.class);
+	private final Logger logger = LoggerFactory.getLogger(ValueInjector.class);
 
 	public ValueInjector() {
 		htmlCleaner = new HtmlCleaner();
 		CleanerProperties properties = htmlCleaner.getProperties();
 		properties.setOmitXmlDeclaration(true);
 		simpleHtmlSerializer = new SimpleHtmlSerializer(properties);
+		documentHelper = new DocumentHelper();
 	}
 
-	public void processForEachStatements(TagNode formHtml, Document dataDocument, String docBase) throws XPatherException,
-			XPathExpressionException, IOException {
+	public void processForEachStatements(FormFlow formFlow, TagNode formHtml, Document dataDocument, String docBase) throws XPatherException,
+			XPathExpressionException, IOException, ValueInjectorException {
 		Object[] forEachNodes = formHtml.evaluateXPath("//" + Constants.FOR_EACH_ELEMENT);
 		logger.debug("Processing {} nodes. Found: {}", Constants.FOR_EACH_ELEMENT, forEachNodes.length);
 		for (Object forEachNodeO : forEachNodes) {
@@ -69,7 +74,7 @@ public class ValueInjector {
 				for (int dataNodeindex = 0; dataNodeindex < dataNodeList.getLength(); dataNodeindex++) {
 					Node dataNode = dataNodeList.item(dataNodeindex);
 					StringBuilder thisForEachNodeContents = new StringBuilder(forEachNodeContents);
-					replaceCurlyBrackets(thisForEachNodeContents, dataDocument, null, dataNode, selectAsName, dataNodeindex + 1);
+					replaceCurlyBrackets(formFlow, thisForEachNodeContents, dataDocument, dataNode, selectAsName, dataNodeindex + 1);
 					TagNode processedForEachNode = stringBuilderToNode(thisForEachNodeContents);
 					
 					@SuppressWarnings("unchecked")
@@ -103,8 +108,8 @@ public class ValueInjector {
 		}
 	}
 
-	public void processRemainingCurlyBrackets(TagNode formHtml, Document dataDocument, String docBase, String flowID) throws IOException,
-			XPathExpressionException {
+	public void processRemainingCurlyBrackets(FormFlow formFlow, TagNode formHtml, Document dataDocument, String docBase) throws IOException,
+			XPathExpressionException, ValueInjectorException {
 		XPathExpression selectExpression = xPathFactory.newXPath().compile(docBase);
 		Node dataDocAtDocBase = (Node) selectExpression.evaluate(dataDocument, XPathConstants.NODE);
 
@@ -112,23 +117,30 @@ public class ValueInjector {
 		if (bodyElements.length > 0) {
 			TagNode bodyElement = bodyElements[0];
 			StringBuilder builder = nodeToStringBuilder(bodyElement);
-			replaceCurlyBrackets(builder, dataDocAtDocBase, flowID, null, null, null);
+			replaceCurlyBrackets(formFlow, builder, dataDocAtDocBase, null, null, null);
 			TagNode processedBodyElement = stringBuilderBodyToNode(builder);
 			TagNode parent = bodyElement.getParent();
 			parent.replaceChild(bodyElement, processedBodyElement);
 		}
 	}
 
-	private void replaceCurlyBrackets(StringBuilder builder, Node dataDocument, String flowID, Node contextNode, String contextName, Integer contextindex)
-			throws XPathExpressionException {
+	private void replaceCurlyBrackets(FormFlow formFlow, StringBuilder builder, Node dataDocument, Node contextNode, String contextName, Integer contextindex)
+			throws ValueInjectorException {
 		StringBuffer completedText = new StringBuffer();
+		
+		String flowID = formFlow.getId();
+		Properties properties = formFlow.getProperties();
 
 		Matcher matcher = CURLY_BRACKET_CONTENTS_PATTERN.matcher(builder);
 		while (matcher.matches()) {
 			// get brackets contents
 			String group = matcher.group(1);
 			String value = null;
-			if (group.equals(Constants.FLOW_ID_FIELD_NAME) && flowID != null) {
+			if (group.startsWith("$")) {
+				if (group.length() > 1 && properties != null) {
+					value = properties.getProperty(group.substring(1));
+				}
+			} else if (group.equals(Constants.FLOW_ID_FIELD_NAME) && flowID != null) {
 				value = flowID;
 			} else {
 				if (contextNode != null && group.equals(contextName)) {
@@ -169,10 +181,33 @@ public class ValueInjector {
 		builder.append(completedText);
 	}
 
-	private String lookupValue(Node dataNode, String fieldName) throws XPathExpressionException {
-		String xpath = fieldName.replaceAll("\\.", "/");
-		XPathExpression expression = XPathFactory.newInstance().newXPath().compile(xpath);
-		return expression.evaluate(dataNode);
+	private String lookupValue(Node dataNode, String fieldName) throws ValueInjectorException {
+		if (dataNode != null) {
+			String xpath = null;
+			XPathExpression expression = null;
+			try {
+				xpath = fieldName.replaceAll("\\.", "/");
+				expression = XPathFactory.newInstance().newXPath().compile(xpath);
+				return expression.evaluate(dataNode);
+				
+			} catch (XPathExpressionException e) {
+				StringBuilder stringBuilder = new StringBuilder();
+				if (expression == null) {
+					stringBuilder.append("Failed to compile xpath '").append(xpath).append("'");
+				} else {
+					String documentAsString = "";
+					try {
+						documentAsString = documentHelper.documentToString(dataNode);
+					} catch (TransformerException e1) {
+						documentAsString = "TransformerException serialising document.";
+					}
+					stringBuilder.append("Failed to evaluate xpath '").append(xpath).append("', DataDocument: ").append(documentAsString);
+				}
+				throw new ValueInjectorException(stringBuilder.toString());
+			}
+		} else {
+			throw new ValueInjectorException("Document node is null.");
+		}
 	}
 
 	StringBuilder nodeToStringBuilder(TagNode forEachNode) throws IOException {

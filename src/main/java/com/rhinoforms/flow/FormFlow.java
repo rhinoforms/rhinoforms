@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Stack;
 
 import org.w3c.dom.Document;
@@ -20,6 +21,7 @@ public class FormFlow implements Serializable {
 	private List<String> libraries;
 	private Map<String, List<Form>> formLists;
 	private Document dataDocument;
+	private Properties properties;
 	
 	private Stack<FlowNavigationLevel> navigationStack;
 	private List<InputPojo> currentInputPojos;
@@ -48,6 +50,7 @@ public class FormFlow implements Serializable {
 		navigationStack.push(currentNavigationLevel);
 		String newDocBase = resolveNewDocBase(currentNavigationLevel.getCurrentForm().getDocBase(), null, null, documentHelper);
 		currentNavigationLevel.setDocBase(newDocBase);
+		prepDataDocument(getCurrentDocBase(), null, false, documentHelper);
 		return currentNavigationLevel.getCurrentForm().getPath();
 	}
 
@@ -342,6 +345,14 @@ public class FormFlow implements Serializable {
 	
 	public boolean isDisableInputsOnSubmit() {
 		return disableInputsOnSubmit;
+	}
+	
+	public void setProperties(Properties properties) {
+		this.properties = properties;
+	}
+	
+	public Properties getProperties() {
+		return properties;
 	}
 	
 }

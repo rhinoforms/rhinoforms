@@ -2,7 +2,6 @@ package com.rhinoforms.formparser;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,7 +68,7 @@ public class FormParser {
 	}
 
 	public void parseForm(InputStream formStream, FormFlow formFlow, PrintWriter writer, JSMasterScope masterScope, boolean suppressDebugBar)
-			throws XPatherException, XPathExpressionException, IOException, ResourceLoaderException, FormParserException {
+			throws XPatherException, XPathExpressionException, IOException, ResourceLoaderException, FormParserException, ValueInjectorException {
 
 		TagNode formHtml = htmlCleaner.clean(formStream);
 		String flowID = formFlow.getId();
@@ -88,9 +87,9 @@ public class FormParser {
 		}
 
 		// Process rf.forEach statements
-		valueInjector.processForEachStatements(formHtml, dataDocument, docBase);
+		valueInjector.processForEachStatements(formFlow, formHtml, dataDocument, docBase);
 		
-		valueInjector.processRemainingCurlyBrackets(formHtml, dataDocument, docBase, flowID);
+		valueInjector.processRemainingCurlyBrackets(formFlow, formHtml, dataDocument, docBase);
 
 		// Process first Rhinoforms form in doc
 		Object[] rfFormNodes = formHtml.evaluateXPath("//form[@" + Constants.RHINOFORMS_FLAG + "='true']");

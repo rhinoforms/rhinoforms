@@ -4,6 +4,7 @@ import static com.rhinoforms.TestUtil.createDocument;
 import static com.rhinoforms.TestUtil.serialiseHtmlCleanerNode;
 
 import java.io.FileInputStream;
+import java.io.StringReader;
 import java.util.Properties;
 
 import junit.framework.Assert;
@@ -14,12 +15,15 @@ import org.junit.Before;
 import org.junit.Test;
 import org.w3c.dom.Document;
 
+import com.rhinoforms.flow.FormFlow;
+
 public class ValueInjectorTest {
 
 	private ValueInjector valueInjector;
 	private HtmlCleaner htmlCleaner;
 	private TagNode formHtml;
 	private Document dataDocument;
+	private FormFlow formFlow;
 
 	@Before
 	public void setup() throws Exception {
@@ -28,11 +32,13 @@ public class ValueInjectorTest {
 		dataDocument = createDocument("<myData><ocean><name>Pacific</name><fishes><fish><name>One</name></fish><fish><name>Two</name></fish></fishes></ocean></myData>");
 
 		this.valueInjector = new ValueInjector();
+		formFlow = new FormFlow();
+		formFlow.setProperties(new Properties());
 	}
 
 	@Test
 	public void testForEachWithDocBaseRelativeXPath() throws Exception {
-		valueInjector.processForEachStatements(formHtml, dataDocument, "/myData/ocean");
+		valueInjector.processForEachStatements(formFlow, formHtml, dataDocument, "/myData/ocean");
 
 		String actual = serialiseHtmlCleanerNode(formHtml);
 		Assert.assertFalse(actual.contains("foreach"));
@@ -44,7 +50,7 @@ public class ValueInjectorTest {
 	public void testForEachWithDocBaseRelativeXPathTextNodes() throws Exception {
 		formHtml = htmlCleaner.clean(new FileInputStream("src/test/resources/fishes-text-nodes.html"));
 		dataDocument = createDocument("<myData><fishes><fish_one>One</fish_one><fish_two>Two</fish_two><fish_three/></fishes></myData>");
-		valueInjector.processForEachStatements(formHtml, dataDocument, "/myData");
+		valueInjector.processForEachStatements(formFlow, formHtml, dataDocument, "/myData");
 
 		String actual = serialiseHtmlCleanerNode(formHtml);
 		Assert.assertFalse(actual.contains("foreach"));
@@ -66,7 +72,7 @@ public class ValueInjectorTest {
 		String selectStatement = forEachNode.getAttributeByName("select");
 		Assert.assertEquals("Select statement is absolute XPath", "/myData/ocean/fishes/fish", selectStatement);
 		
-		valueInjector.processForEachStatements(formHtml, dataDocument, "/myData");
+		valueInjector.processForEachStatements(formFlow, formHtml, dataDocument, "/myData");
 
 		String actual = serialiseHtmlCleanerNode(formHtml);
 		Assert.assertFalse(actual.contains("foreach"));
@@ -81,7 +87,7 @@ public class ValueInjectorTest {
 		String selectStatement = forEachNode.getAttributeByName("select");
 		Assert.assertEquals("Select statement is search XPath", "//fish", selectStatement);
 
-		valueInjector.processForEachStatements(formHtml, dataDocument, "/myData");
+		valueInjector.processForEachStatements(formFlow, formHtml, dataDocument, "/myData");
 
 		String actual = serialiseHtmlCleanerNode(formHtml);
 		Assert.assertFalse(actual.contains("foreach"));
@@ -93,12 +99,24 @@ public class ValueInjectorTest {
 	public void testProcessRemainingCurlyBrackets() throws Exception {
 		Assert.assertTrue("Placeholder present.", serialiseHtmlCleanerNode(formHtml).contains("<span class=\"ocean\">{{name}}</span>"));
 
-		valueInjector.processRemainingCurlyBrackets(formHtml, dataDocument, "/myData/ocean", "123");
+		valueInjector.processRemainingCurlyBrackets(formFlow, formHtml, dataDocument, "/myData/ocean");
 
 		String actual = serialiseHtmlCleanerNode(formHtml);
 		Assert.assertTrue("Placeholder replaced with dataDocument content.", actual.contains("<span class=\"ocean\">Pacific</span>"));
 		Assert.assertTrue(actual.contains("Fish count: 2"));
 		Assert.assertTrue(actual.contains("First fish: One"));
+	}
+	
+	@Test
+	public void testProcessRemainingCurlyBracketsSomeProperties() throws Exception {
+		formHtml = htmlCleaner.clean(new StringReader("<span class=\"ocean\">{{$someUrl}}{{name}}</span>"));
+		Assert.assertTrue("Placeholder present.", serialiseHtmlCleanerNode(formHtml).contains("<span class=\"ocean\">{{$someUrl}}{{name}}</span>"));
+		formFlow.getProperties().put("someUrl", "http://en.wikipedia.org/wiki/");
+		
+		valueInjector.processRemainingCurlyBrackets(formFlow, formHtml, dataDocument, "/myData/ocean");
+
+		String actual = serialiseHtmlCleanerNode(formHtml);
+		Assert.assertTrue("Placeholder replaced with dataDocument content.", actual.contains("<span class=\"ocean\">http://en.wikipedia.org/wiki/Pacific</span>"));
 	}
 	
 	@Test

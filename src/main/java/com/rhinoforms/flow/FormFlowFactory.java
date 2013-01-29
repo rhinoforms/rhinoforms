@@ -8,11 +8,15 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
 import com.rhinoforms.formparser.ValueInjector;
@@ -28,6 +32,7 @@ public class FormFlowFactory {
 	private String servletContextPath;
 	private DocumentHelper documentHelper;
 	private ValueInjector valueInjector;
+	private static final Logger LOGGER = LoggerFactory.getLogger(FormFlowFactory.class);
 
 	public FormFlowFactory(ResourceLoader resourceLoader, JSMasterScope masterScope, String servletContextPath) {
 		this.resourceLoader = resourceLoader;
@@ -72,8 +77,9 @@ public class FormFlowFactory {
 						dataDocument = documentHelper.newDocument();
 					}
 				}
-
+				
 				documentHelper.createNodeIfNotThere(dataDocument, flowDocBase);
+				LOGGER.debug("DataDocument first child {}", dataDocument.getFirstChild());
 
 				formFlow.setDataDocument(dataDocument);
 
@@ -105,6 +111,8 @@ public class FormFlowFactory {
 		Properties flowProperties = loadFlowProperties(formFlowJSDefinitionPath);
 		if (flowProperties != null) {
 			flowProperties.put("contextPath", servletContextPath);
+			fillPlaceholders(flowProperties);
+			formFlow.setProperties(flowProperties);
 		}
 		
 		Object wrappedFormFlow = Context.javaToJS(formFlow, scope);
@@ -151,6 +159,28 @@ public class FormFlowFactory {
 			// No problem, properties file is optional
 		}
 		return null;
+	}
+	
+	public void fillPlaceholders(Properties properties) {
+		Pattern propertyNamePlaceholderPattern = Pattern.compile("\\{([a-zA-Z0-9_-]+)\\}");
+		
+		for (Object object : properties.keySet()) {
+			String key = (String) object;
+			String value = properties.getProperty(key);
+			Matcher matcher = propertyNamePlaceholderPattern.matcher(value);
+			while (matcher.find()) {
+				String group = matcher.group(1);
+				if (properties.containsKey(group)) {
+					value = replaceGroup(value, group, (String) properties.get(group));
+				}
+			}
+			properties.setProperty(key, value);
+		}
+		
+	}
+	
+	private String replaceGroup(String value, String group, String newValue) {
+		return value.replace("{" + group + "}", newValue);
 	}
 	
 }
