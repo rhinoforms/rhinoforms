@@ -20,7 +20,7 @@ function Rhinoforms() {
 	this.init = function() {
 		validationKeywords = {};
 		customTypes = {};
-		
+
 		// Enable the 'required' validation keyword
 		this.registerValidationKeyword("required", function(value) {
 			if (!value) {
@@ -64,7 +64,20 @@ function Rhinoforms() {
 				}
 			}
 		});
-		
+
+		// Enable the 'equals' validation keyword
+		this.registerValidationKeyword("equals", function (value, rfAttributes, args) {
+			var requiredValue = args.value;
+			var errorMessage = args.errorMessage;
+			if (value != requiredValue) {
+				if (errorMessage) {
+					return errorMessage;
+				} else {
+					return "Invalid value.";
+				}
+			}
+		});
+
 		// Enable the 'pattern' validation keyword
 		this.registerValidationKeyword("pattern", function(value, rfAttributes, args) {
 			var regex = args.regex;
