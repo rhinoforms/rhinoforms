@@ -2,9 +2,6 @@ function Rhinoforms() {
 	
 	var servletUrl = "rhinoforms";
 	
-	// Should be configurable
-	this.alertOnSetupError = true;
-	
 	// For internal use
 	var validationKeywords;
 	var customTypes;
@@ -227,7 +224,7 @@ function Rhinoforms() {
 				var customTypeFunction = customTypes[customType.name];
 				customTypeFunction(input, flowId, customType.args);
 			} else {
-				setupError("Input custom-type not found '" + customType.name + "'.")
+				rf.onError("Input custom-type not found '" + customType.name + "'.")
 			}
 		});
 		
@@ -642,8 +639,8 @@ function Rhinoforms() {
 		};
 	}
 	
-	function setupError(message) {
-		if (this.alertOnSetupError) alert(message);
+	this.onError = function(message) {
+		alert(message);
 		rf_trace(message);
 	}
 	
