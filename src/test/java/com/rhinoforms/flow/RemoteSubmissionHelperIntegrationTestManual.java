@@ -32,8 +32,9 @@ public class RemoteSubmissionHelperIntegrationTestManual {
 	public void run() throws Exception {
 		Submission submission = new Submission("http://httpbin.org/post");
 		submission.setOmitXmlDeclaration(false);
-		submission.setRawXmlRequest(true);
+//		submission.setRawXmlRequest(true);
 		submission.getData().put("xml", "[dataDocument]");
+		submission.getData().put("something", "xpath:/myData/something");
 		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
 	}
 	

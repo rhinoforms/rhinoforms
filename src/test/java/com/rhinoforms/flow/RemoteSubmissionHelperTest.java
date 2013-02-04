@@ -41,6 +41,23 @@ public class RemoteSubmissionHelperTest {
 	public void testSimplestHandleSubmission() throws Exception {
 		Submission submission = new Submission("http://localhost/dummyURL");
 		submission.setOmitXmlDeclaration(true);
+		submission.getData().put("tree", "apple tree");
+		submission.getData().put("fruit", "apple");
+		testConnectionFactory.setResultXmlString("<submissionResult>one</submissionResult>");
+		
+		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
+		
+		Assert.assertEquals("application/x-www-form-urlencoded", testConnectionFactory.getRequestProperties().get("Content-Type"));
+		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
+		Assert.assertEquals("fruit=apple&tree=apple tree", URLDecoder.decode(submittedData, "UTF-8"));
+		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
+		Assert.assertEquals("<myData><something>a</something></myData>", dataDocumentStringAfterSubmission);
+	}
+	
+	@Test
+	public void testHandleSubmissionWithDataDoc() throws Exception {
+		Submission submission = new Submission("http://localhost/dummyURL");
+		submission.setOmitXmlDeclaration(true);
 		submission.getData().put("xml", "[dataDocument]");
 		testConnectionFactory.setResultXmlString("<submissionResult>one</submissionResult>");
 		
@@ -54,7 +71,58 @@ public class RemoteSubmissionHelperTest {
 	}
 	
 	@Test
-	public void testSimplestHandleSubmissionWithXmlDeclaration() throws Exception {
+	public void testHandleSubmissionXPathParam() throws Exception {
+		Submission submission = new Submission("http://localhost/dummyURL");
+		submission.setOmitXmlDeclaration(true);
+		submission.getData().put("something", "xpath://something");
+		testConnectionFactory.setResultXmlString("<submissionResult>one</submissionResult>");
+		
+		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
+		
+		Assert.assertEquals("application/x-www-form-urlencoded", testConnectionFactory.getRequestProperties().get("Content-Type"));
+		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
+		Assert.assertEquals("something=a", URLDecoder.decode(submittedData, "UTF-8"));
+		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
+		Assert.assertEquals("<myData><something>a</something></myData>", dataDocumentStringAfterSubmission);
+	}
+	
+	@Test
+	public void testHandleSubmissionXPathParamMultipleValues() throws Exception {
+		Submission submission = new Submission("http://localhost/dummyURL");
+		submission.setOmitXmlDeclaration(true);
+		submission.getData().put("something", "xpath://something");
+		testConnectionFactory.setResultXmlString("<submissionResult>one</submissionResult>");
+		
+		String dataDocString = "<myData><something>a</something><something>b</something><something>c</something></myData>";
+		dataDocument = TestUtil.createDocument(dataDocString);
+		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
+		
+		Assert.assertEquals("application/x-www-form-urlencoded", testConnectionFactory.getRequestProperties().get("Content-Type"));
+		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
+		Assert.assertEquals("something=a&something=b&something=c", URLDecoder.decode(submittedData, "UTF-8"));
+		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
+		Assert.assertEquals(dataDocString, dataDocumentStringAfterSubmission);
+	}
+	
+	@Test
+	public void testHandleSubmissionXPathParamsOneBlank() throws Exception {
+		Submission submission = new Submission("http://localhost/dummyURL");
+		submission.setOmitXmlDeclaration(true);
+		submission.getData().put("something", "xpath://something");
+		submission.getData().put("myData", "xpath:/myData");
+		testConnectionFactory.setResultXmlString("<submissionResult>one</submissionResult>");
+		
+		remoteSubmissionHelper.handleSubmission(submission, dataDocument, xsltParameters);
+		
+		Assert.assertEquals("application/x-www-form-urlencoded", testConnectionFactory.getRequestProperties().get("Content-Type"));
+		String submittedData = new String(testConnectionFactory.getByteArrayOutputStream().toByteArray());
+		Assert.assertEquals("myData=&something=a", URLDecoder.decode(submittedData, "UTF-8"));
+		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
+		Assert.assertEquals("<myData><something>a</something></myData>", dataDocumentStringAfterSubmission);
+	}
+	
+	@Test
+	public void testHandleSubmissionWithDataDocWithXmlDeclaration() throws Exception {
 		Submission submission = new Submission("http://localhost/dummyURL");
 		submission.getData().put("xml", "[dataDocument]");
 		testConnectionFactory.setResultXmlString("<submissionResult>one</submissionResult>");

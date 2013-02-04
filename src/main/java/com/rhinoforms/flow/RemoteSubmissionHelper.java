@@ -21,6 +21,7 @@ import javax.xml.transform.dom.DOMResult;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
+import javax.xml.xpath.XPathExpressionException;
 
 import net.sf.saxon.TransformerFactoryImpl;
 
@@ -29,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
 
 import com.rhinoforms.net.ConnectionFactory;
 import com.rhinoforms.net.ConnectionFactoryImpl;
@@ -97,18 +99,44 @@ public class RemoteSubmissionHelper {
 				if (!data.isEmpty()) {
 					boolean first = true;
 					for (String key : data.keySet()) {
-						if (first) {
-							first = false;
-						} else {
+						String dataValue = data.get(key);
+						if (!first) {
 							requestDataBuilder.append("&");
 						}
-						requestDataBuilder.append(URLEncoder.encode(key, UTF8));
-						requestDataBuilder.append("=");
-						String dataValue = data.get(key);
-						if (DATA_DOCUMENT_VALUE_KEY.equals(dataValue)) {
-							dataValue = dataDocumentString;
+						
+						if (dataValue.startsWith("xpath:")) {
+							NodeList nodeList = documentHelper.lookup(dataDocument, dataValue.substring(6));
+							boolean firstNode = true;
+							for (int i = 0; i < nodeList.getLength(); i++) {
+								
+								// We want the first match to always append the parameter name even if no value.
+								if (firstNode) {
+									requestDataBuilder.append(URLEncoder.encode(key, UTF8));
+									requestDataBuilder.append("=");
+								}
+								
+								Node node = nodeList.item(i);
+								Node firstChild = node.getFirstChild();
+								if (firstChild instanceof Text) {
+									String textContent = firstChild.getTextContent();
+									if (!firstNode) {
+										requestDataBuilder.append("&");
+										requestDataBuilder.append(URLEncoder.encode(key, UTF8));
+										requestDataBuilder.append("=");
+									}
+									requestDataBuilder.append(URLEncoder.encode(textContent, UTF8));
+									firstNode = false;
+								}
+							}
+						} else {
+							requestDataBuilder.append(URLEncoder.encode(key, UTF8));
+							requestDataBuilder.append("=");
+							if (DATA_DOCUMENT_VALUE_KEY.equals(dataValue)) {
+								dataValue = dataDocumentString;
+							}
+							requestDataBuilder.append(URLEncoder.encode(dataValue, UTF8));
 						}
-						requestDataBuilder.append(URLEncoder.encode(dataValue, UTF8));
+						first = false;
 					}
 				}
 				requestDataString = requestDataBuilder.toString();
@@ -117,6 +145,8 @@ public class RemoteSubmissionHelper {
 			}
 		} catch (UnsupportedEncodingException e) {
 			throw new RemoteSubmissionHelperException("Failed to encode values for submission", e);
+		} catch (XPathExpressionException e) {
+			throw new RemoteSubmissionHelperException("Failed to build values for submission. XPathExpressionException.", e);
 		}
 
 		LOGGER.debug("Submission data: {}", requestDataString);

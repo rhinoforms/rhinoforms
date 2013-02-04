@@ -170,6 +170,10 @@ public class DocumentHelper {
 		}
 	}
 
+	public NodeList lookup(Document dataDocument, String xPathExpression) throws XPathExpressionException {
+		return lookup(dataDocument, newXPath(xPathExpression));
+	}
+	
 	private NodeList lookup(Document dataDocument, XPathExpression fullXPathExpression) throws XPathExpressionException {
 		return (NodeList) fullXPathExpression.evaluate(dataDocument, XPathConstants.NODESET);
 	}
