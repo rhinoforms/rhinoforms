@@ -16,9 +16,20 @@
 		<load-on-startup>1</load-on-startup>
 	</servlet>
 
+	<servlet>
+		<!-- Just for debugging -->
+		<servlet-name>TraceServlet</servlet-name>
+		<servlet-class>com.rhinoforms.util.TraceServlet</servlet-class>
+	</servlet>
+
 	<servlet-mapping>
 		<servlet-name>FormServlet</servlet-name>
 		<url-pattern>/rhinoforms/*</url-pattern>
+	</servlet-mapping>
+
+	<servlet-mapping>
+		<servlet-name>TraceServlet</servlet-name>
+		<url-pattern>/trace</url-pattern>
 	</servlet-mapping>
 
 </web-app>
