@@ -429,7 +429,7 @@ function Rhinoforms() {
 		var submit = true;
 
 		// Compile map of fields with their values, include validation options and rf fields
-		var fields = getFieldsMap($form, true, fieldName);
+		var fields = getFieldsMap($form, true);
 		// Pass map and get list of errors back
 		var errors = rf.validateFields(fields);
 
