@@ -324,7 +324,7 @@ public class FormParser {
 		formFlow.setCurrentInputPojos(inputPojos);
 	}
 
-	private void processSelectRange(TagNode formNode, JSMasterScope masterScope) throws XPatherException {
+	private void processSelectRange(TagNode formNode, JSMasterScope masterScope) throws XPatherException, IOException {
 		Object[] rangeSelectNodes = formNode.evaluateXPath("//select[@" + Constants.SELECT_RANGE_START_ATTR + "]");
 		if (rangeSelectNodes.length > 0) {
 			Scriptable workingScope = masterScope.createWorkingScope();

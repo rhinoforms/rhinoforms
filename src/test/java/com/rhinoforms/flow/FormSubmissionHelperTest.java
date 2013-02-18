@@ -141,6 +141,28 @@ public class FormSubmissionHelperTest {
 	}
 	
 	@Test
+	public void testValidationFunctionUsingFlowLibrary() throws Exception {
+		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
+		InputPojo marriedInputPojo = new InputPojo("married", "checkbox", new HashMap<String, String>());
+		marriedInputPojo.setValue("true");
+		inputs.add(marriedInputPojo);
+		HashMap<String, String> rfAttributes = new HashMap<String, String>();
+		rfAttributes.put(Constants.VALIDATION_FUNCTION_ATTR, "{ if( isTrue(fields.married.value) ) { this.validate('required'); } }");
+		InputPojo madenNameInputPojo = new InputPojo("madenName", "text", rfAttributes);
+		inputs.add(madenNameInputPojo);
+		
+		Context jsContext = Context.getCurrentContext();
+		jsContext.evaluateString(workingScope, "var isTrue = function(value) { return value == true; }", "<cmd>", 1, null);
+		
+		Set<String> fieldsInError = formSubmissionHelper.validateInput(inputs, workingScope);
+		Assert.assertEquals(1, fieldsInError.size());
+		Assert.assertEquals("madenName", fieldsInError.iterator().next());
+		
+		marriedInputPojo.setValue("false");
+		Assert.assertEquals(0, formSubmissionHelper.validateInput(inputs, workingScope).size());
+	}
+	
+	@Test
 	public void testGetIncludeFalseInputs() throws Exception {
 		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
 		
