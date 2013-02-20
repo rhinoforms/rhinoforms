@@ -30,6 +30,7 @@ import com.rhinoforms.flow.FormSubmissionHelper;
 import com.rhinoforms.flow.FormSubmissionResult;
 import com.rhinoforms.flow.RemoteSubmissionHelper;
 import com.rhinoforms.formparser.FormParser;
+import com.rhinoforms.formparser.ValueInjector;
 import com.rhinoforms.js.JSMasterScope;
 import com.rhinoforms.js.RhinoFormsMasterScopeFactory;
 import com.rhinoforms.resourceloader.ResourceLoader;
@@ -82,7 +83,7 @@ public class FormServlet extends HttpServlet {
 		this.formSubmissionHelper = new FormSubmissionHelper(masterScope);
 		this.formFlowFactory = new FormFlowFactory(resourceLoader, masterScope, servletContext.getContextPath());
 
-		this.remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader);
+		this.remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader, new ValueInjector());
 	}
 
 	@Override

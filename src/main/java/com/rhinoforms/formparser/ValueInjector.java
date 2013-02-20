@@ -124,6 +124,11 @@ public class ValueInjector {
 		}
 	}
 
+	public void replaceCurlyBrackets(FormFlow formFlow, StringBuilder builder, Node dataDocument)
+			throws ValueInjectorException {
+		replaceCurlyBrackets(formFlow, builder, dataDocument, null, null, null);
+	}
+	
 	private void replaceCurlyBrackets(FormFlow formFlow, StringBuilder builder, Node dataDocument, Node contextNode, String contextName, Integer contextindex)
 			throws ValueInjectorException {
 		StringBuffer completedText = new StringBuffer();

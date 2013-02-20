@@ -32,6 +32,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 
+import com.rhinoforms.formparser.ValueInjector;
+import com.rhinoforms.formparser.ValueInjectorException;
 import com.rhinoforms.net.ConnectionFactory;
 import com.rhinoforms.net.ConnectionFactoryImpl;
 import com.rhinoforms.resourceloader.ResourceLoader;
@@ -45,18 +47,20 @@ public class RemoteSubmissionHelper {
 	private DocumentHelper documentHelper;
 	private ResourceLoader resourceLoader;
 	private TransformerFactory transformerFactory;
+	private ValueInjector valueInjector;
 	private static final String UTF8 = "UTF-8";
 	private static final String DATA_DOCUMENT_VALUE_KEY = "[dataDocument]";
 	private static final Logger LOGGER = LoggerFactory.getLogger(RemoteSubmissionHelper.class);
 
-	public RemoteSubmissionHelper(ResourceLoader resourceLoader) {
+	public RemoteSubmissionHelper(ResourceLoader resourceLoader, ValueInjector valueInjector) {
 		this.resourceLoader = resourceLoader;
+		this.valueInjector = valueInjector;
 		connectionFactory = new ConnectionFactoryImpl();
 		documentHelper = new DocumentHelper();
 		transformerFactory = new TransformerFactoryImpl(); // Saxon Impl
 	}
 
-	public void handleSubmission(Submission submission, Document dataDocument, Map<String, String> xsltParameters)
+	public void handleSubmission(Submission submission, Map<String, String> xsltParameters, FormFlow formFlow)
 			throws RemoteSubmissionHelperException {
 		String url = submission.getUrl();
 		String method = submission.getMethod();
@@ -64,6 +68,7 @@ public class RemoteSubmissionHelper {
 		String preTransform = submission.getPreTransform();
 		String postTransform = submission.getPostTransform();
 		boolean rawXmlRequest = submission.isRawXmlRequest();
+		Document dataDocument = formFlow.getDataDocument();
 
 		LOGGER.debug("Handling '{}' submission to '{}'", method, url);
 
@@ -143,16 +148,41 @@ public class RemoteSubmissionHelper {
 			} else {
 				requestDataString = dataDocumentString;
 			}
+			
 		} catch (UnsupportedEncodingException e) {
 			throw new RemoteSubmissionHelperException("Failed to encode values for submission", e);
 		} catch (XPathExpressionException e) {
 			throw new RemoteSubmissionHelperException("Failed to build values for submission. XPathExpressionException.", e);
 		}
+		
 
 		LOGGER.debug("Submission data: {}", requestDataString);
+		
+		StringBuilder urlBuilder = new StringBuilder(url);
+		if (urlBuilder.indexOf("{{") != -1) {
+			try {
+				valueInjector.replaceCurlyBrackets(formFlow, urlBuilder, dataDocument);
+			} catch (ValueInjectorException e) {
+				throw new RemoteSubmissionHelperException("Failed to build submission URL.", e);
+			}
+		}
 
 		try {
-			HttpURLConnection connection = connectionFactory.openConnection(url);
+			if (!requestDataString.isEmpty() && !method.equals("POST")) {
+				if (urlBuilder.indexOf("?") == -1) {
+					urlBuilder.append("?");
+				} else {
+					urlBuilder.append("&");
+				}
+				urlBuilder.append(requestDataString);
+			}
+			
+			String resolvedUrl = urlBuilder.toString();
+			if (!url.equals(resolvedUrl)) {
+				LOGGER.debug("Resolved url: '{}'", resolvedUrl);
+			}
+			
+			HttpURLConnection connection = connectionFactory.openConnection(resolvedUrl);
 
 			connection.setRequestMethod(method.toUpperCase());
 

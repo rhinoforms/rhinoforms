@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,15 +16,20 @@ import com.rhinoforms.net.ConnectionFactory;
 
 public class TestConnectionFactory implements ConnectionFactory {
 
-	private String resultXmlString = "<defaultTestResult/>";
+	private String recordedRequestUrl;
+	private ByteArrayOutputStream recordedRequestStream = new ByteArrayOutputStream();
+	private Map<String, String> recordedRequestProperties = new HashMap<String, String>();
+	
+	private String testResponseString = "<defaultTestResult/>";
 	private int testResponseCode = 200;
 	private String testResponseMessage = "";
-	private ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-	private Map<String, String> requestProperties = new HashMap<String, String>();
 	
 	@Override
 	public HttpURLConnection openConnection(String url) throws MalformedURLException, IOException {
-		return new HttpURLConnection(null) {
+		
+		this.recordedRequestUrl = url;
+		
+		return new HttpURLConnection(new URL(url)) {
 			
 			@Override
 			public void connect() throws IOException {
@@ -40,7 +46,7 @@ public class TestConnectionFactory implements ConnectionFactory {
 			
 			@Override
 			public OutputStream getOutputStream() throws IOException {
-				return byteArrayOutputStream;
+				return recordedRequestStream;
 			}
 			
 			@Override
@@ -55,39 +61,43 @@ public class TestConnectionFactory implements ConnectionFactory {
 			
 			@Override
 			public InputStream getInputStream() throws IOException {
-				return new ByteArrayInputStream(resultXmlString.getBytes());
+				return new ByteArrayInputStream(testResponseString.getBytes());
 			}
 			
 			@Override
 			public void setRequestProperty(String key, String value) {
-				requestProperties.put(key, value);
+				recordedRequestProperties.put(key, value);
 			}
 			
 		};
 	}
 	
-	public void setTestResponseCode(int testResponseCode) {
+	public void setResponseCode(int testResponseCode) {
 		this.testResponseCode = testResponseCode;
 	}
 	
-	public void setTestResponseMessage(String testResponseMessage) {
+	public void setResponseMessage(String testResponseMessage) {
 		this.testResponseMessage = testResponseMessage;
 	}
 	
-	public void setResultXmlString(String resultXmlString) {
-		this.resultXmlString = resultXmlString;
+	public void setResponseString(String resultXmlString) {
+		this.testResponseString = resultXmlString;
+	}
+
+	public String getRecordedRequestUrl() {
+		return recordedRequestUrl;
 	}
 	
-	public ByteArrayOutputStream getByteArrayOutputStream() {
-		return byteArrayOutputStream;
+	public ByteArrayOutputStream getRecordedRequestStream() {
+		return recordedRequestStream;
 	}
 	
-	public void resetByteArrayOutputStream() {
-		byteArrayOutputStream.reset();
+	public void resetRecordedRequestStream() {
+		recordedRequestStream.reset();
 	}
 	
-	public Map<String, String> getRequestProperties() {
-		return requestProperties;
+	public Map<String, String> getRecordedRequestProperties() {
+		return recordedRequestProperties;
 	}
 	
 }
