@@ -47,6 +47,7 @@ public class ValueInjector {
 		htmlCleaner = new HtmlCleaner();
 		CleanerProperties properties = htmlCleaner.getProperties();
 		properties.setOmitXmlDeclaration(true);
+		properties.setTranslateSpecialEntities(false);
 		simpleHtmlSerializer = new SimpleHtmlSerializer(properties);
 		documentHelper = new DocumentHelper();
 	}

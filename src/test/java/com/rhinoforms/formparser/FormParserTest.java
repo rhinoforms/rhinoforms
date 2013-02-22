@@ -205,6 +205,15 @@ public class FormParserTest {
 	}
 	
 	@Test
+	public void testAmpPound() throws Exception {
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		formParser.parseForm(getClass().getResourceAsStream("amp.html"), formFlow, new PrintWriter(outputStream), masterScope, false);
+		String string = outputStream.toString();
+		Assert.assertTrue(string.contains("<span>&amp;</span>"));
+		Assert.assertTrue(string.contains("<span>&pound;</span>"));
+	}
+	
+	@Test
 	public void testIncludeWithForLoop() throws Exception {
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		formParser.parseForm(new FileInputStream("src/test/resources/include-with-forloop-test/include-with-forloop-test.html"), formFlow, new PrintWriter(outputStream), masterScope, false);

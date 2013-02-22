@@ -62,6 +62,7 @@ public class FormParser {
 		this.valueInjector = new ValueInjector();
 		CleanerProperties cleanerProperties = new CleanerProperties();
 		cleanerProperties.setAllowHtmlInsideAttributes(true);
+		cleanerProperties.setTranslateSpecialEntities(false);
 		this.htmlCleaner = new HtmlCleaner(cleanerProperties);
 		showDebugBar = RhinoformsProperties.getInstance().isShowDebugBar();
 		debugBarNode = loadDebugBar();
