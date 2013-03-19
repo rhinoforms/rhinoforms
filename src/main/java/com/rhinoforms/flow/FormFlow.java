@@ -2,6 +2,7 @@ package com.rhinoforms.flow;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ public class FormFlow implements Serializable {
 	private Map<String, FieldSourceProxy> fieldSourceProxies;
 	private String resourcesBase;
 	private transient RemoteSubmissionHelper remoteSubmissionHelper;
+	private transient SubmissionTimeKeeper submissionTimeKeeper;
 	
 	private boolean disableInputsOnSubmit;
 
@@ -68,7 +70,10 @@ public class FormFlow implements Serializable {
 		
 		List<Submission> submissions = flowAction.getSubmissions();
 		if (submissions != null) {
+			List<Integer> times = new ArrayList<Integer>();
+			long startTime;
 			for (Submission submission : submissions) {
+				startTime = new Date().getTime();
 				try {
 					Map<String, String> xsltParameters = new HashMap<String, String>();
 					xsltParameters.put("rf.flowId", flowId);
@@ -78,7 +83,9 @@ public class FormFlow implements Serializable {
 				} catch (RemoteSubmissionHelperException e) {
 					throw new ActionError("Remote submission failed.", e);
 				}
+				times.add((int) (startTime - new Date().getTime()));
 			}
+			submissionTimeKeeper.recordTimeTaken(getCurrentFormId(), action, times);
 		}
 		
 		if (actionTarget.isEmpty()) {
@@ -337,6 +344,10 @@ public class FormFlow implements Serializable {
 	
 	public void setRemoteSubmissionHelper(RemoteSubmissionHelper remoteSubmissionHelper) {
 		this.remoteSubmissionHelper = remoteSubmissionHelper;
+	}
+	
+	public void setSubmissionTimeKeeper(SubmissionTimeKeeper submissionTimeKeeper) {
+		this.submissionTimeKeeper = submissionTimeKeeper;
 	}
 
 	public void setDisableInputsOnSubmit(boolean disableInputsOnSubmit) {

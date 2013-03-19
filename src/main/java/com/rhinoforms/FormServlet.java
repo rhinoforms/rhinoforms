@@ -29,6 +29,7 @@ import com.rhinoforms.flow.FormFlowFactoryException;
 import com.rhinoforms.flow.FormSubmissionHelper;
 import com.rhinoforms.flow.FormSubmissionResult;
 import com.rhinoforms.flow.RemoteSubmissionHelper;
+import com.rhinoforms.flow.SubmissionTimeKeeper;
 import com.rhinoforms.formparser.FormParser;
 import com.rhinoforms.formparser.ValueInjector;
 import com.rhinoforms.js.JSMasterScope;
@@ -61,12 +62,13 @@ public class FormServlet extends HttpServlet {
 		ServletContext servletContext = getServletContext();
 		this.documentHelper = new DocumentHelper();
 		this.servletHelper = new ServletHelper();
+		SubmissionTimeKeeper submissionTimeKeeper = new SubmissionTimeKeeper();
 
 		Context jsContext = Context.enter();
 		try {
 			this.applicationContext = new ApplicationContext(servletContext);
 			this.resourceLoader = applicationContext.getResourceLoader();
-			this.formParser = new FormParser(resourceLoader);
+			this.formParser = new FormParser(resourceLoader, submissionTimeKeeper);
 			this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
 		} catch (ResourceLoaderException e) {
 			String message = "Failed to create ResourceLoader.";
@@ -81,7 +83,7 @@ public class FormServlet extends HttpServlet {
 		}
 
 		this.formSubmissionHelper = new FormSubmissionHelper(masterScope);
-		this.formFlowFactory = new FormFlowFactory(resourceLoader, masterScope, servletContext.getContextPath());
+		this.formFlowFactory = new FormFlowFactory(resourceLoader, masterScope, servletContext.getContextPath(), submissionTimeKeeper);
 
 		this.remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader, new ValueInjector());
 	}

@@ -36,6 +36,7 @@ import com.rhinoforms.flow.FlowActionType;
 import com.rhinoforms.flow.FormFlow;
 import com.rhinoforms.flow.InputPojo;
 import com.rhinoforms.flow.ProxyFactory;
+import com.rhinoforms.flow.SubmissionTimeKeeper;
 import com.rhinoforms.js.JSMasterScope;
 import com.rhinoforms.resourceloader.ResourceLoader;
 import com.rhinoforms.resourceloader.ResourceLoaderException;
@@ -50,13 +51,15 @@ public class FormParser {
 	private HtmlCleaner htmlCleaner;
 	private boolean showDebugBar;
 	private TagNode debugBarNode;
+	private SubmissionTimeKeeper submissionTimeKeeper;
 
 	private static final FieldPathHelper fieldPathHelper = new FieldPathHelper();
 	private static final int processIncludesMaxDepth = 10;
 	final Logger logger = LoggerFactory.getLogger(FormParser.class);
 
-	public FormParser(ResourceLoader resourceLoader) {
+	public FormParser(ResourceLoader resourceLoader, SubmissionTimeKeeper submissionTimeKeeper) {
 		this.resourceLoader = resourceLoader;
+		this.submissionTimeKeeper = submissionTimeKeeper;
 		this.selectOptionHelper = new SelectOptionHelper(resourceLoader);
 		this.proxyFactory = new ProxyFactory();
 		this.valueInjector = new ValueInjector();
@@ -110,7 +113,7 @@ public class FormParser {
 			recordInputFields(formNode, formFlow, dataDocument, docBase);
 
 			// Process Actions
-			processActions(currentActions, formNode);
+			processActions(currentActions, formNode, formFlow.getCurrentFormId());
 
 			// Process auto-complete fields, replace source with proxy path
 			processInputSourceFields(formNode, currentPath, formFlow);
@@ -239,7 +242,7 @@ public class FormParser {
 		formNode.insertChild(0, flowIdNode);
 	}
 
-	private void processActions(Map<String, FlowAction> currentActions, TagNode formNode) {
+	private void processActions(Map<String, FlowAction> currentActions, TagNode formNode, String formId) {
 		@SuppressWarnings("unchecked")
 		List<TagNode> actions = formNode.getElementListHavingAttribute(Constants.ACTION_ATTR, true);
 		for (TagNode actionTagNode : actions) {
@@ -249,6 +252,10 @@ public class FormParser {
 				FlowActionType type = flowAction.getType();
 				if (type != null) {
 					actionTagNode.setAttribute(Constants.ACTION_TYPE_ATTR, type.toString());
+					List<Integer> estimate = submissionTimeKeeper.getEstimate(formId, actionName);
+					if (estimate != null) {
+						actionTagNode.setAttribute(Constants.ACTION_TIME_ESTIMATE_ATTR, estimate.toString());
+					}
 				}
 			}
 		}

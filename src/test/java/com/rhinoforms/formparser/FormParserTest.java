@@ -3,17 +3,20 @@ package com.rhinoforms.formparser;
 import static com.rhinoforms.TestUtil.createDocument;
 import static com.rhinoforms.TestUtil.serialiseHtmlCleanerNode;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.Assert;
 
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
@@ -24,6 +27,7 @@ import com.rhinoforms.TestResourceLoader;
 import com.rhinoforms.flow.FormFlow;
 import com.rhinoforms.flow.FormFlowFactory;
 import com.rhinoforms.flow.InputPojo;
+import com.rhinoforms.flow.SubmissionTimeKeeper;
 import com.rhinoforms.js.JSMasterScope;
 import com.rhinoforms.js.RhinoFormsMasterScopeFactory;
 import com.rhinoforms.resourceloader.ResourceLoader;
@@ -39,26 +43,25 @@ public class FormParserTest {
 	private HtmlCleaner htmlCleaner;
 	private FormFlowFactory formFlowFactory;
 	private ResourceLoader resourceLoader;
+	private SubmissionTimeKeeper submissionTimeKeeper;
 
-	@Before
-	public void setup() throws Exception {
-		Context jsContext = Context.enter();
+	public FormParserTest() throws Exception {
 		this.resourceLoader = new ResourceLoaderImpl(new TestResourceLoader(), new TestResourceLoader());
-		this.formParser = new FormParser(resourceLoader);
+		submissionTimeKeeper = new SubmissionTimeKeeper();
+		this.formParser = new FormParser(resourceLoader, submissionTimeKeeper);
 		this.documentHelper = new DocumentHelper();
 		this.htmlCleaner = new HtmlCleaner();
-		
+		Context jsContext = Context.enter();
 		this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
-		this.formFlowFactory = new FormFlowFactory(this.resourceLoader, this.masterScope, "rhinoforms");
+		this.formFlowFactory = new FormFlowFactory(this.resourceLoader, this.masterScope, "rhinoforms", submissionTimeKeeper);
+	}
+	
+	@Before
+	public void setup() throws Exception {
 		this.formFlow = formFlowFactory.createFlow("test-flow1.js", "<myData><fishes><fish><name>One</name></fish><fish><name>Two</name></fish></fishes></myData>");
 		this.formFlow.navigateToFirstForm(documentHelper);
 	}
 
-	@After
-	public void after() {
-		Context.exit();
-	}
-	
 	@Test
 	public void testIgnoreFieldsWithNoName() throws Exception {
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -110,6 +113,20 @@ public class FormParserTest {
 		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
 		Assert.assertTrue("Option should have value and label from CSV.", parsedFormHtml.contains("<option value=\"1\">Single</option>"));
 		Assert.assertTrue("Option 2 should be selected.", parsedFormHtml.contains("<option value=\"2\" selected=\"selected\">Married</option>"));
+	}
+	
+	@Test
+	public void testActionEstimate() throws Exception {
+		ArrayList<Integer> times = new ArrayList<Integer>();
+		times.add(5133);
+		submissionTimeKeeper.recordTimeTaken("one", "next", times);
+		
+		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+		formParser.parseForm(new FileInputStream("src/test/resources/all-input-types.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope, false);
+		
+		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
+		String submitInput = grep("submit", parsedFormHtml);
+		Assert.assertEquals(" <input type=\"submit\" rf.action=\"next\" value=\"Next\" rf.actiontype=\"next\" rf.actiontimeestimate=\"[5133]\" />", submitInput);
 	}
 	
 	@Test
@@ -197,7 +214,7 @@ public class FormParserTest {
 	@Test
 	public void testDebugBar() throws Exception {
 		RhinoformsProperties.getInstance().setShowDebugBar(true);
-		this.formParser = new FormParser(resourceLoader);
+		this.formParser = new FormParser(resourceLoader, submissionTimeKeeper);
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		formParser.parseForm(new FileInputStream("src/test/resources/empty-form.html"), formFlow, new PrintWriter(outputStream), masterScope, false);
 		String string = outputStream.toString();
@@ -222,4 +239,15 @@ public class FormParserTest {
 		Assert.assertFalse(html.contains("forEach"));
 	}
 
+	private String grep(String string, String parsedFormHtml) throws IOException {
+		BufferedReader bufferedReader = new BufferedReader(new StringReader(parsedFormHtml));
+		String line;
+		while ((line = bufferedReader.readLine()) != null) {
+			if (line.contains(string)) {
+				return line;
+			}
+		}
+		return null;
+	}
+	
 }

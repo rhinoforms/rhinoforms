@@ -32,5 +32,6 @@ public interface Constants {
 	String FOR_EACH_ELEMENT = "rf.forEach";
 	String ACTION_ATTR = "rf.action";
 	String ACTION_TYPE_ATTR = "rf.actionType";
+	String ACTION_TIME_ESTIMATE_ATTR = "rf.actionTimeEstimate";
 	
 }

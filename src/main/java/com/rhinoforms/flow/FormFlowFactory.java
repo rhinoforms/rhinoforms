@@ -32,12 +32,14 @@ public class FormFlowFactory {
 	private String servletContextPath;
 	private DocumentHelper documentHelper;
 	private ValueInjector valueInjector;
+	private SubmissionTimeKeeper submissionTimeKeeper;
 	private static final Logger LOGGER = LoggerFactory.getLogger(FormFlowFactory.class);
 
-	public FormFlowFactory(ResourceLoader resourceLoader, JSMasterScope masterScope, String servletContextPath) {
+	public FormFlowFactory(ResourceLoader resourceLoader, JSMasterScope masterScope, String servletContextPath, SubmissionTimeKeeper submissionTimeKeeper) {
 		this.resourceLoader = resourceLoader;
 		this.masterScope = masterScope;
 		this.servletContextPath = servletContextPath;
+		this.submissionTimeKeeper = submissionTimeKeeper;
 		this.documentHelper = new DocumentHelper();
 		this.valueInjector = new ValueInjector();
 	}
@@ -51,6 +53,7 @@ public class FormFlowFactory {
 			// Create flow
 			FormFlow formFlow = new FormFlow();
 			formFlow.setResourcesBase(resolveResourcesBase(formFlowPath));
+			formFlow.setSubmissionTimeKeeper(submissionTimeKeeper);
 			loadFlowFromJSDefinition(formFlow, formFlowPath, scope, masterScope.getCurrentContext());
 
 			// Load or create data document
