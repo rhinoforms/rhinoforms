@@ -1,7 +1,7 @@
 package com.rhinoforms.flow;
 
 import java.io.Serializable;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class Submission implements Serializable {
@@ -18,7 +18,7 @@ public class Submission implements Serializable {
 
 	public Submission(String url) {
 		this.url = url;
-		data = new HashMap<String, String>();
+		data = new LinkedHashMap<String, String>();
 		method = "POST";
 		omitXmlDeclaration = false;
 	}

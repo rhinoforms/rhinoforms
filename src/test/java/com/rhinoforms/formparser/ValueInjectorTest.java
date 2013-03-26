@@ -145,7 +145,7 @@ public class ValueInjectorTest {
 	
 	@Test
 	public void testProcessFlowDefinitionCurlyBrackets() throws Exception {
-		String initialFlowDef = "{ docBase: '{{baseNode}}', formLists: { main: [ { id: 'customer', url: '/forms/simplest/{{firstForm}}', actions: [ 'finish' ] } ] } }";
+		String initialFlowDef = "{ docBase: '{{$baseNode}}', formLists: { main: [ { id: 'customer', url: '/forms/simplest/{{$firstForm}}', actions: [ 'finish' ] } ] } }";
 		String expectedFlowDef = "{ docBase: '/myDocBase', formLists: { main: [ { id: 'customer', url: '/forms/simplest/simplest.html', actions: [ 'finish' ] } ] } }";
 		StringBuilder flowStringBuilder = new StringBuilder(initialFlowDef);
 		Properties flowProperties = new Properties();

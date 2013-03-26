@@ -108,30 +108,35 @@ public class RemoteSubmissionHelper {
 						if (!first) {
 							requestDataBuilder.append("&");
 						}
+						first = false;
 						
 						if (dataValue.startsWith("xpath:")) {
 							NodeList nodeList = documentHelper.lookup(dataDocument, dataValue.substring(6));
 							boolean firstNode = true;
-							for (int i = 0; i < nodeList.getLength(); i++) {
-								
-								// We want the first match to always append the parameter name even if no value.
-								if (firstNode) {
-									requestDataBuilder.append(URLEncoder.encode(key, UTF8));
-									requestDataBuilder.append("=");
-								}
-								
-								Node node = nodeList.item(i);
-								Node firstChild = node.getFirstChild();
-								if (firstChild instanceof Text) {
-									String textContent = firstChild.getTextContent();
-									if (!firstNode) {
-										requestDataBuilder.append("&");
+							if (nodeList.getLength() > 0) {
+								for (int i = 0; i < nodeList.getLength(); i++) {
+									
+									// We want the first match to always append the parameter name even if no value.
+									if (firstNode) {
 										requestDataBuilder.append(URLEncoder.encode(key, UTF8));
 										requestDataBuilder.append("=");
 									}
-									requestDataBuilder.append(URLEncoder.encode(textContent, UTF8));
-									firstNode = false;
+									
+									Node node = nodeList.item(i);
+									Node firstChild = node.getFirstChild();
+									if (firstChild instanceof Text) {
+										String textContent = firstChild.getTextContent();
+										if (!firstNode) {
+											requestDataBuilder.append("&");
+											requestDataBuilder.append(URLEncoder.encode(key, UTF8));
+											requestDataBuilder.append("=");
+										}
+										requestDataBuilder.append(URLEncoder.encode(textContent, UTF8));
+										firstNode = false;
+									}
 								}
+							} else {
+								first = true;
 							}
 						} else {
 							requestDataBuilder.append(URLEncoder.encode(key, UTF8));
@@ -141,7 +146,6 @@ public class RemoteSubmissionHelper {
 							}
 							requestDataBuilder.append(URLEncoder.encode(dataValue, UTF8));
 						}
-						first = false;
 					}
 				}
 				requestDataString = requestDataBuilder.toString();

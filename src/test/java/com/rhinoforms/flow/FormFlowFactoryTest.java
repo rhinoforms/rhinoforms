@@ -132,6 +132,22 @@ public class FormFlowFactoryTest {
 	}
 	
 	@Test
+	public void testCreateFlowSubmissionWithXpathUrl() throws Exception {
+		FormFlow formFlow = formFlowFactory.createFlow("test-flow1-submission-with-xpath-url.js", null);
+		Map<String, List<Form>> formLists = formFlow.getFormLists();
+		List<Form> list = formLists.get("main");
+		Iterator<Form> iterator = list.iterator();
+		Form nextForm = iterator.next();
+		Map<String, FlowAction> actions = nextForm.getActions();
+		FlowAction flowActionToServer = actions.get("sendToMyServer");
+		Assert.assertNotNull(flowActionToServer);
+		
+		Submission submission = flowActionToServer.getSubmissions().get(0);
+		Assert.assertNotNull(submission);
+		Assert.assertEquals("http://localhost/service/REST/{{//calcRef}}", submission.getUrl());
+	}
+	
+	@Test
 	public void testCreateFlowRawSubmission() throws Exception {
 		FormFlow formFlow = formFlowFactory.createFlow("test-flow1-submission-raw.js", null);
 		Map<String, List<Form>> formLists = formFlow.getFormLists();

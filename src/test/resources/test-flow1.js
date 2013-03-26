@@ -13,7 +13,7 @@
 							name: "send-to-my-server",
 							submission: {
 								preTransform: "xslt/toServerFormat.xsl",
-								url: "{{dummy-submission-url}}",
+								url: "{{$dummy-submission-url}}",
 								method: "post",
 								data: {
 									type: "10",
@@ -24,10 +24,10 @@
 							},
 							submissions: [
 								{
-									url: "{{dummy-submission-url}}",
+									url: "{{$dummy-submission-url}}",
 								},
 								{
-									url: "{{dummy-submission-url}}",
+									url: "{{$dummy-submission-url}}",
 								}
 							],
 							clearTargetFormDocBase: "true"
