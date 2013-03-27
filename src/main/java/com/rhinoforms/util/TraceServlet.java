@@ -11,6 +11,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rhinoforms.Constants;
+
 /**
  * This is just for debugging
  */
@@ -33,7 +35,7 @@ public class TraceServlet extends HttpServlet {
 		StringBuilder stringBuilder = new StringBuilder();
 		@SuppressWarnings("unchecked")
 		int paramCount = arrayMapToString(request.getParameterMap(), stringBuilder);
-		stringBuilder.insert(0, "\nParameters (" + paramCount + "):\n");
+		stringBuilder.insert(0, Constants.NEW_LINE + "Parameters (" + paramCount + "):" + Constants.NEW_LINE);
 
 		LOGGER.info("{} request{}", request.getMethod(), stringBuilder);
 	}
@@ -43,7 +45,7 @@ public class TraceServlet extends HttpServlet {
 		for (String key : hashMap.keySet()) {
 			for (String value : hashMap.get(key)) {
 				count++;
-				stringBuilder.append("    '").append(key).append("':'").append(value).append("'\n");
+				stringBuilder.append("    '").append(key).append("':'").append(value).append(Constants.NEW_LINE);
 			}
 		}
 		return count;

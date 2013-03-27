@@ -15,6 +15,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.w3c.dom.Document;
 
+import com.rhinoforms.Constants;
 import com.rhinoforms.flow.FormFlow;
 
 public class ValueInjectorTest {
@@ -56,11 +57,11 @@ public class ValueInjectorTest {
 		Assert.assertFalse(actual.contains("foreach"));
 		Assert.assertTrue(actual.contains("<span>One</span>"));
 		Assert.assertTrue(actual.contains("<span>Two</span>"));
-		String expected = "<html><head></head><body><div class=\"before\">\n" +
-			" <span>One</span>\n" +
-			" <span>Two</span>\n" +
-			" <span>{{aFish}}</span>\n" +
-			"\n" +
+		String expected = "<html><head></head><body><div class=\"before\">" + Constants.NEW_LINE + 
+			" <span>One</span>" + Constants.NEW_LINE +
+			" <span>Two</span>" + Constants.NEW_LINE +
+			" <span>{{aFish}}</span>" + Constants.NEW_LINE +
+			Constants.NEW_LINE +
 			"<div class=\"after\"></div></div></body></html>";
 		Assert.assertEquals(expected, actual);
 	}
