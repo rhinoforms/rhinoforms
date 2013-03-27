@@ -27,7 +27,7 @@ public class TestUtil {
 		try {
 			while (reader.ready()) {
 				builder.append(reader.readLine());
-				builder.append("\n");
+				builder.append(Constants.NEW_LINE);
 			}
 		} finally {
 			reader.close();

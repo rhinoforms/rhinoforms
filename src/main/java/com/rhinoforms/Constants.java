@@ -34,4 +34,6 @@ public interface Constants {
 	String ACTION_TYPE_ATTR = "rf.actionType";
 	String ACTION_TIME_ESTIMATE_ATTR = "rf.actionTimeEstimate";
 	
+	String NEW_LINE = System.getProperty("line.separator");
+	
 }
