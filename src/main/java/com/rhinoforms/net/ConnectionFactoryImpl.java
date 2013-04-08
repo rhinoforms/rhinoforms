@@ -5,6 +5,8 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.apache.commons.codec.binary.Base64;
+
 public class ConnectionFactoryImpl implements ConnectionFactory {
 
 	@Override
