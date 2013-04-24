@@ -48,21 +48,21 @@ public class FormSubmissionHelper {
 		FormSubmissionResult formSubmissionResult = new FormSubmissionResult();
 		
 		Map<String, String> actionParams = new HashMap<String, String>();
-		String action = collectActionParameters(actionParams, parameterMap);
+		String actionName = collectActionParameters(actionParams, parameterMap);
 
-		FlowAction flowAction = formFlow.getCurrentActions().get(action);
+		FlowAction flowAction = formFlow.getCurrentActions().get(actionName);
 		Set<String> fieldsInError = null;
 		if (flowAction != null) {
 			FlowActionType actionType = flowAction.getType();
 			if (actionType != FlowActionType.CANCEL) {
-				fieldsInError = validateAndPersist(formFlow, actionType, parameterMap);
+				fieldsInError = validateAndPersist(formFlow, actionName, actionType, parameterMap);
 			}
 		}
 
 		if (fieldsInError == null || fieldsInError.isEmpty()) {
 			// Find next form
-			if (action != null) {
-				String nextUrl = formFlow.doAction(action, actionParams, documentHelper);
+			if (actionName != null) {
+				String nextUrl = formFlow.doAction(actionName, actionParams, documentHelper);
 				formSubmissionResult.setNextUrl(nextUrl);
 			}
 		} else {
@@ -86,7 +86,7 @@ public class FormSubmissionHelper {
 		return action;
 	}
 	
-	public Set<String> validateAndPersist(FormFlow formFlow, FlowActionType actionType , Map<String, String> parameterMap) throws ServletException, IOException {
+	public Set<String> validateAndPersist(FormFlow formFlow, String actionName, FlowActionType actionType , Map<String, String> parameterMap) throws ServletException, IOException {
 
 		// Collect input values
 		List<InputPojo> inputPojos = formFlow.getCurrentInputPojos();
@@ -112,7 +112,7 @@ public class FormSubmissionHelper {
 		processCalculatedFields(inputPojos, workingScope);
 		
 		// Validate fields
-		Set<String> fieldsInError = validateInput(inputPojos, workingScope);
+		Set<String> fieldsInError = validateInput(inputPojos, actionName, workingScope);
 
 		// If Back action remove any invalid input
 		if (actionType == FlowActionType.BACK && !fieldsInError.isEmpty()) {
@@ -193,14 +193,16 @@ public class FormSubmissionHelper {
 		context.evaluateString(workingScope, "var fields = " + jsPojoMapString, "Add fields to scope", 1, null);
 	}
 	
-	Set<String> validateInput(List<InputPojo> inputPojos, Scriptable workingScope) throws ServletException {
+	Set<String> validateInput(List<InputPojo> inputPojos, String actionName, Scriptable workingScope) throws ServletException {
 		Set<String> fieldsInError = new HashSet<String>();
 		String jsPojoMapString = jsSerialiser.inputPOJOListToJS(inputPojos);
 		logger.debug("inputPojos as js:{}", jsPojoMapString);
 		StringBuilder commandStringBuilder = new StringBuilder();
 		commandStringBuilder.append("rf.validateFields(");
 		commandStringBuilder.append(jsPojoMapString);
-		commandStringBuilder.append(")");
+		commandStringBuilder.append(", '");
+		commandStringBuilder.append(actionName);
+		commandStringBuilder.append("')");
 		Context jsContext = Context.getCurrentContext();
 		try {
 			NativeArray errors = (NativeArray) jsContext.evaluateString(workingScope, commandStringBuilder.toString(), "<cmd>", 1, null);

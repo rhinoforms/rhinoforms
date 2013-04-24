@@ -233,7 +233,8 @@ function Rhinoforms() {
 			var $input = $(input);
 			$input.blur(function() {
 				if ($input.hasClass("invalid") || $input.val()) {
-					validateForm($container, $input.attr("name"));
+					var action = null;
+					validateForm($container, action, $input.attr("name"));
 				}
 			});
 		});
@@ -377,7 +378,7 @@ function Rhinoforms() {
 		if (!type) {
 			type = action;
 		}
-		if (type == "back" || type == "cancel" || validateForm($form) == true) {
+		if (type == "back" || type == "cancel" || validateForm($form, action) == true) {
 			var currentAction = action;
 			// Deactivate current form
 			$form.removeClass("rf-active-form");
@@ -425,13 +426,13 @@ function Rhinoforms() {
 		$(":input", $form).attr("disabled", "disabled");
 	}
 	
-	function validateForm($form, fieldName) {
+	function validateForm($form, action, fieldName) {
 		var submit = true;
 
 		// Compile map of fields with their values, include validation options and rf fields
 		var fields = getFieldsMap($form, true);
 		// Pass map and get list of errors back
-		var errors = rf.validateFields(fields);
+		var errors = rf.validateFields(fields, action);
 
 		var $inputs = getInputs($form, fieldName);
 		
@@ -564,7 +565,7 @@ function Rhinoforms() {
 	
 	// Take a map of fields and validate each returning a list of any errors.
 	// This is also run server-side
-	this.validateFields = function(fields) {
+	this.validateFields = function(fields, action) {
 		var rf = this;
 		var errors = [];
 		for (var a in fields) {
