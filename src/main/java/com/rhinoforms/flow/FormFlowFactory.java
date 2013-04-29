@@ -24,6 +24,7 @@ import com.rhinoforms.js.JSMasterScope;
 import com.rhinoforms.resourceloader.ResourceLoader;
 import com.rhinoforms.xml.DocumentHelper;
 import com.rhinoforms.xml.DocumentHelperException;
+import com.rhinoforms.xml.FlowExceptionXPath;
 
 public class FormFlowFactory {
 
@@ -81,7 +82,7 @@ public class FormFlowFactory {
 					}
 				}
 				
-				documentHelper.createNodeIfNotThere(dataDocument, flowDocBase);
+				documentHelper.createElementIfNotThere(dataDocument, flowDocBase);
 				LOGGER.debug("DataDocument first child {}", dataDocument.getFirstChild());
 
 				formFlow.setDataDocument(dataDocument);
@@ -92,7 +93,7 @@ public class FormFlowFactory {
 			}
 		} catch (EvaluatorException e) {
 			throw new FormFlowFactoryException("Error parsing flow js file.", e);
-		} catch (DocumentHelperException e) {
+		} catch (FlowExceptionXPath e) {
 			throw new FormFlowFactoryException("Error creating base node in data document using flow docBase.", e);
 		}
 	}

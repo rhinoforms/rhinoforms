@@ -40,6 +40,7 @@ import com.rhinoforms.resourceloader.ResourceLoader;
 import com.rhinoforms.util.StreamUtils;
 import com.rhinoforms.xml.DocumentHelper;
 import com.rhinoforms.xml.DocumentHelperException;
+import com.rhinoforms.xml.FlowExceptionXPath;
 
 public class RemoteSubmissionHelper {
 
@@ -61,7 +62,7 @@ public class RemoteSubmissionHelper {
 	}
 
 	public void handleSubmission(Submission submission, Map<String, String> xsltParameters, FormFlow formFlow)
-			throws RemoteSubmissionHelperException {
+			throws RemoteSubmissionHelperException, FlowExceptionXPath {
 		String url = submission.getUrl();
 		String method = submission.getMethod();
 		Map<String, String> data = submission.getData();

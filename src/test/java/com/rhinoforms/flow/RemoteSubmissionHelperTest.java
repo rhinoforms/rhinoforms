@@ -17,6 +17,7 @@ import com.rhinoforms.TestUtil;
 import com.rhinoforms.formparser.ValueInjector;
 import com.rhinoforms.resourceloader.ResourceLoaderImpl;
 import com.rhinoforms.xml.DocumentHelper;
+import com.rhinoforms.xml.FlowExceptionXPath;
 
 public class RemoteSubmissionHelperTest {
 	
@@ -260,7 +261,7 @@ public class RemoteSubmissionHelperTest {
 	}
 	
 	@Test
-	public void testHandleSubmissionBadResult() {
+	public void testHandleSubmissionBadResult() throws FlowExceptionXPath {
 		Submission submission = new Submission("http://localhost/dummyURL");
 		submission.setOmitXmlDeclaration(true);
 		submission.getData().put("xml", "[dataDocument]");

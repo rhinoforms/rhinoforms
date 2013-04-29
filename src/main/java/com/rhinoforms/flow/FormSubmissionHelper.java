@@ -11,9 +11,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletResponse;
-
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.NativeArray;
@@ -24,10 +21,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rhinoforms.Constants;
+import com.rhinoforms.js.FlowExceptionFileNotFound;
 import com.rhinoforms.js.JSMasterScope;
 import com.rhinoforms.js.JSSerialiser;
 import com.rhinoforms.xml.DocumentHelper;
-import com.rhinoforms.xml.DocumentHelperException;
+import com.rhinoforms.xml.FlowExceptionXPath;
 
 public class FormSubmissionHelper {
 
@@ -35,7 +33,6 @@ public class FormSubmissionHelper {
 	private JSSerialiser jsSerialiser;
 	private DocumentHelper documentHelper;
 	private final Logger logger = LoggerFactory.getLogger(FormSubmissionHelper.class);
-	private static final String UTF8 = "UTF-8";
 
 	public FormSubmissionHelper(JSMasterScope masterScope) {
 		this.masterScope = masterScope;
@@ -44,7 +41,7 @@ public class FormSubmissionHelper {
 	}
 	
 	public FormSubmissionResult handlePost(FormFlow formFlow, Map<String, String> parameterMap)
-			throws ServletException, IOException, ActionError {
+			throws IOException, FlowExceptionActionError, FlowExceptionBadRequest, FlowExceptionFileNotFound, FlowExceptionJavaScript, FlowExceptionXPath {
 		FormSubmissionResult formSubmissionResult = new FormSubmissionResult();
 		
 		Map<String, String> actionParams = new HashMap<String, String>();
@@ -66,7 +63,7 @@ public class FormSubmissionHelper {
 				formSubmissionResult.setNextUrl(nextUrl);
 			}
 		} else {
-			formSubmissionResult.setError(HttpServletResponse.SC_BAD_REQUEST, "Validation error.");
+			throw new FlowExceptionBadRequest("Validation error.");
 		}
 		return formSubmissionResult;
 	}
@@ -86,7 +83,7 @@ public class FormSubmissionHelper {
 		return action;
 	}
 	
-	public Set<String> validateAndPersist(FormFlow formFlow, String actionName, FlowActionType actionType , Map<String, String> parameterMap) throws ServletException, IOException {
+	public Set<String> validateAndPersist(FormFlow formFlow, String actionName, FlowActionType actionType , Map<String, String> parameterMap) throws IOException, FlowExceptionFileNotFound, FlowExceptionJavaScript, FlowExceptionXPath {
 
 		// Collect input values
 		List<InputPojo> inputPojos = formFlow.getCurrentInputPojos();
@@ -129,14 +126,8 @@ public class FormSubmissionHelper {
 		if (fieldsInError.isEmpty()) {
 			// Persist collected form data
 			String docBase = formFlow.getCurrentDocBase();
-			try {
-				documentHelper.persistFormData(inputPojos, docBase, formFlow.getDataDocument());
-				documentHelper.clearFormData(includeFalseInputs, docBase, formFlow.getDataDocument());
-			} catch (DocumentHelperException e) {
-				String message = "Failed to map field to xml document.";
-				logger.error(message, e);
-				throw new ServletException(message, e);
-			}
+			documentHelper.persistFormData(inputPojos, docBase, formFlow.getDataDocument());
+			documentHelper.clearFormData(includeFalseInputs, docBase, formFlow.getDataDocument());
 		}
 
 		return fieldsInError;
@@ -193,7 +184,7 @@ public class FormSubmissionHelper {
 		context.evaluateString(workingScope, "var fields = " + jsPojoMapString, "Add fields to scope", 1, null);
 	}
 	
-	Set<String> validateInput(List<InputPojo> inputPojos, String actionName, Scriptable workingScope) throws ServletException {
+	Set<String> validateInput(List<InputPojo> inputPojos, String actionName, Scriptable workingScope) throws FlowExceptionJavaScript {
 		Set<String> fieldsInError = new HashSet<String>();
 		String jsPojoMapString = jsSerialiser.inputPOJOListToJS(inputPojos);
 		logger.debug("inputPojos as js:{}", jsPojoMapString);
@@ -214,13 +205,9 @@ public class FormSubmissionHelper {
 				fieldsInError.add(errorFieldName);
 			}
 		} catch (EcmaError e) {
-			String message = "EcmaError error while calling JavaScript function rf.validateFields.";
-			logger.error(message, e);
-			throw new ServletException(message, e);
+			throw new FlowExceptionJavaScript("EcmaError error while calling JavaScript function rf.validateFields.", e);
 		} catch (WrappedException e) {
-			String message = "WrappedException error while calling JavaScript function rf.validateFields.";
-			logger.error(message, e);
-			throw new ServletException(message, e);
+			throw new FlowExceptionJavaScript("WrappedException error while calling JavaScript function rf.validateFields.", e);
 		}
 		return fieldsInError;
 	}
@@ -243,9 +230,9 @@ public class FormSubmissionHelper {
 					String paramName = token.substring(0, token.indexOf("="));
 					String paramValue = token.substring(token.indexOf("=") + 1);
 					try {
-						paramValue = URLDecoder.decode(paramValue, UTF8);
+						paramValue = URLDecoder.decode(paramValue, Constants.UTF8);
 					} catch (UnsupportedEncodingException e) {
-						logger.warn("UnsupportedEncodingException while decoding paramValue:'{}', using " + UTF8, paramValue, e);
+						logger.warn("UnsupportedEncodingException while decoding paramValue:'{}', using " + Constants.UTF8, paramValue, e);
 					}
 					paramsMap.put(paramName, paramValue);
 				}

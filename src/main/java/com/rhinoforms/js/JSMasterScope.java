@@ -48,7 +48,7 @@ public class JSMasterScope {
 		return workingScope;
 	}
 
-	public Scriptable createWorkingScope(List<String> librariesToPreload) throws IOException {
+	public Scriptable createWorkingScope(List<String> librariesToPreload) throws IOException, FlowExceptionFileNotFound {
 		Scriptable workingScope = createWorkingScope();
 
 		if (librariesToPreload != null && !librariesToPreload.isEmpty()) {
@@ -59,7 +59,7 @@ public class JSMasterScope {
 					logger.debug("Loading library script {}", libraryToPreload);
 					jsContext.evaluateReader(workingScope, new InputStreamReader(resourceAsStream), libraryToPreload, 1, null);
 				} else {
-					throw new IOException("Could not locate flow library '" + libraryToPreload + "'");
+					throw new FlowExceptionFileNotFound("Could not locate flow library '" + libraryToPreload + "'");
 				}
 			}
 		}
