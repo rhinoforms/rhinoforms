@@ -18,7 +18,7 @@ public class RhinoFormsMasterScopeFactory {
 		NetUtil netUtil = createNetUtil(masterScope);
 		Object wrappedNetUtil = Context.javaToJS(netUtil, sharedScope);
 		ScriptableObject.putProperty(sharedScope, "netUtil", wrappedNetUtil);
-
+		
 		// It would be good to seal the sharedScope here but we can't because of a bug when xerces or xalan is on the classpath.
 //		sharedScope.sealObject();
 
