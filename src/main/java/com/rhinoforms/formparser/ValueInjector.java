@@ -30,10 +30,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.rhinoforms.Constants;
-import com.rhinoforms.TestApplicationContext;
 import com.rhinoforms.flow.FormFlow;
 import com.rhinoforms.flow.FormFlowFactoryException;
-import com.rhinoforms.resourceloader.ResourceLoaderException;
 import com.rhinoforms.xml.DocumentHelper;
 
 public class ValueInjector {
@@ -234,12 +232,6 @@ public class ValueInjector {
 
 	TagNode stringBuilderBodyToNode(StringBuilder nodeContents) throws IOException {
 		return (TagNode) htmlCleaner.clean(nodeContents.toString()).getChildren().get(1);
-	}
-	
-	public static void main(String[] args) throws ResourceLoaderException, IOException {
-		ValueInjector valueInjector = new TestApplicationContext().getValueInjector();
-		TagNode node = valueInjector.stringBuilderBodyToNode(new StringBuilder("<a>123</a>"));
-		System.out.println(node.getChildren().get(0));
 	}
 	
 	TagNode stringBuilderToNode(StringBuilder nodeContents) throws IOException {
