@@ -1,8 +1,6 @@
 package com.rhinoforms;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -15,43 +13,33 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.xml.transform.TransformerException;
 
-import org.mozilla.javascript.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
-import com.rhinoforms.flow.ActionError;
 import com.rhinoforms.flow.FieldSourceProxy;
 import com.rhinoforms.flow.FieldSourceProxyException;
+import com.rhinoforms.flow.FlowException;
+import com.rhinoforms.flow.FlowExceptionBadRequest;
 import com.rhinoforms.flow.FormFlow;
-import com.rhinoforms.flow.FormFlowFactory;
 import com.rhinoforms.flow.FormFlowFactoryException;
-import com.rhinoforms.flow.FormSubmissionHelper;
-import com.rhinoforms.flow.FormSubmissionResult;
-import com.rhinoforms.flow.RemoteSubmissionHelper;
-import com.rhinoforms.flow.SubmissionTimeKeeper;
-import com.rhinoforms.formparser.FormParser;
-import com.rhinoforms.formparser.ValueInjector;
-import com.rhinoforms.js.JSMasterScope;
-import com.rhinoforms.js.RhinoFormsMasterScopeFactory;
+import com.rhinoforms.flow.FormSubmissionHelperException;
+import com.rhinoforms.formparser.FormParserException;
 import com.rhinoforms.resourceloader.ResourceLoader;
 import com.rhinoforms.resourceloader.ResourceLoaderException;
 import com.rhinoforms.util.ServletHelper;
-import com.rhinoforms.util.StringUtils;
 import com.rhinoforms.xml.DocumentHelper;
 
 @SuppressWarnings("serial")
 public class FormServlet extends HttpServlet {
 
-	private FormFlowFactory formFlowFactory;
 	private DocumentHelper documentHelper;
 	private ResourceLoader resourceLoader;
-	private JSMasterScope masterScope;
 	private ServletHelper servletHelper;
-	private FormSubmissionHelper formSubmissionHelper;
-	private FormParser formParser;
-	private RemoteSubmissionHelper remoteSubmissionHelper;
-	private ApplicationContext applicationContext;
+	private FlowRequestFactory flowRequestFactory;
+	private FormActionRequestFactory formActionRequestFactory;
+	private FormProducer formProducer;
+	
 	private static final Logger LOGGER = LoggerFactory.getLogger(FormServlet.class);
 	private static final String PROXY_PATH_PREFIX = "/proxy/";
 	private static final String VIEW_DATA_DOC_PATH_PREFIX = "/data-document/";
@@ -60,16 +48,14 @@ public class FormServlet extends HttpServlet {
 	@Override
 	public void init() throws ServletException {
 		ServletContext servletContext = getServletContext();
-		this.documentHelper = new DocumentHelper();
-		this.servletHelper = new ServletHelper();
-		SubmissionTimeKeeper submissionTimeKeeper = new SubmissionTimeKeeper();
-
-		Context jsContext = Context.enter();
 		try {
-			this.applicationContext = new ApplicationContext(servletContext);
-			this.resourceLoader = applicationContext.getResourceLoader();
-			this.formParser = new FormParser(resourceLoader, submissionTimeKeeper);
-			this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
+			ApplicationContext appContext = new ApplicationContext(servletContext);
+			this.servletHelper = appContext.getServletHelper();
+			this.documentHelper = appContext.getDocumentHelper();
+			this.resourceLoader = appContext.getResourceLoader();
+			this.flowRequestFactory = appContext.getFlowRequestFactory();
+			this.formActionRequestFactory = appContext.getFormActionRequestFactory();
+			this.formProducer = appContext.getFormProducer();
 		} catch (ResourceLoaderException e) {
 			String message = "Failed to create ResourceLoader.";
 			LOGGER.error(message, e);
@@ -78,14 +64,7 @@ public class FormServlet extends HttpServlet {
 			String message = "Failed to create master scope.";
 			LOGGER.error(message, e);
 			throw new ServletException(message);
-		} finally {
-			Context.exit();
 		}
-
-		this.formSubmissionHelper = new FormSubmissionHelper(masterScope);
-		this.formFlowFactory = new FormFlowFactory(resourceLoader, masterScope, servletContext.getContextPath(), submissionTimeKeeper);
-
-		this.remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader, new ValueInjector());
 	}
 
 	@Override
@@ -116,47 +95,33 @@ public class FormServlet extends HttpServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		HttpSession session = request.getSession();
-		@SuppressWarnings("unchecked")
-		Map<String, String[]> parameterMapMultiValue = request.getParameterMap();
-		Map<String, String> parameterMap = servletHelper.mapOfArraysToMapOfFirstValues(parameterMapMultiValue);
-		
+		FormActionRequest formActionRequest = formActionRequestFactory.createRequest(request);
 		FormFlow formFlow = getFlowFromSession(request);
 		
 		if (formFlow != null) {
-			formFlow.setRemoteSubmissionHelper(remoteSubmissionHelper);
-
-			Context.enter();
+			
 			try {
-				FormSubmissionResult submissionResult = formSubmissionHelper.handlePost(formFlow, parameterMap);
-				
-				if (!submissionResult.isError()) {
-					String nextUrl = submissionResult.getNextUrl();
-					if (nextUrl != null) {
-						boolean suppressDebugBar = StringUtils.isStringTrueNullSafe(parameterMap.get(Constants.SUPPRESS_DEBUG_BAR_PARAM));
-						forwardToAndParseForm(request, response, formFlow, nextUrl, suppressDebugBar);
-						SessionHelper.setFlow(formFlow, session); // Required for Google AppEngine
-					} else {
-						// End of flow. Spit out XML.
-						response.setContentType("text/plain");
-						response.setHeader("rf.responseType", "data");
-						PrintWriter writer = response.getWriter();
-						documentHelper.documentToWriterPretty(formFlow.getDataDocument(), writer);
-					}
-				} else {
-					sendError(submissionResult.getHttpErrorCode(), submissionResult.getErrorMessage(), response);
-				}
-			} catch (ActionError e) {
-				SessionHelper.removeFlow(formFlow, session);
-				String message = "Failed to perform action, form session suspended.";
-				LOGGER.error(message, e);
+				formProducer.doActionWriteForm(formActionRequest, formFlow, response);
+			} catch (FlowExceptionBadRequest e) {
+				String message = e.getMessage();
+				LOGGER.info(message, e);
+				sendError(HttpServletResponse.SC_BAD_REQUEST, message, response);
+			} catch (FlowException e) {
+				String message = e.getMessage();
+				LOGGER.info(message, e);
+				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
+			} catch (FormSubmissionHelperException e) {
+				String message = e.getMessage();
+				LOGGER.info(message, e);
+				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
+			} catch (FormParserException e) {
+				String message = e.getMessage();
+				LOGGER.info(message, e);
 				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 			} catch (TransformerException e) {
-				String message = "Failed to output the underlaying xml data.";
+				String message = "Failed to output DataDocument";
 				LOGGER.error(message, e);
 				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
-			} finally {
-				Context.exit();
 			}
 		} else {
 			sendError(HttpServletResponse.SC_FORBIDDEN, "Your session has expired.", response);
@@ -165,47 +130,19 @@ public class FormServlet extends HttpServlet {
 
 	private void doGetCreateFormFlow(HttpServletRequest request, HttpServletResponse response, HttpSession session) throws IOException,
 			ServletException {
-		String formFlowPath = request.getParameter(Constants.FLOW_PATH_PARAM);
-		String initData = request.getParameter(Constants.INIT_DATA_PARAM);
-
-		Context.enter();
+		FlowCreationRequest flowRequest = flowRequestFactory.createNewFlowRequest(request);
 		try {
-			FormFlow newFormFlow = formFlowFactory.createFlow(formFlowPath, initData);
-			SessionHelper.setFlow(newFormFlow, session);
-			
-			if (!newFormFlow.isDisableInputsOnSubmit()) {
-				response.setHeader("rf.disableInputsOnSubmit", "false");
-			}
-			
-			String formUrl = newFormFlow.navigateToFirstForm(documentHelper);
-			boolean suppressDebugBar = StringUtils.isStringTrueNullSafe(request.getParameter(Constants.SUPPRESS_DEBUG_BAR_PARAM));
-			forwardToAndParseForm(request, response, newFormFlow, formUrl, suppressDebugBar);
+			formProducer.createFlowWriteForm(flowRequest, request.getSession(), response);
 		} catch (FormFlowFactoryException e) {
 			String message = "Failed to create form flow.";
 			LOGGER.error(message, e);
 			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
-		} catch (ActionError e) {
-			String message = "Failed to navigate to the first form.";
+		} catch (FormParserException e) {
+			String message = "Failed to load the first form.";
 			LOGGER.error(message, e);
 			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
-		} finally {
-			Context.exit();
-		}
-	}
-
-	private void forwardToAndParseForm(HttpServletRequest request, HttpServletResponse response, FormFlow formFlow, String formUrl,
-			boolean suppressDebugBar) throws ServletException, IOException {
-
-		formUrl = formFlow.resolveResourcePathIfRelative(formUrl);
-		String currentFormId = formFlow.getCurrentFormId();
-		response.setHeader("rf.formId", currentFormId);
-
-		try {
-			InputStream formStream = resourceLoader.getFormResourceAsStream(formUrl);
-			response.setContentType("text/html");
-			formParser.parseForm(formStream, formFlow, response.getWriter(), masterScope, suppressDebugBar);
-		} catch (Exception e) {
-			String message = "Failed to load next form.";
+		} catch (FlowException e) {
+			String message = "Failed to navigate to the first form.";
 			LOGGER.error(message, e);
 			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 		}

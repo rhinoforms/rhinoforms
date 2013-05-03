@@ -32,5 +32,6 @@ public interface Constants {
 	String ACTION_TIME_ESTIMATE_ATTR = "rf.actionTimeEstimate";
 	
 	String NEW_LINE = System.getProperty("line.separator");
+	String UTF8 = "UTF-8";
 	
 }

@@ -11,12 +11,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.w3c.dom.Document;
 
+import com.rhinoforms.TestApplicationContext;
 import com.rhinoforms.TestConnectionFactory;
-import com.rhinoforms.TestResourceLoader;
 import com.rhinoforms.TestUtil;
-import com.rhinoforms.formparser.ValueInjector;
-import com.rhinoforms.resourceloader.ResourceLoaderImpl;
 import com.rhinoforms.xml.DocumentHelper;
+import com.rhinoforms.xml.FlowExceptionXPath;
 
 public class RemoteSubmissionHelperTest {
 	
@@ -31,8 +30,8 @@ public class RemoteSubmissionHelperTest {
 	@Before
 	public void setup() throws Exception {
 		documentHelper = new DocumentHelper();
-		ResourceLoaderImpl resourceLoader = new ResourceLoaderImpl(new TestResourceLoader(), new TestResourceLoader());
-		remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader, new ValueInjector());
+		TestApplicationContext applicationContext = new TestApplicationContext();
+		remoteSubmissionHelper = applicationContext.getRemoteSubmissionHelper();
 		testConnectionFactory = new TestConnectionFactory();
 		remoteSubmissionHelper.setConnectionFactory(testConnectionFactory);
 		dataDocumentString = "<myData><something>a</something><another>anotherVal</another></myData>";
@@ -283,7 +282,7 @@ public class RemoteSubmissionHelperTest {
 	}
 	
 	@Test
-	public void testHandleSubmissionBadResult() {
+	public void testHandleSubmissionBadResult() throws FlowExceptionXPath {
 		Submission submission = new Submission("http://localhost/dummyURL");
 		submission.setOmitXmlDeclaration(true);
 		submission.getData().put("xml", "[dataDocument]");

@@ -11,11 +11,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 
-import com.rhinoforms.TestResourceLoader;
-import com.rhinoforms.js.JSMasterScope;
-import com.rhinoforms.js.RhinoFormsMasterScopeFactory;
+import com.rhinoforms.ApplicationContext;
+import com.rhinoforms.TestApplicationContext;
 import com.rhinoforms.resourceloader.ResourceLoaderException;
-import com.rhinoforms.resourceloader.ResourceLoaderImpl;
 import com.rhinoforms.xml.DocumentHelper;
 
 public class FormFlowTest {
@@ -24,17 +22,16 @@ public class FormFlowTest {
 	private HashMap<String, String> actionParams;
 	private FormFlow formFlow;
 	private DocumentHelper documentHelper;
-	private JSMasterScope masterScope;
 
 	@Before
 	public void setup() throws IOException, FormFlowFactoryException, ResourceLoaderException {
-		ResourceLoaderImpl resourceLoader = new ResourceLoaderImpl(new TestResourceLoader(), new TestResourceLoader());
 		this.actionParams = new HashMap<String, String>();
 		this.documentHelper = new DocumentHelper();
 		
-		Context jsContext = Context.enter();
-		this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
-		this.formFlowFactory = new FormFlowFactory(resourceLoader, this.masterScope, "rhinoforms", new SubmissionTimeKeeper());
+		Context.enter();
+		ApplicationContext applicationContext = new TestApplicationContext();
+		
+		this.formFlowFactory = applicationContext.getFormFlowFactory();
 		this.formFlow = formFlowFactory.createFlow("test-flow1.js", "<myData/>");
 	}
 	

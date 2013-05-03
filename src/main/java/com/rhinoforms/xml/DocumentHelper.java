@@ -48,7 +48,7 @@ public class DocumentHelper {
 		}
 	}
 
-	public void persistFormData(List<InputPojo> inputPOJOs, String docBase, Document dataDocument) throws DocumentHelperException {
+	public void persistFormData(List<InputPojo> inputPOJOs, String docBase, Document dataDocument) throws FlowExceptionXPath {
 		for (InputPojo inputPojo : inputPOJOs) {
 			String xPathString = getXPathStringForInput(docBase, inputPojo);
 			Node node = lookupOrCreateNode(dataDocument, xPathString);
@@ -56,10 +56,11 @@ public class DocumentHelper {
 		}
 	}
 
-	public void clearFormData(List<InputPojo> inputsToClear, String docBase, Document dataDocument) throws DocumentHelperException {
+	public void clearFormData(List<InputPojo> inputsToClear, String docBase, Document dataDocument) throws FlowExceptionXPath {
+		String xPathString = null;
 		try {
 			for (InputPojo inputPojo : inputsToClear) {
-				String xPathString = getXPathStringForInput(docBase, inputPojo);
+				xPathString = getXPathStringForInput(docBase, inputPojo);
 				XPathExpression xPath = newXPath(xPathString);
 				NodeList nodeList = lookup(dataDocument, xPath);
 				if (nodeList.getLength() > 0) {
@@ -70,10 +71,10 @@ public class DocumentHelper {
 				}
 			}
 		} catch (XPathExpressionException e) {
-			throw new DocumentHelperException(e);
+			throw new FlowExceptionXPath("Problem with generated XPath '" + xPathString + "'.", e);
 		}
 	}
-	
+
 	private void deleteNodeIfEmptyRecurseUp(Node node) {
 		Node parentNode = node.getParentNode();
 		if (!node.hasChildNodes() && parentNode != null && parentNode.getParentNode() != null) {
@@ -81,12 +82,13 @@ public class DocumentHelper {
 			deleteNodeIfEmptyRecurseUp(parentNode);
 		}
 	}
-	
+
 	private String getXPathStringForInput(String documentBasePath, InputPojo inputPojo) {
 		return documentBasePath + "/" + inputPojo.getName().replaceAll("\\.", "/");
 	}
-	
-	public String resolveXPathIndexesForAction(String xpath, Map<String, String> actionParams, Document document) throws DocumentHelperException {
+
+	public String resolveXPathIndexesForAction(String actionName, String xpath, Map<String, String> actionParams, Document document)
+			throws FlowExceptionXPath {
 		Pattern xpathIndexPattern = Pattern.compile("(.+?)\\[([^0-9]+?)\\].*");
 		Matcher matcher = xpathIndexPattern.matcher(xpath);
 		if (matcher.matches()) {
@@ -99,47 +101,50 @@ public class DocumentHelper {
 					int listLength = list.getLength();
 					xpath = xpath.replace("[next]", "[" + ++listLength + "]");
 				} catch (XPathExpressionException e) {
-					throw new DocumentHelperException("Failed to compile or evaluate XPath: " + xpathToCount, e);
+					throw new FlowExceptionXPath("Problem with action named '" + actionName + "'. Attempting to resolve 'next' alias but can not compile or evaluate XPath '" + xpathToCount + "'.", e);
 				}
-				return resolveXPathIndexesForAction(xpath, actionParams, document);
+				return resolveXPathIndexesForAction(actionName, xpath, actionParams, document);
 			} else if (actionParams.containsKey(group)) {
 				xpath = xpath.replace("[" + group + "]", "[" + actionParams.get(group) + "]");
-				return resolveXPathIndexesForAction(xpath, actionParams, document);
+				return resolveXPathIndexesForAction(actionName, xpath, actionParams, document);
 			} else {
-				throw new DocumentHelperException("XPath index alias not recognised. Index alias:'" + group + "', XPath:'" + xpath + "', action params:'" + actionParams + "'");
+				throw new FlowExceptionXPath("Problem with action named '" + actionName + "'. Index alias is not recognised. Index alias:'" + group + "', XPath:'" + xpath
+						+ "', action params:'" + actionParams + "'");
 			}
 		} else {
 			return xpath;
 		}
 	}
-	
-	public Node createNodeIfNotThere(Document dataDocument, String xPathString) throws DocumentHelperException {
+
+	public Node createElementIfNotThere(Document dataDocument, String xPathString) throws FlowExceptionXPath {
 		return lookupOrCreateNode(dataDocument, xPathString);
 	}
-	
-	public Node lookupOrCreateNode(Document dataDocument, String xPathString) throws DocumentHelperException {
+
+	public Node lookupOrCreateNode(Document dataDocument, String xPathString) throws FlowExceptionXPath {
 		try {
 			XPathExpression fullXPathExpression = newXPath(xPathString);
 			NodeList fullPathNodeList = lookup(dataDocument, fullXPathExpression);
 			if (fullPathNodeList.getLength() == 1) {
 				return fullPathNodeList.item(0);
 			} else if (fullPathNodeList.getLength() > 1) {
-				throw new DocumentHelperException("XPath matches more than one node '" + xPathString + "'.");
+				throw new FlowExceptionXPath("XPath matches more than one node '" + xPathString + "'.");
 			} else {
 				String[] xPathStringParts = xPathString.split("/");
 				Stack<String> xPathPartsStack = new Stack<String>();
 				Collections.addAll(xPathPartsStack, xPathStringParts);
 				Collections.reverse(xPathPartsStack);
-				xPathPartsStack.pop(); // discard blank string from before first slash
-				
+				xPathPartsStack.pop(); // discard blank string from before first
+										// slash
+
 				return recursiveCreateNode(dataDocument, "", dataDocument, xPathPartsStack);
 			}
 		} catch (XPathExpressionException e) {
-			throw new DocumentHelperException(e);
+			throw new FlowExceptionXPath("Problem with XPath expression.", e);
 		}
 	}
 
-	private Node recursiveCreateNode(Document doc, String progressiveXpath, Node currentNode, Stack<String> xPathPartsStack) throws XPathExpressionException, DocumentHelperException {
+	private Node recursiveCreateNode(Document doc, String progressiveXpath, Node currentNode, Stack<String> xPathPartsStack)
+			throws XPathExpressionException, FlowExceptionXPath {
 		String nodeToFindOrCreate = xPathPartsStack.pop();
 		progressiveXpath += "/" + nodeToFindOrCreate;
 		NodeList nodeSet = lookup(doc, newXPath(progressiveXpath));
@@ -148,11 +153,12 @@ public class DocumentHelper {
 			logger.debug("Creating node at {}", progressiveXpath);
 			nextNode = doc.createElement(cleanNodeName(nodeToFindOrCreate));
 			currentNode.appendChild(nextNode);
-		} else if (nodeSet.getLength() == 1){
+		} else if (nodeSet.getLength() == 1) {
 			logger.debug("Found node at {}", progressiveXpath);
 			nextNode = nodeSet.item(0);
 		} else {
-			throw new DocumentHelperException("Node list should contain one element. XPath:'" + progressiveXpath + "', node count:" + nodeSet.getLength());
+			throw new FlowExceptionXPath("Node list should contain one element. XPath:'" + progressiveXpath + "', node count:"
+					+ nodeSet.getLength());
 		}
 		if (!xPathPartsStack.isEmpty()) {
 			return recursiveCreateNode(doc, progressiveXpath, nextNode, xPathPartsStack);
@@ -173,7 +179,7 @@ public class DocumentHelper {
 	public NodeList lookup(Document dataDocument, String xPathExpression) throws XPathExpressionException {
 		return lookup(dataDocument, newXPath(xPathExpression));
 	}
-	
+
 	private NodeList lookup(Document dataDocument, XPathExpression fullXPathExpression) throws XPathExpressionException {
 		return (NodeList) fullXPathExpression.evaluate(dataDocument, XPathConstants.NODESET);
 	}
@@ -181,7 +187,7 @@ public class DocumentHelper {
 	private XPathExpression newXPath(String xPathString) throws XPathExpressionException {
 		return xPathFactory.newXPath().compile(xPathString);
 	}
-	
+
 	public String documentToString(Node document) throws TransformerException {
 		StringWriter writer = new StringWriter();
 		documentToWriter(document, writer);
@@ -191,19 +197,19 @@ public class DocumentHelper {
 	public void documentToWriter(Node document, Writer writer) throws TransformerException {
 		documentToWriter(document, writer, false, true);
 	}
-	
+
 	public void documentToWriter(Node document, Writer writer, boolean omitXmlDeclaration) throws TransformerException {
 		documentToWriter(document, writer, false, omitXmlDeclaration);
 	}
-	
+
 	public void documentToWriterPretty(Node document, Writer writer) throws TransformerException {
 		documentToWriter(document, writer, true, true);
 	}
-	
+
 	public void documentToWriterPretty(Node document, Writer writer, boolean omitXmlDeclaration) throws TransformerException {
 		documentToWriter(document, writer, true, omitXmlDeclaration);
 	}
-	
+
 	private void documentToWriter(Node document, Writer writer, boolean indent, boolean omitXmlDeclaration) throws TransformerException {
 		TransformerFactory transFactory = TransformerFactory.newInstance();
 		Transformer transformer = transFactory.newTransformer();
@@ -217,28 +223,20 @@ public class DocumentHelper {
 		transformer.transform(new DOMSource(document), new StreamResult(writer));
 	}
 
-	public void deleteNodes(String xpath, Document dataDocument) throws DocumentHelperException {
-		try {
-			XPathExpression expression = newXPath(xpath);
-			NodeList nodesToDelete = (NodeList) expression.evaluate(dataDocument, XPathConstants.NODESET);
-			for (int i = 0; i < nodesToDelete.getLength(); i++) {
-				Node nodeToDelete = nodesToDelete.item(i);
-				nodeToDelete.getParentNode().removeChild(nodeToDelete);
-			}
-		} catch (XPathExpressionException e) {
-			throw new DocumentHelperException(e);
+	public void deleteElements(String xpath, Document dataDocument) throws XPathExpressionException {
+		XPathExpression expression = newXPath(xpath);
+		NodeList nodesToDelete = (NodeList) expression.evaluate(dataDocument, XPathConstants.NODESET);
+		for (int i = 0; i < nodesToDelete.getLength(); i++) {
+			Node nodeToDelete = nodesToDelete.item(i);
+			nodeToDelete.getParentNode().removeChild(nodeToDelete);
 		}
 	}
 
-	public void deleteNodeIfEmptyRecurseUp(Document dataDocument, String xpath) throws DocumentHelperException {
-		try {
-			XPathExpression expression = newXPath(xpath);
-			Node nodeToDelete = (Node) expression.evaluate(dataDocument, XPathConstants.NODE);
-			if (nodeToDelete != null) {
-				deleteNodeIfEmptyRecurseUp(nodeToDelete);
-			}
-		} catch (XPathExpressionException e) {
-			throw new DocumentHelperException(e);
+	public void deleteElementIfEmptyRecurseUp(Document dataDocument, String xpath) throws XPathExpressionException {
+		XPathExpression expression = newXPath(xpath);
+		Node nodeToDelete = (Node) expression.evaluate(dataDocument, XPathConstants.NODE);
+		if (nodeToDelete != null) {
+			deleteNodeIfEmptyRecurseUp(nodeToDelete);
 		}
 	}
 

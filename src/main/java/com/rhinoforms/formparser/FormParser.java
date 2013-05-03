@@ -13,7 +13,6 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 
-import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.ContentNode;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.HtmlNode;
@@ -57,78 +56,87 @@ public class FormParser {
 	private static final int processIncludesMaxDepth = 10;
 	final Logger logger = LoggerFactory.getLogger(FormParser.class);
 
-	public FormParser(ResourceLoader resourceLoader, SubmissionTimeKeeper submissionTimeKeeper) {
+	public FormParser(HtmlCleaner htmlCleaner, ValueInjector valueInjector, ResourceLoader resourceLoader, SubmissionTimeKeeper submissionTimeKeeper) {
 		this.resourceLoader = resourceLoader;
 		this.submissionTimeKeeper = submissionTimeKeeper;
 		this.selectOptionHelper = new SelectOptionHelper(resourceLoader);
 		this.proxyFactory = new ProxyFactory();
-		this.valueInjector = new ValueInjector();
-		CleanerProperties cleanerProperties = new CleanerProperties();
-		cleanerProperties.setAllowHtmlInsideAttributes(true);
-		cleanerProperties.setTranslateSpecialEntities(false);
-		this.htmlCleaner = new HtmlCleaner(cleanerProperties);
+		this.valueInjector = valueInjector;
+		this.htmlCleaner = htmlCleaner;
 		showDebugBar = RhinoformsProperties.getInstance().isShowDebugBar();
 		debugBarNode = loadDebugBar();
 	}
 
 	public void parseForm(InputStream formStream, FormFlow formFlow, PrintWriter writer, JSMasterScope masterScope, boolean suppressDebugBar)
-			throws XPatherException, XPathExpressionException, IOException, ResourceLoaderException, FormParserException, ValueInjectorException {
+			throws FormParserException {
 
-		TagNode formHtml = htmlCleaner.clean(formStream);
-		String flowID = formFlow.getId();
-
-		Document dataDocument = formFlow.getDataDocument();
-		String docBase = formFlow.getCurrentDocBase();
-		String currentPath = formFlow.getCurrentPath();
-		Map<String, FlowAction> currentActions = formFlow.getCurrentActions();
-
-		// Process rf.include
-		processIncludes(formHtml, formFlow);
-
-		// Add debugBar
-		if (showDebugBar && !suppressDebugBar) {
-			addDebugBar(formHtml);
-		}
-
-		// Process rf.forEach statements
-		valueInjector.processForEachStatements(formFlow, formHtml, dataDocument, docBase);
-		
-		valueInjector.processRemainingCurlyBrackets(formFlow, formHtml, dataDocument, docBase);
-
-		// Process first Rhinoforms form in doc
-		Object[] rfFormNodes = formHtml.evaluateXPath("//form[@" + Constants.RHINOFORMS_FLAG + "='true']");
-		if (rfFormNodes.length > 0) {
-			logger.debug("{} forms found.", rfFormNodes.length);
-			TagNode formNode = (TagNode) rfFormNodes[0];
+		try {
+			TagNode formHtml = htmlCleaner.clean(formStream);
+			String flowID = formFlow.getId();
+	
+			Document dataDocument = formFlow.getDataDocument();
+			String docBase = formFlow.getCurrentDocBase();
+			String currentPath = formFlow.getCurrentPath();
+			Map<String, FlowAction> currentActions = formFlow.getCurrentActions();
+	
+			// Process rf.include
+			processIncludes(formHtml, formFlow);
+	
+			// Add debugBar
+			if (showDebugBar && !suppressDebugBar) {
+				addDebugBar(formHtml);
+			}
+	
+			// Process rf.forEach statements
+			valueInjector.processForEachStatements(formFlow, formHtml, dataDocument, docBase);
 			
-			perpetuateIncludeIfStatementsToInputs(formHtml);
-
-			// Process dynamic select elements
-			processSelectSource(formNode, formFlow);
-
-			// Process range select elements
-			processSelectRange(formNode, masterScope);
-
-			// Record input fields
-			recordInputFields(formNode, formFlow, dataDocument, docBase);
-
-			// Process Actions
-			processActions(currentActions, formNode, formFlow.getCurrentFormId());
-
-			// Process auto-complete fields, replace source with proxy path
-			processInputSourceFields(formNode, currentPath, formFlow);
-
-			// Add flowId as hidden field
-			addFlowId(flowID, formNode);
-
-			// Mark form as parsed
-			formNode.setAttribute("parsed", "true");
-		} else {
-			logger.warn("No forms found");
+			valueInjector.processRemainingCurlyBrackets(formFlow, formHtml, dataDocument, docBase);
+	
+			// Process first Rhinoforms form in doc
+			Object[] rfFormNodes = formHtml.evaluateXPath("//form[@" + Constants.RHINOFORMS_FLAG + "='true']");
+			if (rfFormNodes.length > 0) {
+				logger.debug("{} forms found.", rfFormNodes.length);
+				TagNode formNode = (TagNode) rfFormNodes[0];
+				
+				perpetuateIncludeIfStatementsToInputs(formHtml);
+	
+				// Process dynamic select elements
+				processSelectSource(formNode, formFlow);
+	
+				// Process range select elements
+				processSelectRange(formNode, masterScope);
+	
+				// Record input fields
+				recordInputFields(formNode, formFlow, dataDocument, docBase);
+	
+				// Process Actions
+				processActions(currentActions, formNode, formFlow.getCurrentFormId());
+	
+				// Process auto-complete fields, replace source with proxy path
+				processInputSourceFields(formNode, currentPath, formFlow);
+	
+				// Add flowId as hidden field
+				addFlowId(flowID, formNode);
+	
+				// Mark form as parsed
+				formNode.setAttribute("parsed", "true");
+			} else {
+				logger.warn("No forms found");
+			}
+	
+			// Write out processed document
+			new SimpleHtmlSerializer(htmlCleaner.getProperties()).write(formHtml, writer, "utf-8");
+		} catch (IOException e) {
+			throw new FormParserException(e);
+		} catch (XPatherException e) {
+			throw new FormParserException(e);
+		} catch (ResourceLoaderException e) {
+			throw new FormParserException(e);
+		} catch (XPathExpressionException e) {
+			throw new FormParserException(e);
+		} catch (ValueInjectorException e) {
+			throw new FormParserException(e);
 		}
-
-		// Write out processed document
-		new SimpleHtmlSerializer(htmlCleaner.getProperties()).write(formHtml, writer, "utf-8");
 	}
 
 	void processIncludes(TagNode html, FormFlow formFlow) throws IOException, FormParserException {
@@ -433,4 +441,8 @@ public class FormParser {
 		}
 	}
 
+	public void setShowDebugBar(boolean showDebugBar) {
+		this.showDebugBar = showDebugBar;
+	}
+	
 }

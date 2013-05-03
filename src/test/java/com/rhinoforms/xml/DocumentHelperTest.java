@@ -165,7 +165,7 @@ public class DocumentHelperTest {
 		HashMap<String, String> actionParams = new HashMap<String, String>();
 		actionParams.put("indexA", "2");
 		
-		String resolvedXPath = documentHelper.resolveXPathIndexesForAction("/myData/customers/customer[indexA]", actionParams, dataDocument);
+		String resolvedXPath = documentHelper.resolveXPathIndexesForAction("testAction", "/myData/customers/customer[indexA]", actionParams, dataDocument);
 		
 		Assert.assertEquals("/myData/customers/customer[2]", resolvedXPath);
 	}
@@ -178,7 +178,7 @@ public class DocumentHelperTest {
 		actionParams.put("indexA", "1");
 		actionParams.put("indexB", "2");
 		
-		String resolvedXPath = documentHelper.resolveXPathIndexesForAction("/myData/customers/customer[indexA]/address[indexB]", actionParams, dataDocument);
+		String resolvedXPath = documentHelper.resolveXPathIndexesForAction("testAction", "/myData/customers/customer[indexA]/address[indexB]", actionParams, dataDocument);
 		
 		Assert.assertEquals("/myData/customers/customer[1]/address[2]", resolvedXPath);
 	}
@@ -190,7 +190,7 @@ public class DocumentHelperTest {
 		HashMap<String, String> actionParams = new HashMap<String, String>();
 		actionParams.put("index", "next");
 		
-		String resolvedXPath = documentHelper.resolveXPathIndexesForAction("/myData/customers/customer[index]", actionParams, dataDocument);
+		String resolvedXPath = documentHelper.resolveXPathIndexesForAction("testAction", "/myData/customers/customer[index]", actionParams, dataDocument);
 		
 		Assert.assertEquals("/myData/customers/customer[3]", resolvedXPath);
 	}
