@@ -5,10 +5,8 @@ import java.util.Map;
 
 import org.w3c.dom.Document;
 
-import com.rhinoforms.TestResourceLoader;
+import com.rhinoforms.TestApplicationContext;
 import com.rhinoforms.TestUtil;
-import com.rhinoforms.formparser.ValueInjector;
-import com.rhinoforms.resourceloader.ResourceLoaderImpl;
 
 public class RemoteSubmissionHelperIntegrationTestManual {
 	
@@ -24,8 +22,8 @@ public class RemoteSubmissionHelperIntegrationTestManual {
 	}
 	
 	public RemoteSubmissionHelperIntegrationTestManual() throws Exception {
-		ResourceLoaderImpl resourceLoader = new ResourceLoaderImpl(new TestResourceLoader(), new TestResourceLoader());
-		remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader, new ValueInjector());
+		TestApplicationContext applicationContext = new TestApplicationContext();
+		remoteSubmissionHelper = applicationContext.getRemoteSubmissionHelper();
 		dataDocumentString = "<myData><something>aaa</something></myData>";
 		dataDocument = TestUtil.createDocument(dataDocumentString);
 		xsltParameters = new HashMap<String, String>();

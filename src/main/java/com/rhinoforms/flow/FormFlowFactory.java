@@ -36,13 +36,13 @@ public class FormFlowFactory {
 	private SubmissionTimeKeeper submissionTimeKeeper;
 	private static final Logger LOGGER = LoggerFactory.getLogger(FormFlowFactory.class);
 
-	public FormFlowFactory(ResourceLoader resourceLoader, JSMasterScope masterScope, String servletContextPath, SubmissionTimeKeeper submissionTimeKeeper) {
+	public FormFlowFactory(ResourceLoader resourceLoader, ValueInjector valueInjector, JSMasterScope masterScope, String servletContextPath, SubmissionTimeKeeper submissionTimeKeeper) {
 		this.resourceLoader = resourceLoader;
 		this.masterScope = masterScope;
 		this.servletContextPath = servletContextPath;
 		this.submissionTimeKeeper = submissionTimeKeeper;
 		this.documentHelper = new DocumentHelper();
-		this.valueInjector = new ValueInjector();
+		this.valueInjector = valueInjector;
 	}
 
 	public FormFlow createFlow(String formFlowPath, String dataDocumentString) throws IOException,

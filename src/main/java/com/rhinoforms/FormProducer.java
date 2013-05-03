@@ -2,10 +2,12 @@ package com.rhinoforms;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.xml.transform.TransformerException;
 
 import org.mozilla.javascript.Context;
 
@@ -66,7 +68,7 @@ public class FormProducer {
 	}
 
 	public void doActionWriteForm(FormActionRequest formActionRequest, FormFlow formFlow, HttpServletResponse response) throws IOException, FlowExceptionActionError,
-			FormSubmissionHelperException, FlowExceptionBadRequest, FlowExceptionFileNotFound, FlowExceptionJavaScript, FlowExceptionXPath, FormParserException {
+			FormSubmissionHelperException, FlowExceptionBadRequest, FlowExceptionFileNotFound, FlowExceptionJavaScript, FlowExceptionXPath, FormParserException, TransformerException {
 		Context.enter();
 		try {
 			formFlow.setRemoteSubmissionHelper(remoteSubmissionHelper);
@@ -76,6 +78,12 @@ public class FormProducer {
 			String nextUrl = submissionResult.getNextUrl();
 			if (nextUrl != null) {
 				writeForm(response, formFlow, nextUrl, formActionRequest.isSuppressDebugBar());
+			} else {
+				// End of flow. Spit out XML.
+				response.setContentType("text/plain");
+				response.setHeader("rf.responseType", "data");
+				PrintWriter writer = response.getWriter();
+				documentHelper.documentToWriterPretty(formFlow.getDataDocument(), writer);
 			}
 		} finally {
 			Context.exit();

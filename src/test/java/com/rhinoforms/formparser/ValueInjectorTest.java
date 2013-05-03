@@ -16,6 +16,7 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 
 import com.rhinoforms.Constants;
+import com.rhinoforms.TestApplicationContext;
 import com.rhinoforms.flow.FormFlow;
 
 public class ValueInjectorTest {
@@ -28,11 +29,12 @@ public class ValueInjectorTest {
 
 	@Before
 	public void setup() throws Exception {
-		htmlCleaner = new HtmlCleaner();
+		TestApplicationContext applicationContext = new TestApplicationContext();
+		htmlCleaner = applicationContext.getHtmlCleaner();
 		formHtml = htmlCleaner.clean(new FileInputStream("src/test/resources/fishes.html"));
 		dataDocument = createDocument("<myData><ocean><name>Pacific</name><fishes><fish><name>One</name></fish><fish><name>Two</name></fish></fishes></ocean></myData>");
 
-		this.valueInjector = new ValueInjector();
+		this.valueInjector = applicationContext.getValueInjector();
 		formFlow = new FormFlow();
 		formFlow.setProperties(new Properties());
 	}

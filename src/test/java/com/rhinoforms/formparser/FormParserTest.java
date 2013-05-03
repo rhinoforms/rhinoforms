@@ -22,16 +22,12 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.w3c.dom.Document;
 
-import com.rhinoforms.RhinoformsProperties;
-import com.rhinoforms.TestResourceLoader;
+import com.rhinoforms.TestApplicationContext;
 import com.rhinoforms.flow.FormFlow;
 import com.rhinoforms.flow.FormFlowFactory;
 import com.rhinoforms.flow.InputPojo;
 import com.rhinoforms.flow.SubmissionTimeKeeper;
 import com.rhinoforms.js.JSMasterScope;
-import com.rhinoforms.js.RhinoFormsMasterScopeFactory;
-import com.rhinoforms.resourceloader.ResourceLoader;
-import com.rhinoforms.resourceloader.ResourceLoaderImpl;
 import com.rhinoforms.xml.DocumentHelper;
 
 public class FormParserTest {
@@ -42,18 +38,17 @@ public class FormParserTest {
 	private DocumentHelper documentHelper;
 	private HtmlCleaner htmlCleaner;
 	private FormFlowFactory formFlowFactory;
-	private ResourceLoader resourceLoader;
 	private SubmissionTimeKeeper submissionTimeKeeper;
 
 	public FormParserTest() throws Exception {
-		this.resourceLoader = new ResourceLoaderImpl(new TestResourceLoader(), new TestResourceLoader());
-		submissionTimeKeeper = new SubmissionTimeKeeper();
-		this.formParser = new FormParser(resourceLoader, submissionTimeKeeper);
-		this.documentHelper = new DocumentHelper();
-		this.htmlCleaner = new HtmlCleaner();
-		Context jsContext = Context.enter();
-		this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
-		this.formFlowFactory = new FormFlowFactory(this.resourceLoader, this.masterScope, "rhinoforms", submissionTimeKeeper);
+		Context.enter();
+		TestApplicationContext applicationContext = new TestApplicationContext();
+		submissionTimeKeeper = applicationContext.getSubmissionTimeKeeper();
+		this.formParser = applicationContext.getFormParser();
+		this.documentHelper = applicationContext.getDocumentHelper();
+		this.htmlCleaner = applicationContext.getHtmlCleaner();
+		this.masterScope = applicationContext.getMasterScope();
+		this.formFlowFactory = applicationContext.getFormFlowFactory();
 	}
 	
 	@Before
@@ -149,6 +144,17 @@ public class FormParserTest {
 		Assert.assertFalse(parsedFormHtml.contains("Please Select"));
 	}
 	
+ 	@Test
+	public void testSelectOptionsForLoop() throws Exception {
+		this.formFlow = formFlowFactory.createFlow("test-flow1.js", "<myData><years><year>2000</year><year>2010</year><year>2020</year></years></myData>");
+		this.formFlow.navigateToFirstForm(documentHelper);
+
+		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+		formParser.parseForm(new FileInputStream("src/test/resources/select-options-for-loop.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope, false);
+		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
+		Assert.assertTrue(parsedFormHtml.contains("<select name=\"year\"><option>2000</option><option>2010</option><option>2020</option></select>"));
+	}
+	
 	@Test
 	public void testlookupValueByFieldName() throws Exception {
 		Document createDocument = createDocument("<myData><customer>One</customer></myData>");
@@ -213,8 +219,7 @@ public class FormParserTest {
 	
 	@Test
 	public void testDebugBar() throws Exception {
-		RhinoformsProperties.getInstance().setShowDebugBar(true);
-		this.formParser = new FormParser(resourceLoader, submissionTimeKeeper);
+		this.formParser.setShowDebugBar(true);
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		formParser.parseForm(new FileInputStream("src/test/resources/empty-form.html"), formFlow, new PrintWriter(outputStream), masterScope, false);
 		String string = outputStream.toString();

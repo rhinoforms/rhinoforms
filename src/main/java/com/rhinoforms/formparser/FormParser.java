@@ -13,7 +13,6 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 
-import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.ContentNode;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.HtmlNode;
@@ -57,16 +56,13 @@ public class FormParser {
 	private static final int processIncludesMaxDepth = 10;
 	final Logger logger = LoggerFactory.getLogger(FormParser.class);
 
-	public FormParser(ResourceLoader resourceLoader, SubmissionTimeKeeper submissionTimeKeeper) {
+	public FormParser(HtmlCleaner htmlCleaner, ValueInjector valueInjector, ResourceLoader resourceLoader, SubmissionTimeKeeper submissionTimeKeeper) {
 		this.resourceLoader = resourceLoader;
 		this.submissionTimeKeeper = submissionTimeKeeper;
 		this.selectOptionHelper = new SelectOptionHelper(resourceLoader);
 		this.proxyFactory = new ProxyFactory();
-		this.valueInjector = new ValueInjector();
-		CleanerProperties cleanerProperties = new CleanerProperties();
-		cleanerProperties.setAllowHtmlInsideAttributes(true);
-		cleanerProperties.setTranslateSpecialEntities(false);
-		this.htmlCleaner = new HtmlCleaner(cleanerProperties);
+		this.valueInjector = valueInjector;
+		this.htmlCleaner = htmlCleaner;
 		showDebugBar = RhinoformsProperties.getInstance().isShowDebugBar();
 		debugBarNode = loadDebugBar();
 	}
@@ -445,4 +441,8 @@ public class FormParser {
 		}
 	}
 
+	public void setShowDebugBar(boolean showDebugBar) {
+		this.showDebugBar = showDebugBar;
+	}
+	
 }

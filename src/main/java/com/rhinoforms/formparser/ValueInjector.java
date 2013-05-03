@@ -3,6 +3,8 @@ package com.rhinoforms.formparser;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -15,7 +17,6 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.io.output.StringBuilderWriter;
-import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.ContentNode;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.HtmlNode;
@@ -29,8 +30,10 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.rhinoforms.Constants;
+import com.rhinoforms.TestApplicationContext;
 import com.rhinoforms.flow.FormFlow;
 import com.rhinoforms.flow.FormFlowFactoryException;
+import com.rhinoforms.resourceloader.ResourceLoaderException;
 import com.rhinoforms.xml.DocumentHelper;
 
 public class ValueInjector {
@@ -43,12 +46,9 @@ public class ValueInjector {
 	
 	private final Logger logger = LoggerFactory.getLogger(ValueInjector.class);
 
-	public ValueInjector() {
-		htmlCleaner = new HtmlCleaner();
-		CleanerProperties properties = htmlCleaner.getProperties();
-		properties.setOmitXmlDeclaration(true);
-		properties.setTranslateSpecialEntities(false);
-		simpleHtmlSerializer = new SimpleHtmlSerializer(properties);
+	public ValueInjector(HtmlCleaner htmlCleaner, SimpleHtmlSerializer simpleHtmlSerializer) {
+		this.htmlCleaner = htmlCleaner;
+		this.simpleHtmlSerializer = simpleHtmlSerializer;
 		documentHelper = new DocumentHelper();
 	}
 
@@ -76,7 +76,16 @@ public class ValueInjector {
 					Node dataNode = dataNodeList.item(dataNodeindex);
 					StringBuilder thisForEachNodeContents = new StringBuilder(forEachNodeContents);
 					replaceCurlyBrackets(formFlow, thisForEachNodeContents, dataDocument, dataNode, selectAsName, dataNodeindex + 1);
+					
+					System.out.println("thisForEachNodeContents:");
+					System.out.println(thisForEachNodeContents);
+					
 					TagNode processedForEachNode = stringBuilderToNode(thisForEachNodeContents);
+					
+					StringWriter stringWriter = new StringWriter();
+					new SimpleHtmlSerializer(htmlCleaner.getProperties()).write(processedForEachNode, new PrintWriter(stringWriter), "utf-8");
+					System.out.println("processedForEachNode:");
+					System.out.println(stringWriter);
 					
 					@SuppressWarnings("unchecked")
 					List<HtmlNode> children = processedForEachNode.getChildren();
@@ -225,6 +234,12 @@ public class ValueInjector {
 
 	TagNode stringBuilderBodyToNode(StringBuilder nodeContents) throws IOException {
 		return (TagNode) htmlCleaner.clean(nodeContents.toString()).getChildren().get(1);
+	}
+	
+	public static void main(String[] args) throws ResourceLoaderException, IOException {
+		ValueInjector valueInjector = new TestApplicationContext().getValueInjector();
+		TagNode node = valueInjector.stringBuilderBodyToNode(new StringBuilder("<a>123</a>"));
+		System.out.println(node.getChildren().get(0));
 	}
 	
 	TagNode stringBuilderToNode(StringBuilder nodeContents) throws IOException {

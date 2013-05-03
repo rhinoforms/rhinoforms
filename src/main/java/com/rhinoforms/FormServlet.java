@@ -118,6 +118,10 @@ public class FormServlet extends HttpServlet {
 				String message = e.getMessage();
 				LOGGER.info(message, e);
 				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
+			} catch (TransformerException e) {
+				String message = "Failed to output DataDocument";
+				LOGGER.error(message, e);
+				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 			}
 		} else {
 			sendError(HttpServletResponse.SC_FORBIDDEN, "Your session has expired.", response);
