@@ -51,10 +51,13 @@ public class FormParser {
 	private boolean showDebugBar;
 	private TagNode debugBarNode;
 	private SubmissionTimeKeeper submissionTimeKeeper;
+	private final Logger logger = LoggerFactory.getLogger(FormParser.class);
 
+	private static final String INPUT = "input";
+	private static final String SELECT = "select";
+	private static final String TEXTAREA = "textarea";
 	private static final FieldPathHelper fieldPathHelper = new FieldPathHelper();
 	private static final int processIncludesMaxDepth = 10;
-	final Logger logger = LoggerFactory.getLogger(FormParser.class);
 
 	public FormParser(HtmlCleaner htmlCleaner, ValueInjector valueInjector, ResourceLoader resourceLoader, SubmissionTimeKeeper submissionTimeKeeper) {
 		this.resourceLoader = resourceLoader;
@@ -182,14 +185,17 @@ public class FormParser {
 		for (Object includeIfNodeO : includeIfNodes) {
 			TagNode includeIfNode = (TagNode) includeIfNodeO;
 			String name = includeIfNode.getName();
-			if (!name.equals("input") && !name.equals("select")) {
+			if (!name.equals(INPUT) && !name.equals(SELECT) && !name.equals(TEXTAREA)) {
 				String parentIncludeIf = includeIfNode.getAttributeByName(Constants.INCLUDE_IF_ATTR);
 
 				@SuppressWarnings("unchecked")
-				List<TagNode> inputs = includeIfNode.getElementListByName("input", true);
+				List<TagNode> inputs = includeIfNode.getElementListByName(INPUT, true);
 				@SuppressWarnings("unchecked")
-				List<TagNode> selects = includeIfNode.getElementListByName("select", true);
+				List<TagNode> selects = includeIfNode.getElementListByName(SELECT, true);
 				inputs.addAll(selects);
+				@SuppressWarnings("unchecked")
+				List<TagNode> textareas = includeIfNode.getElementListByName(TEXTAREA, true);
+				inputs.addAll(textareas);
 				for (TagNode inputTagNode : inputs) {
 					String inputIncludeIf = inputTagNode.getAttributeByName(Constants.INCLUDE_IF_ATTR);
 					if (inputIncludeIf == null) {
@@ -243,7 +249,7 @@ public class FormParser {
 	}
 
 	private void addFlowId(String flowID, TagNode formNode) {
-		TagNode flowIdNode = new TagNode("input");
+		TagNode flowIdNode = new TagNode(INPUT);
 		flowIdNode.setAttribute("name", Constants.FLOW_ID_FIELD_NAME);
 		flowIdNode.setAttribute("type", "hidden");
 		flowIdNode.setAttribute("value", flowID + "");
@@ -275,17 +281,22 @@ public class FormParser {
 		Map<String, InputPojo> inputPojosMap = new HashMap<String, InputPojo>();
 
 		@SuppressWarnings("unchecked")
-		List<TagNode> inputs = formNode.getElementListByName("input", true);
+		List<TagNode> inputs = formNode.getElementListByName(INPUT, true);
 		@SuppressWarnings("unchecked")
-		List<TagNode> selects = formNode.getElementListByName("select", true);
+		List<TagNode> selects = formNode.getElementListByName(SELECT, true);
 		inputs.addAll(selects);
+		@SuppressWarnings("unchecked")
+		List<TagNode> textareas = formNode.getElementListByName(TEXTAREA, true);
+		inputs.addAll(textareas);
 		for (TagNode inputTagNode : inputs) {
 			String name = inputTagNode.getAttributeByName(Constants.NAME_ATTR);
 			if (name != null) {
 				String type;
 
-				if (inputTagNode.getName().equals("select")) {
-					type = "select";
+				if (inputTagNode.getName().equals(SELECT)) {
+					type = SELECT;
+				} else if (inputTagNode.getName().equals(TEXTAREA)) {
+					type = TEXTAREA;
 				} else {
 					type = inputTagNode.getAttributeByName(Constants.TYPE_ATTR);
 				}
@@ -320,7 +331,7 @@ public class FormParser {
 							if (inputValue.equals("true")) {
 								inputTagNode.setAttribute(Constants.CHECKED_ATTR, Constants.CHECKED_ATTR);
 							}
-						} else if (type.equals("select")) {
+						} else if (type.equals(SELECT)) {
 							Object[] nodes = inputTagNode.evaluateXPath("option[@value=\"" + inputValue + "\"]");
 							if (nodes.length == 0) {
 								nodes = inputTagNode.evaluateXPath("option[text()=\"" + inputValue + "\"]");

@@ -73,12 +73,13 @@ public class FormParserTest {
 		
 		List<InputPojo> inputPojos = formFlow.getCurrentInputPojos();
 		
-		Assert.assertEquals(5, inputPojos.size());
+		Assert.assertEquals(6, inputPojos.size());
 		Assert.assertEquals("terms", inputPojos.get(0).getName());
 		Assert.assertEquals("firstName", inputPojos.get(1).getName());
 		Assert.assertEquals("canWalkOnHands", inputPojos.get(2).getName());
 		Assert.assertEquals("title", inputPojos.get(3).getName());
 		Assert.assertEquals("maritalStatusCode", inputPojos.get(4).getName());
+		Assert.assertEquals("additionalInfo", inputPojos.get(5).getName());
 		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
 		Assert.assertTrue(parsedFormHtml.contains("type=\"radio\" name=\"terms\" value=\"disagree\" checked=\"checked\""));
 		Assert.assertTrue(parsedFormHtml.contains("<option selected=\"selected\">Miss</option>"));
@@ -198,7 +199,7 @@ public class FormParserTest {
 		
 		List<InputPojo> inputPojos = formFlow.getCurrentInputPojos();
 		
-		Assert.assertEquals(4, inputPojos.size());
+		Assert.assertEquals(5, inputPojos.size());
 		
 		InputPojo terms = inputPojos.get(0);
 		Assert.assertEquals("terms", terms.getName());
@@ -215,6 +216,10 @@ public class FormParserTest {
 		InputPojo canWalkOnHands = inputPojos.get(2);
 		Assert.assertEquals("canWalkOnHands", canWalkOnHands.getName());
 		Assert.assertEquals(null, canWalkOnHands.getRfAttributes().get("rf.includeif"));
+
+		InputPojo textarea = inputPojos.get(4);
+		Assert.assertEquals("textarea", textarea.getName());
+		Assert.assertEquals("{ false }", textarea.getRfAttributes().get("rf.includeif"));
 	}
 	
 	@Test
