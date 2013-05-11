@@ -1,4 +1,7 @@
 <form rhinoforms="true">
+
+	<p>Captured input:</p>
+
 	<div class="field">
 		<label>Do you agree?</label>
 		<input id="input_terms" type="radio" name="terms" value="agree" rf.validation="required"/>
@@ -8,11 +11,13 @@
 	</div>
 	
 	<div class="field">
+		<p>{{title}}</p>
 		<label for="input_title">Title:</label>
 		<select id="input_title" name="title" rf.validation="required" rf.source="titles.txt" rf.preselectFirstOption="false"></select>
 	</div>
 	
 	<div class="field">
+		<p>{{firstName}}</p>
 		<label for="input_firstName">First name:</label>
 		<input id="input_firstName" type="text" name="firstName" rf.validation="required"/>
 	</div>
@@ -28,9 +33,12 @@
 	</div>
 	
 	<div class="field">
+		<p>{{additionalInfo}}</p>
 		<label for="input_add">Additional info:</label>
 		<textarea id="input_add" name="additionalInfo"></textarea>
 	</div>
 	
-	<input type="submit" rf.action="next" value="Next"/>
+	<input type="button" rf.action="back" value="Back"/>
+	<input type="submit" rf.action="finish" value="Finish"/>
+	
 </form>
