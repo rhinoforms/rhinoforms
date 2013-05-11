@@ -143,6 +143,17 @@ public class FormSubmissionHelperTest {
 	}
 	
 	@Test
+	public void testTextareaValidation() throws Exception {
+		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
+		InputPojo marriedInputPojo = new InputPojo("text", "textarea", new HashMap<String, String>());
+		marriedInputPojo.setValue("first line\nsecond line");
+		inputs.add(marriedInputPojo);
+		
+		Set<String> fieldsInError = formSubmissionHelper.validateInput(inputs, actionName, workingScope);
+		Assert.assertEquals(0, fieldsInError.size());
+	}
+	
+	@Test
 	public void testValidationFunctionUsingActionCondition() throws Exception {
 		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
 		InputPojo marriedInputPojo = new InputPojo("married", "checkbox", new HashMap<String, String>());

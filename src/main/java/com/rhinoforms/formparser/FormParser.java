@@ -56,6 +56,8 @@ public class FormParser {
 	private static final String INPUT = "input";
 	private static final String SELECT = "select";
 	private static final String TEXTAREA = "textarea";
+	private static final String CHECKBOX = "checkbox";
+	private static final String RADIO = "radio";
 	private static final FieldPathHelper fieldPathHelper = new FieldPathHelper();
 	private static final int processIncludesMaxDepth = 10;
 
@@ -110,7 +112,7 @@ public class FormParser {
 				processSelectRange(formNode, masterScope);
 	
 				// Record input fields
-				recordInputFields(formNode, formFlow, dataDocument, docBase);
+				recordInputFieldsPushInValues(formNode, formFlow, dataDocument, docBase);
 	
 				// Process Actions
 				processActions(currentActions, formNode, formFlow.getCurrentFormId());
@@ -275,7 +277,7 @@ public class FormParser {
 		}
 	}
 
-	private void recordInputFields(TagNode formNode, FormFlow formFlow, Document dataDocument, String docBase)
+	private void recordInputFieldsPushInValues(TagNode formNode, FormFlow formFlow, Document dataDocument, String docBase)
 			throws XPathExpressionException, XPatherException {
 		List<InputPojo> inputPojos = new ArrayList<InputPojo>();
 		Map<String, InputPojo> inputPojosMap = new HashMap<String, InputPojo>();
@@ -303,7 +305,7 @@ public class FormParser {
 
 				if (type != null) {
 
-					if (!(type.equals("radio") && inputPojosMap.containsKey(name))) {
+					if (!(type.equals(RADIO) && inputPojosMap.containsKey(name))) {
 
 						// Collect all rf.xxx attributes
 						Map<String, String> rfAttributes = new HashMap<String, String>();
@@ -322,12 +324,12 @@ public class FormParser {
 					// Push values from the dataDocument into the form html.
 					String inputValue = lookupValueByFieldName(dataDocument, name, docBase);
 					if (inputValue != null) {
-						if (type.equals("radio")) {
+						if (type.equals(RADIO)) {
 							String value = inputTagNode.getAttributeByName(Constants.VALUE_ATTR);
 							if (inputValue.equals(value)) {
 								inputTagNode.setAttribute(Constants.CHECKED_ATTR, Constants.CHECKED_ATTR);
 							}
-						} else if (type.equals("checkbox")) {
+						} else if (type.equals(CHECKBOX)) {
 							if (inputValue.equals("true")) {
 								inputTagNode.setAttribute(Constants.CHECKED_ATTR, Constants.CHECKED_ATTR);
 							}
@@ -339,6 +341,8 @@ public class FormParser {
 							if (nodes.length > 0) {
 								((TagNode) nodes[0]).setAttribute(Constants.SELECTED_ATTR, "selected");
 							}
+						} else if (type.equals(TEXTAREA)) {
+							inputTagNode.addChild(new ContentNode(inputValue));
 						} else {
 							inputTagNode.setAttribute("value", inputValue);
 						}
