@@ -93,9 +93,9 @@ public class FormParser {
 			}
 	
 			// Process rf.forEach statements
-			valueInjector.processForEachStatements(formFlow, formHtml, dataDocument, docBase);
+			valueInjector.processForEachStatements(formFlow.getProperties(), formHtml, dataDocument, docBase);
 			
-			valueInjector.processRemainingCurlyBrackets(formFlow, formHtml, dataDocument, docBase);
+			valueInjector.processCurlyBrackets(dataDocument, formHtml, formFlow.getProperties(), docBase);
 	
 			// Process first Rhinoforms form in doc
 			Object[] rfFormNodes = formHtml.evaluateXPath("//form[@" + Constants.RHINOFORMS_FLAG + "='true']");

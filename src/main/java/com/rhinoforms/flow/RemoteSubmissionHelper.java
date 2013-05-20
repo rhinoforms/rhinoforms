@@ -166,7 +166,7 @@ public class RemoteSubmissionHelper {
 		StringBuilder urlBuilder = new StringBuilder(url);
 		if (urlBuilder.indexOf("{{") != -1) {
 			try {
-				valueInjector.replaceCurlyBrackets(formFlow, urlBuilder, dataDocument);
+				valueInjector.replaceCurlyBrackets(formFlow.getProperties(), urlBuilder, dataDocument);
 			} catch (ValueInjectorException e) {
 				throw new RemoteSubmissionHelperException("Failed to build submission URL.", e);
 			}
