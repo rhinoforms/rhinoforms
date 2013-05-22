@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.w3c.dom.Document;
 
+import com.rhinoforms.Constants;
 import com.rhinoforms.TestApplicationContext;
 import com.rhinoforms.TestConnectionFactory;
 import com.rhinoforms.TestUtil;
@@ -39,6 +40,7 @@ public class RemoteSubmissionHelperTest {
 		xsltParameters = new HashMap<String, String>();
 		formFlow = new FormFlow();
 		formFlow.setDataDocument(dataDocument);
+		formFlow.setResourcesBase("");
 	}
 	
 	@Test
@@ -352,6 +354,39 @@ public class RemoteSubmissionHelperTest {
 		Assert.assertEquals("myXml=" + dataDocumentString, URLDecoder.decode(submittedData, "UTF-8"));
 		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
 		Assert.assertEquals("<myData><something>a</something><another>anotherVal</another><submissionResult><submissionResult><premium>10.00</premium></submissionResult></submissionResult></myData>", dataDocumentStringAfterSubmission);
+	}
+	
+	@Test
+	public void testHandleSubmissionHtmlTemplate() throws Exception {
+		String dataDocString = "<order>" +
+				"<firstName>Kai</firstName>" +
+				"<items>" +
+				"<item><name>Sony Vaio Laptop</name></item>" +
+				"<item><name>Kiteboard</name></item>" +
+				"</items></order>";
+		dataDocument = TestUtil.createDocument(dataDocString);
+		formFlow.setDataDocument(dataDocument);
+		
+		Submission submission = new Submission("http://localhost/dummyURL");
+		submission.getData().put("someHtml", "htmlTemplate:thank-you-email.html");
+		
+		remoteSubmissionHelper.handleSubmission(submission, xsltParameters, formFlow);
+		
+		Assert.assertEquals("application/x-www-form-urlencoded", testConnectionFactory.getRecordedRequestProperties().get("Content-Type"));
+		String submittedData = new String(testConnectionFactory.getRecordedRequestStream().toByteArray());
+		String decoded = URLDecoder.decode(submittedData, "UTF-8");
+		String expectedParams = "someHtml=<h1>Thank you</h1>" + Constants.NEW_LINE +
+				Constants.NEW_LINE +
+				"<p>Kai, thank you for your order.</p>" + Constants.NEW_LINE +
+				Constants.NEW_LINE +
+				"<h2>Order Summary</h2>" + Constants.NEW_LINE +
+				"<ul>" + Constants.NEW_LINE +
+				"  <li>Sony Vaio Laptop</li>" + Constants.NEW_LINE +
+				"  <li>Kiteboard</li>" + Constants.NEW_LINE +
+				"</ul>" + Constants.NEW_LINE +
+				Constants.NEW_LINE +
+				"<p>We hope to see you again soon.</p>" + Constants.NEW_LINE;
+		Assert.assertEquals(expectedParams, decoded);
 	}
 	
 }

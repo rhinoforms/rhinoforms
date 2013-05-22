@@ -1,5 +1,6 @@
 package com.rhinoforms.flow;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,6 +53,7 @@ public class RemoteSubmissionHelper {
 	private static final String UTF8 = "UTF-8";
 	private static final String DATA_DOCUMENT_VALUE_KEY = "[dataDocument]";
 	private static final Logger LOGGER = LoggerFactory.getLogger(RemoteSubmissionHelper.class);
+	private static final String HTML_TEMPLATE_PREFIX = "htmlTemplate:";
 
 	public RemoteSubmissionHelper(ResourceLoader resourceLoader, ValueInjector valueInjector) {
 		this.resourceLoader = resourceLoader;
@@ -144,6 +146,15 @@ public class RemoteSubmissionHelper {
 							requestDataBuilder.append("=");
 							if (DATA_DOCUMENT_VALUE_KEY.equals(dataValue)) {
 								dataValue = dataDocumentString;
+							} else {
+								if (dataValue.startsWith(HTML_TEMPLATE_PREFIX)) {
+									String templatePath = dataValue.substring(HTML_TEMPLATE_PREFIX.length());
+									templatePath = formFlow.resolveResourcePathIfRelative(templatePath);
+									InputStream templateStream = resourceLoader.getFormResourceAsStream(templatePath);
+									ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+									valueInjector.processHtmlTemplate(templateStream, dataDocument, "*", formFlow.getProperties(), outputStream);
+									dataValue = outputStream.toString();
+								}
 							}
 							requestDataBuilder.append(URLEncoder.encode(dataValue, UTF8));
 						}
@@ -155,9 +166,13 @@ public class RemoteSubmissionHelper {
 			}
 			
 		} catch (UnsupportedEncodingException e) {
-			throw new RemoteSubmissionHelperException("Failed to encode values for submission", e);
+			throw new RemoteSubmissionHelperException("Failed to encode values for submission request.", e);
 		} catch (XPathExpressionException e) {
-			throw new RemoteSubmissionHelperException("Failed to build values for submission. XPathExpressionException.", e);
+			throw new RemoteSubmissionHelperException("Failed to build values for submission request. XPathExpressionException.", e);
+		} catch (IOException e) {
+			throw new RemoteSubmissionHelperException("Failed to build values for submission request. IOException.", e);
+		} catch (ValueInjectorException e) {
+			throw new RemoteSubmissionHelperException("Failed to process HTML Template for submission request.", e);
 		}
 		
 

@@ -1,7 +1,8 @@
 package com.rhinoforms.formparser;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Properties;
@@ -20,7 +21,6 @@ import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.HtmlNode;
 import org.htmlcleaner.SimpleHtmlSerializer;
 import org.htmlcleaner.TagNode;
-import org.htmlcleaner.XPatherException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -48,13 +48,39 @@ public class ValueInjector {
 		this.tags = tags;
 		documentHelper = new DocumentHelper();
 	}
+	
+	public void processHtmlTemplate(InputStream htmlTemplateInputStream, Document dataDocument, String docBase, Properties properties, OutputStream processedHtmlOutputStream) throws IOException, XPathExpressionException, ValueInjectorException {
+		TagNode html = htmlCleaner.clean(htmlTemplateInputStream);
+		if (docBase == null) {
+			docBase = "";
+		}
+		processForEachStatements(properties, html, dataDocument, docBase);
+		processCurlyBrackets(dataDocument, html, properties, docBase);
+		
+		TagNode bodyElement = html.getElementsByName("body", false)[0];
+		serializeChildren(bodyElement, processedHtmlOutputStream);
+	}
 
-	public void processForEachStatements(Properties properties, TagNode formHtml, Document dataDocument, String docBase) throws XPatherException,
-			XPathExpressionException, IOException, ValueInjectorException {
-		Object[] forEachNodes = formHtml.evaluateXPath("//" + tags.getForEachTag());
+	private void serializeChildren(TagNode bodyElement, OutputStream processedHtmlOutputStream) throws IOException {
+		@SuppressWarnings("unchecked")
+		List<Object> children = bodyElement.getChildren();
+		OutputStreamWriter outputStreamWriter = new OutputStreamWriter(processedHtmlOutputStream);
+		for (Object object : children) {
+			if (object instanceof ContentNode) {
+				ContentNode contentNode = (ContentNode) object;
+				contentNode.serialize(simpleHtmlSerializer, outputStreamWriter);
+			} else if (object instanceof TagNode) {
+				TagNode tagNode = (TagNode) object;
+				tagNode.serialize(simpleHtmlSerializer, outputStreamWriter);
+			}
+		}
+		outputStreamWriter.flush();
+	}
+
+	public void processForEachStatements(Properties properties, TagNode formHtml, Document dataDocument, String docBase) throws XPathExpressionException, IOException, ValueInjectorException {
+		TagNode[] forEachNodes = formHtml.getElementsByName(tags.getForEachTag(), true);
 		logger.debug("Processing {} nodes. Found: {}", tags.getForEachTag(), forEachNodes.length);
-		for (Object forEachNodeO : forEachNodes) {
-			TagNode forEachNode = (TagNode) forEachNodeO;
+		for (TagNode forEachNode : forEachNodes) {
 			TagNode parent = forEachNode.getParent();
 			String selectPath = forEachNode.getAttributeByName("select");
 			String selectAsName = forEachNode.getAttributeByName("as");
@@ -77,6 +103,9 @@ public class ValueInjector {
 					@SuppressWarnings("unchecked")
 					List<HtmlNode> children = processedForEachNode.getChildren();
 					trimFirstNewline(children);
+					if (dataNodeindex == dataNodeList.getLength() - 1) {
+						trimTrailingWhitespace(children);
+					}
 					for (HtmlNode child : children) {
 						parent.insertChildBefore(forEachNode, child);
 					}
@@ -96,7 +125,7 @@ public class ValueInjector {
 			if (htmlNode instanceof ContentNode) {	
 				ContentNode contentNode = (ContentNode) htmlNode;
 				StringBuilder content = contentNode.getContent();
-				if (content.length() >= 1 && content.substring(0, 1).equals("\n")) {
+				if (content.length() > 0 && content.substring(0, 1).equals("\n")) {
 					content.delete(0, 1);
 				} else if (content.length() >= 2 && content.substring(0, 2).equals("\r\n")) {
 					content.delete(0, 2);
@@ -104,11 +133,34 @@ public class ValueInjector {
 			}
 		}
 	}
+	
+	private void trimTrailingWhitespace(List<HtmlNode> children) {
+		HtmlNode htmlNode = children.get(children.size() - 1);
+		if (htmlNode instanceof ContentNode) {
+			ContentNode contentNode = (ContentNode) htmlNode;
+			StringBuilder contentBuilder = contentNode.getContent();
+			String content = contentBuilder.toString();
+			String trailingWhitespaceRegex = "\\s+$";
+			if (content.matches(trailingWhitespaceRegex)) {
+				content = content.replaceFirst(trailingWhitespaceRegex, "");
+				contentBuilder.setLength(0);
+				contentBuilder.append(content);
+			}
+		}
+	}
 
 	public void processCurlyBrackets(Document dataDocument, TagNode formHtml, Properties properties, String docBase) throws IOException,
-			XPathExpressionException, ValueInjectorException {
-		XPathExpression selectExpression = xPathFactory.newXPath().compile(docBase);
-		Node dataDocAtDocBase = (Node) selectExpression.evaluate(dataDocument, XPathConstants.NODE);
+			ValueInjectorException {
+
+		XPathExpression selectExpression;
+		Node dataDocAtDocBase;
+		
+		try {
+			selectExpression = xPathFactory.newXPath().compile(docBase);
+			dataDocAtDocBase = (Node) selectExpression.evaluate(dataDocument, XPathConstants.NODE);
+		} catch (XPathExpressionException e) {
+			throw new ValueInjectorException("Invalid docBase '" + docBase + "'", e);
+		}
 
 		TagNode[] bodyElements = formHtml.getElementsByName("body", false);
 		if (bodyElements.length > 0) {
@@ -222,13 +274,6 @@ public class ValueInjector {
 		return (TagNode) stringBuilderBodyToNode(nodeContents).getChildren().get(0);
 	}
 	
-	public String serialiseNode(TagNode node) throws IOException {
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		simpleHtmlSerializer.write(node, new OutputStreamWriter(outputStream), Constants.UTF8);
-		String actual = new String(outputStream.toByteArray());
-		return actual;
-	}
-
 	public void processFlowDefinitionCurlyBrackets(StringBuilder flowStringBuilder, Properties flowProperties) throws FormFlowFactoryException {
 		if (flowProperties != null) {
 			Matcher matcher = CURLY_BRACKET_CONTENTS_PATTERN.matcher(flowStringBuilder);

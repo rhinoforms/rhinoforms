@@ -61,7 +61,6 @@ public class ValueInjectorTest {
 			" <span>One</span>" + Constants.NEW_LINE +
 			" <span>Two</span>" + Constants.NEW_LINE +
 			" <span>{{aFish}}</span>" + Constants.NEW_LINE +
-			Constants.NEW_LINE +
 			"<div class=\"after\"></div></div></body></html>";
 		Assert.assertEquals(expected, actual);
 	}
