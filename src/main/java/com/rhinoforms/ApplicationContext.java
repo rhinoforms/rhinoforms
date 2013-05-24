@@ -69,7 +69,7 @@ public class ApplicationContext {
 			this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
 			this.formSubmissionHelper = new FormSubmissionHelper(masterScope);
 			this.formFlowFactory = new FormFlowFactory(resourceLoader, valueInjector, masterScope, servletContext.getContextPath(), submissionTimeKeeper);
-			this.remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader, valueInjector);
+			this.remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader, valueInjector, transformHelper);
 			this.transformHelper = new TransformHelper(resourceLoader);
 			this.flowRequestFactory = new FlowRequestFactory();
 			this.servletHelper = new ServletHelper();

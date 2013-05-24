@@ -40,8 +40,9 @@ public class RemoteSubmissionHelper {
 	private static final String DATA_DOCUMENT_VALUE_KEY = "[dataDocument]";
 	private static final Logger LOGGER = LoggerFactory.getLogger(RemoteSubmissionHelper.class);
 
-	public RemoteSubmissionHelper(ResourceLoader resourceLoader, ValueInjector valueInjector) {
+	public RemoteSubmissionHelper(ResourceLoader resourceLoader, ValueInjector valueInjector, TransformHelper transformHelper) {
 		this.valueInjector = valueInjector;
+		this.transformHelper = transformHelper;
 		connectionFactory = new ConnectionFactoryImpl();
 		documentHelper = new DocumentHelper();
 	}
