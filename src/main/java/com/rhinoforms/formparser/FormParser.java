@@ -124,11 +124,12 @@ public class FormParser {
 				// Add flowId as hidden field
 				addFlowId(flowID, formNode);
 	
-				// Mark form as parsed
-				formNode.setAttribute("parsed", "true");
-				
 				// Add the form id as a class on the form
 				formNode.setAttribute(Constants.CLASS, addClass(formNode.getAttributeByName(Constants.CLASS), formId));
+				formNode.setAttribute(Constants.FORM_ID_ATTR, formId);
+
+				// Mark form as parsed
+				formNode.setAttribute("parsed", "true");
 			} else {
 				logger.warn("No forms found");
 			}

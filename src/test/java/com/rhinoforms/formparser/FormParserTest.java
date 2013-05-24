@@ -250,19 +250,19 @@ public class FormParserTest {
 	}
 
 	@Test
-	public void testFormIdClassSet() throws Exception {
+	public void testFormIdClassAndAttributeSet() throws Exception {
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		formParser.parseForm(new FileInputStream("src/test/resources/empty-form.html"), formFlow, new PrintWriter(outputStream), masterScope, false);
 		String string = outputStream.toString();
-		Assert.assertTrue(string.contains("<form rhinoforms=\"true\" parsed=\"true\" class=\"one\">"));
+		Assert.assertTrue(string.contains("<form rhinoforms=\"true\" class=\"one\" rf.formid=\"one\" parsed=\"true\">"));
 	}
 	
 	@Test
-	public void testFormIdClassAdded() throws Exception {
+	public void testFormIdClassAddedAndAttributeSet() throws Exception {
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		formParser.parseForm(new FileInputStream("src/test/resources/empty-form-with-class.html"), formFlow, new PrintWriter(outputStream), masterScope, false);
 		String string = outputStream.toString();
-		Assert.assertTrue(string.contains("<form rhinoforms=\"true\" class=\"myForm one\" parsed=\"true\">"));
+		Assert.assertTrue(string.contains("<form rhinoforms=\"true\" class=\"myForm one\" rf.formid=\"one\" parsed=\"true\">"));
 	}
 	
 	private String grep(String string, String parsedFormHtml) throws IOException {

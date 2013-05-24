@@ -11,6 +11,7 @@ public interface Constants {
 	String SUPPRESS_DEBUG_BAR_PARAM = "rf.suppressDebugBar";
 	
 	String CLASS = "class";
+	String FORM_ID_ATTR = "rf.formId";
 	String NAME_ATTR = "name";
 	String TYPE_ATTR = "type";
 	String VALUE_ATTR = "value";
