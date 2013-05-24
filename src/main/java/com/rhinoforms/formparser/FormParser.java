@@ -82,6 +82,7 @@ public class FormParser {
 			Document dataDocument = formFlow.getDataDocument();
 			String docBase = formFlow.getCurrentDocBase();
 			String currentPath = formFlow.getCurrentPath();
+			String formId = formFlow.getCurrentFormId();
 			Map<String, FlowAction> currentActions = formFlow.getCurrentActions();
 	
 			// Process rf.include
@@ -125,6 +126,9 @@ public class FormParser {
 	
 				// Mark form as parsed
 				formNode.setAttribute("parsed", "true");
+				
+				// Add the form id as a class on the form
+				formNode.setAttribute(Constants.CLASS, addClass(formNode.getAttributeByName(Constants.CLASS), formId));
 			} else {
 				logger.warn("No forms found");
 			}
@@ -456,6 +460,16 @@ public class FormParser {
 		}
 	}
 
+	private String addClass(String existingClassString, String classToAdd) {
+		if (existingClassString == null) {
+			existingClassString = "";
+		} else if (!existingClassString.isEmpty()) {
+			existingClassString += " ";
+		}
+		existingClassString += classToAdd;
+		return existingClassString;
+	}
+	
 	public void setShowDebugBar(boolean showDebugBar) {
 		this.showDebugBar = showDebugBar;
 	}

@@ -249,6 +249,22 @@ public class FormParserTest {
 		Assert.assertFalse(html.contains("forEach"));
 	}
 
+	@Test
+	public void testFormIdClassSet() throws Exception {
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		formParser.parseForm(new FileInputStream("src/test/resources/empty-form.html"), formFlow, new PrintWriter(outputStream), masterScope, false);
+		String string = outputStream.toString();
+		Assert.assertTrue(string.contains("<form rhinoforms=\"true\" parsed=\"true\" class=\"one\">"));
+	}
+	
+	@Test
+	public void testFormIdClassAdded() throws Exception {
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		formParser.parseForm(new FileInputStream("src/test/resources/empty-form-with-class.html"), formFlow, new PrintWriter(outputStream), masterScope, false);
+		String string = outputStream.toString();
+		Assert.assertTrue(string.contains("<form rhinoforms=\"true\" class=\"myForm one\" parsed=\"true\">"));
+	}
+	
 	private String grep(String string, String parsedFormHtml) throws IOException {
 		BufferedReader bufferedReader = new BufferedReader(new StringReader(parsedFormHtml));
 		String line;

@@ -10,6 +10,7 @@ public interface Constants {
 	String INIT_DATA_PARAM = "rf.initData";
 	String SUPPRESS_DEBUG_BAR_PARAM = "rf.suppressDebugBar";
 	
+	String CLASS = "class";
 	String NAME_ATTR = "name";
 	String TYPE_ATTR = "type";
 	String VALUE_ATTR = "value";
