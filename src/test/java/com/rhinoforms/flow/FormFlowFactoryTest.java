@@ -128,6 +128,47 @@ public class FormFlowFactoryTest {
 	}
 	
 	@Test
+	public void testCreateFlowSubmissionAndTransform() throws Exception {
+		FormFlow formFlow = formFlowFactory.createFlow("test-flow1-submission-transform.js", null);
+		Map<String, List<Form>> formLists = formFlow.getFormLists();
+		List<Form> list = formLists.get("main");
+		Iterator<Form> iterator = list.iterator();
+		Form firstForm = iterator.next();
+		Assert.assertEquals("zero", firstForm.getId());
+		Assert.assertEquals(0, firstForm.getIndexInList());
+		
+		Form nextForm = iterator.next();
+		Map<String, FlowAction> actions = nextForm.getActions();
+		Assert.assertEquals(3, actions.size());
+		
+		//Send to server
+		FlowAction flowActionToServer = actions.get("sendToMyServer");
+		Assert.assertNotNull(flowActionToServer);
+		
+		Submission submission = flowActionToServer.getSubmissions().get(0);
+		Assert.assertNotNull(submission);
+		Assert.assertEquals("http://localhost/dummy-url", submission.getUrl());
+		Assert.assertEquals("POST", submission.getMethod());
+		Assert.assertEquals(false, submission.isRawXmlRequest());
+		Map<String, String> data = submission.getData();
+		Assert.assertEquals(2, data.size());
+		Assert.assertEquals("10", data.get("type"));
+		Assert.assertEquals("[dataDocument]", data.get("paramA"));
+		Assert.assertEquals("/myData/submissionResult", submission.getResultInsertPoint());
+		Assert.assertEquals(null, submission.getPreTransform());
+		Assert.assertEquals(null, submission.getPostTransform());
+		
+		//Transform only
+		FlowAction flowActionTransform = actions.get("transform");
+		Assert.assertNotNull(flowActionTransform);
+		Assert.assertEquals("xslt/inlineTransform.xsl", flowActionTransform.getDataDocTransform());
+				
+		//Cancel and target 
+		FlowAction flowActionCancelToZero = actions.get("cancel-back-to-one");
+		Assert.assertNotNull(flowActionCancelToZero);
+	}
+	
+	@Test
 	public void testCreateFlowSubmissionWithXpathUrl() throws Exception {
 		FormFlow formFlow = formFlowFactory.createFlow("test-flow1-submission-with-xpath-url.js", null);
 		Map<String, List<Form>> formLists = formFlow.getFormLists();

@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import javax.xml.transform.TransformerException;
+
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.NativeArray;
@@ -25,6 +27,7 @@ import com.rhinoforms.js.FlowExceptionFileNotFound;
 import com.rhinoforms.js.JSMasterScope;
 import com.rhinoforms.js.JSSerialiser;
 import com.rhinoforms.xml.DocumentHelper;
+import com.rhinoforms.xml.DocumentHelperException;
 import com.rhinoforms.xml.FlowExceptionXPath;
 
 public class FormSubmissionHelper {
@@ -41,7 +44,7 @@ public class FormSubmissionHelper {
 	}
 	
 	public FormSubmissionResult handlePost(FormFlow formFlow, Map<String, String> parameterMap)
-			throws IOException, FlowExceptionActionError, FlowExceptionBadRequest, FlowExceptionFileNotFound, FlowExceptionJavaScript, FlowExceptionXPath {
+			throws IOException, FlowExceptionActionError, FlowExceptionBadRequest, FlowExceptionFileNotFound, FlowExceptionJavaScript, FlowExceptionXPath, RemoteSubmissionHelperException, TransformerException, DocumentHelperException, TransformHelperException {
 		FormSubmissionResult formSubmissionResult = new FormSubmissionResult();
 		
 		Map<String, String> actionParams = new HashMap<String, String>();

@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.xml.transform.TransformerException;
+
 import junit.framework.Assert;
 
 import org.junit.Before;
@@ -20,6 +22,7 @@ import com.rhinoforms.xml.FlowExceptionXPath;
 public class RemoteSubmissionHelperTest {
 	
 	private RemoteSubmissionHelper remoteSubmissionHelper;
+	private TransformHelper transformHelper;
 	private Document dataDocument;
 	private DocumentHelper documentHelper;
 	private TestConnectionFactory testConnectionFactory;
@@ -33,7 +36,9 @@ public class RemoteSubmissionHelperTest {
 		TestApplicationContext applicationContext = new TestApplicationContext();
 		remoteSubmissionHelper = applicationContext.getRemoteSubmissionHelper();
 		testConnectionFactory = new TestConnectionFactory();
+		transformHelper = applicationContext.getTransformHelper();
 		remoteSubmissionHelper.setConnectionFactory(testConnectionFactory);
+		remoteSubmissionHelper.setTransformHelper(transformHelper);
 		dataDocumentString = "<myData><something>a</something><another>anotherVal</another></myData>";
 		dataDocument = TestUtil.createDocument(dataDocumentString);
 		xsltParameters = new HashMap<String, String>();
@@ -282,7 +287,7 @@ public class RemoteSubmissionHelperTest {
 	}
 	
 	@Test
-	public void testHandleSubmissionBadResult() throws FlowExceptionXPath {
+	public void testHandleSubmissionBadResult() throws FlowExceptionXPath, TransformerException {
 		Submission submission = new Submission("http://localhost/dummyURL");
 		submission.setOmitXmlDeclaration(true);
 		submission.getData().put("xml", "[dataDocument]");
@@ -310,7 +315,7 @@ public class RemoteSubmissionHelperTest {
 		submission.setResultInsertPoint("/myData/submissionResult");
 		testConnectionFactory.setResponseString("<data>one</data>");
 		
-		remoteSubmissionHelper.handleSubmission(submission, xsltParameters, formFlow);
+		remoteSubmissionHelper.handleSubmission(submission, null, formFlow);
 		
 		Assert.assertEquals("application/x-www-form-urlencoded", testConnectionFactory.getRecordedRequestProperties().get("Content-Type"));
 		String submittedData = new String(testConnectionFactory.getRecordedRequestStream().toByteArray());

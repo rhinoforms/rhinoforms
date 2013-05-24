@@ -34,6 +34,7 @@ function loadFlow(flowMap) {
 				var actionName;
 				var actionTarget = "";
 				var actionType = null;
+				var actionDataDocTransform = "";
 				var actionSubmission = null;
 				var actionSubmissions = null;
 				var actionClearTargetFormDocBase = false;
@@ -44,6 +45,9 @@ function loadFlow(flowMap) {
 					}
 					if (action.type) {
 						actionType = action.type;
+					}
+					if (action.dataDocTransform) {
+						actionDataDocTransform = formFlow.resolveResourcePathIfRelative(action.dataDocTransform);
 					}
 					if (action.submission) {
 						actionSubmission = action.submission;
@@ -82,6 +86,9 @@ function loadFlow(flowMap) {
 				}
 				if (actionType) {
 					flowActionJ.setType(actionType);
+				}
+				if (actionDataDocTransform != '') {
+					flowActionJ.setDataDocTransform(actionDataDocTransform);
 				}
 				if (actionSubmission || actionSubmissions) {
 					if (!actionSubmissions) {
