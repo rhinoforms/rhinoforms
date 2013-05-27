@@ -130,10 +130,8 @@ function Rhinoforms() {
 				},
 			success: function(html) {
 				var formId = jqXHR.getResponseHeader("rf.formId");
-				if ("false" == jqXHR.getResponseHeader("rf.disableInputsOnSubmit")) {
-					$container.data("rf.disableInputsOnSubmit", false);
-				}
-				insertForm(html, $container, formId);
+				var formOptions = parseFormOptions(jqXHR);
+				insertForm(html, $container, formId, formOptions);
 				if (callback) {
 					if (typeof callback === 'function') {
 						callback();
@@ -177,7 +175,13 @@ function Rhinoforms() {
 		alert(message);
 	}
 	
-	function insertForm(html, $container, formId) {
+	function parseFormOptions(jqXHR) {
+		var options = {};
+		options.disableInputsOnSubmit = !("false" == jqXHR.getResponseHeader("rf.disableInputsOnSubmit"));
+		return options;
+	}
+	
+	function insertForm(html, $container, formId, formOptions) {
 		var rf = this;
 		
 		// Replace container contents with single form
@@ -270,15 +274,16 @@ function Rhinoforms() {
 			var type = $this.attr("rf.actionType");
 			var container = $this.attr("rf.container");
 			var unbind = $this.attr("rf.unbind");
-			var suppressDebugBar = false;
+			var suppressDebugBar = $this.attr("rf.suppressDebugBar");
 			var $actionTargetContainer = $container;
 			if (container) {
 				$actionTargetContainer = $(container);
-				if ($actionTargetContainer.size() > 0 && $container.size() > 0 && $container[0] != $actionTargetContainer[0]) {
+				if (!suppressDebugBar && $actionTargetContainer.size() > 0 && $container.size() > 0 && $container[0] != $actionTargetContainer[0]) {
 					suppressDebugBar = true; // Loading into a different container. We don't want more than one DebugBar.
 				}
 			}
-			doAction(action, type, $form, $actionTargetContainer, { suppressDebugBar: suppressDebugBar, unbind: unbind });
+			var actionOptions = $.extend({ suppressDebugBar: suppressDebugBar, unbind: unbind }, formOptions);
+			doAction(action, type, $form, $actionTargetContainer, actionOptions);
 			return false;
 		});
 		
@@ -395,7 +400,7 @@ function Rhinoforms() {
 			}
 			
 			var serialisedForm = $form.serialize();
-			if (false != $container.data("rf.disableInputsOnSubmit")) {
+			if (options.disableInputsOnSubmit) {
 				disableForm($form);
 			}
 			var jqXHR = $.ajax({
@@ -409,7 +414,8 @@ function Rhinoforms() {
 						break;
 					default:
 						var formId = jqXHR.getResponseHeader("rf.formId");
-						insertForm(data, $container, formId);
+						var formOptions = parseFormOptions(jqXHR);
+						insertForm(data, $container, formId, formOptions);
 					}
 				},
 				error: function(jqXHR, textStatus, errorThrown) {
