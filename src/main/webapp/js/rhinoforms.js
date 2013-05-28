@@ -96,8 +96,8 @@ function Rhinoforms() {
 		});
 		
 		this.registerValidationKeyword("between", function(value, rfAttributes, args) {
-			var decimalA = args.decimalA * 1;
-			var decimalB = args.decimalB * 1;
+			var decimalA = args.decimalA.replace(/,/g, '') * 1;
+			var decimalB = args.decimalB.replace(/,/g, '') * 1;
 			if (decimalA > decimalB) {
 				var decimalC = decimalB;
 				decimalB = decimalA;
