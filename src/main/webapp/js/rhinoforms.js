@@ -326,22 +326,22 @@ function Rhinoforms() {
 					var elementIsInput = isInput($element);
 					if (result) {
 						$element.data("rf.included", true);
-						$element.show();
+						$element.removeClass("rf-included-false");
 						
 						if (elementIsInput) {
 							var $lable = getLabel($element, $container);
 							if ($lable) {
-								$lable.show();
+								$lable.removeClass("rf-included-false");
 							}
 						}
 					} else {
 						$element.data("rf.included", false);
-						$element.hide();
+						$element.addClass("rf-included-false");
 						
 						if (elementIsInput) {
 							var $lable = getLabel($element, $container);
 							if ($lable) {
-								$lable.hide();
+								$lable.addClass("rf-included-false");
 							}
 							
 							var doClearInvalid = true;
