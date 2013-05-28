@@ -146,15 +146,17 @@ public class RemoteSubmissionHelper {
 							requestDataBuilder.append("=");
 							if (DATA_DOCUMENT_VALUE_KEY.equals(dataValue)) {
 								dataValue = dataDocumentString;
-							} else {
-								if (dataValue.startsWith(HTML_TEMPLATE_PREFIX)) {
-									String templatePath = dataValue.substring(HTML_TEMPLATE_PREFIX.length());
-									templatePath = formFlow.resolveResourcePathIfRelative(templatePath);
-									InputStream templateStream = resourceLoader.getFormResourceAsStream(templatePath);
-									ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-									valueInjector.processHtmlTemplate(templateStream, dataDocument, "*", formFlow.getProperties(), outputStream);
-									dataValue = outputStream.toString();
-								}
+							} else if (dataValue.startsWith(HTML_TEMPLATE_PREFIX)) {
+								String templatePath = dataValue.substring(HTML_TEMPLATE_PREFIX.length());
+								templatePath = formFlow.resolveResourcePathIfRelative(templatePath);
+								InputStream templateStream = resourceLoader.getFormResourceAsStream(templatePath);
+								ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+								valueInjector.processHtmlTemplate(templateStream, dataDocument, "*", formFlow.getProperties(), outputStream);
+								dataValue = outputStream.toString();
+							} else if (dataValue.contains("{{")) {
+								StringBuilder stringBuilder = new StringBuilder(dataValue);
+								valueInjector.replaceCurlyBrackets(formFlow.getProperties(), stringBuilder, formFlow.getDataDocument());
+								dataValue = stringBuilder.toString();
 							}
 							requestDataBuilder.append(URLEncoder.encode(dataValue, UTF8));
 						}

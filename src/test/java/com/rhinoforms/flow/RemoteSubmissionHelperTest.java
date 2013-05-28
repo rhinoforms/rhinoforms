@@ -213,6 +213,60 @@ public class RemoteSubmissionHelperTest {
 	}
 	
 	@Test
+	public void testHandleSubmissionPropertyParam() throws Exception {
+		Properties properties = new Properties();
+		properties.put("one", "123");
+		formFlow.setProperties(properties);
+		
+		String requestUrl = "http://localhost/dummyURL";
+		Submission submission = new Submission(requestUrl);
+		submission.getData().put("something", "{{$one}}");
+		
+		remoteSubmissionHelper.handleSubmission(submission, xsltParameters, formFlow);
+		
+		Assert.assertEquals(requestUrl, testConnectionFactory.getRecordedRequestUrl());
+		Assert.assertEquals("application/x-www-form-urlencoded", testConnectionFactory.getRecordedRequestProperties().get("Content-Type"));
+		String submittedData = new String(testConnectionFactory.getRecordedRequestStream().toByteArray());
+		Assert.assertEquals("something=123", URLDecoder.decode(submittedData, "UTF-8"));
+	}
+	
+	@Test
+	public void testHandleSubmissionXPathParamAlternativeSyntax() throws Exception {
+		String requestUrl = "http://localhost/dummyURL";
+		Submission submission = new Submission(requestUrl);
+		submission.setOmitXmlDeclaration(true);
+		submission.getData().put("something", "{{//something}}");
+		testConnectionFactory.setResponseString("<submissionResult>one</submissionResult>");
+		
+		remoteSubmissionHelper.handleSubmission(submission, xsltParameters, formFlow);
+		
+		Assert.assertEquals(requestUrl, testConnectionFactory.getRecordedRequestUrl());
+		Assert.assertEquals("application/x-www-form-urlencoded", testConnectionFactory.getRecordedRequestProperties().get("Content-Type"));
+		String submittedData = new String(testConnectionFactory.getRecordedRequestStream().toByteArray());
+		Assert.assertEquals("something=a", URLDecoder.decode(submittedData, "UTF-8"));
+		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
+		Assert.assertEquals(dataDocumentString, dataDocumentStringAfterSubmission);
+	}
+	
+	@Test
+	public void testHandleSubmissionXPathParamAlternativeSyntaxMultipleValuesStillReturnsOne() throws Exception {
+		String dataDocString = "<myData><something>a</something><something>b</something><something>c</something></myData>";
+		dataDocument = TestUtil.createDocument(dataDocString);
+		formFlow.setDataDocument(dataDocument);
+
+		String requestUrl = "http://localhost/dummyURL";
+		Submission submission = new Submission(requestUrl);
+		submission.getData().put("something", "{{//something}}");
+
+		remoteSubmissionHelper.handleSubmission(submission, xsltParameters, formFlow);
+		
+		Assert.assertEquals(requestUrl, testConnectionFactory.getRecordedRequestUrl());
+		Assert.assertEquals("application/x-www-form-urlencoded", testConnectionFactory.getRecordedRequestProperties().get("Content-Type"));
+		String submittedData = new String(testConnectionFactory.getRecordedRequestStream().toByteArray());
+		Assert.assertEquals("something=a", URLDecoder.decode(submittedData, "UTF-8"));
+	}
+	
+	@Test
 	public void testHandleSubmissionWithDataDocWithXmlDeclaration() throws Exception {
 		Submission submission = new Submission("http://localhost/dummyURL");
 		submission.getData().put("xml", "[dataDocument]");
