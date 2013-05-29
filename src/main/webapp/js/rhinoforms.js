@@ -599,7 +599,7 @@ function Rhinoforms() {
 	
 	function validateField(name, value, rfAttributes, validationList) {
 		var validationArray = toNamesAndArgs(validationList);
-		for (a in validationArray) {
+		for (var a in validationArray) {
 			var validation = validationArray[a];
 			var message = null;
 			if (validationKeywords[validation.name]) {

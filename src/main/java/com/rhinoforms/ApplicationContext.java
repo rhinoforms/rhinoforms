@@ -50,6 +50,7 @@ public class ApplicationContext {
 	private ValueInjector valueInjector;
 
 	public ApplicationContext(ServletContext servletContext) throws ResourceLoaderException, IOException {
+		RhinoFormsMasterScopeFactory.enableDynamicScopeFeature();
 		Context jsContext = Context.enter();
 		try {
 			this.servletContext = servletContext;

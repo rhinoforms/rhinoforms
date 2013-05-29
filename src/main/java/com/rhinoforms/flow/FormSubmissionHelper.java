@@ -196,9 +196,7 @@ public class FormSubmissionHelper {
 		commandStringBuilder.append("')");
 		Context jsContext = Context.getCurrentContext();
 		try {
-			String string = commandStringBuilder.toString();
-			System.out.println(string);
-			NativeArray errors = (NativeArray) jsContext.evaluateString(workingScope, string, "<cmd>", 1, null);
+			NativeArray errors = (NativeArray) jsContext.evaluateString(workingScope, commandStringBuilder.toString(), "<cmd>", 1, null);
 			for (int i = 0; i < errors.getLength(); i++) {
 				ScriptableObject error = (ScriptableObject) errors.get(i, workingScope);
 				String errorFieldName = error.get("name", workingScope).toString();
