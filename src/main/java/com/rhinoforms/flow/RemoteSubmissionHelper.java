@@ -88,6 +88,7 @@ public class RemoteSubmissionHelper {
 				StringWriter requestDataAfterTransformWriter = new StringWriter();
 				transformer.transform(new DOMSource(dataDocument), new StreamResult(requestDataAfterTransformWriter));
 				dataDocumentString = requestDataAfterTransformWriter.toString();
+				LOGGER.debug("preTransform result: {}", dataDocumentString);
 			} else {
 				message = "transforming Data Document into a String for submission.";
 				StringWriter stringWriter = new StringWriter();
