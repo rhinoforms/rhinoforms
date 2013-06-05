@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.util.Map;
@@ -259,14 +260,19 @@ public class RemoteSubmissionHelper {
 					inputStream.close();
 				}
 			} else {
-				throw new RemoteSubmissionHelperException("Bad response from target service. Status:" + responseCode + ", message:"
-						+ connection.getResponseMessage());
+				String messageOnHttpError = submission.getMessageOnHttpError();
+				if (messageOnHttpError == null) {
+					messageOnHttpError = "Bad response from target service. Status:" + responseCode + ", message:"
+							+ connection.getResponseMessage();
+				}
+				throw new RemoteSubmissionHelperException(messageOnHttpError);
 			}
+		} catch (ConnectException e) {
+			throw new RemoteSubmissionHelperException("Failed to connect to a service that this form uses.", e);
 		} catch (IOException e) {
 			throw new RemoteSubmissionHelperException("IOException while handling submission.", e);
 		} catch (TransformerException e) {
-			throw new RemoteSubmissionHelperException(
-					"Failed to transform the submission response document serialise the DataDocument for submission.", e);
+			throw new RemoteSubmissionHelperException("Failed to transform the submission response document.", e);
 		} catch (DocumentHelperException e) {
 			throw new RemoteSubmissionHelperException("Failed to insert submission result into the DataDocument.", e);
 		}

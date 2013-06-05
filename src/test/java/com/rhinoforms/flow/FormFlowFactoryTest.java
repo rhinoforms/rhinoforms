@@ -74,6 +74,7 @@ public class FormFlowFactoryTest {
 		Assert.assertEquals("/myData/submissionResult", submission.getResultInsertPoint());
 		Assert.assertEquals("xslt/toServerFormat.xsl", submission.getPreTransform());
 		Assert.assertEquals("xslt/fromServerFormat.xsl", submission.getPostTransform());
+		Assert.assertEquals("Could not reach the web service.", submission.getMessageOnHttpError());
 		Assert.assertTrue(flowActionToServer.isClearTargetFormDocBase());
 		
 		Submission submission2 = submissions.get(1);
