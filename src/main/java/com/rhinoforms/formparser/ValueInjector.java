@@ -34,6 +34,7 @@ import com.rhinoforms.xml.DocumentHelper;
 public class ValueInjector {
 
 	private static final Pattern CURLY_BRACKET_CONTENTS_PATTERN = Pattern.compile(".*?\\{\\{([^} ]+)\\}\\}.*", Pattern.DOTALL);
+	private static final Pattern CURLY_BRACKET_PROPERTY_PATTERN = Pattern.compile(".*?\\{\\{\\$([^} ]+)\\}\\}.*", Pattern.DOTALL);
 	private static final XPathFactory xPathFactory = XPathFactory.newInstance();
 	private HtmlCleaner htmlCleaner;
 	private SimpleHtmlSerializer simpleHtmlSerializer;
@@ -276,20 +277,17 @@ public class ValueInjector {
 	
 	public void processFlowDefinitionCurlyBrackets(StringBuilder flowStringBuilder, Properties flowProperties) throws FormFlowFactoryException {
 		if (flowProperties != null) {
-			Matcher matcher = CURLY_BRACKET_CONTENTS_PATTERN.matcher(flowStringBuilder);
+			Matcher matcher = CURLY_BRACKET_PROPERTY_PATTERN.matcher(flowStringBuilder);
 			while (matcher.find()) {
 				String group = matcher.group(1);
-				if (group.startsWith("$") && group.length() > 1) {
-					group = group.substring(1);
-					String property = flowProperties.getProperty(group);
-					if (property != null) {
-						int groupStart = flowStringBuilder.indexOf("{{$" + group + "}}");
-						int groupEnd = groupStart + group.length() + 5;
-						flowStringBuilder.replace(groupStart, groupEnd, property);
-						matcher = CURLY_BRACKET_CONTENTS_PATTERN.matcher(flowStringBuilder);
-					} else {
-						throw new FormFlowFactoryException("Property not found '" + group + "'");
-					}
+				String property = flowProperties.getProperty(group);
+				if (property != null) {
+					int groupStart = flowStringBuilder.indexOf("{{$" + group + "}}");
+					int groupEnd = groupStart + group.length() + 5;
+					flowStringBuilder.replace(groupStart, groupEnd, property);
+					matcher = CURLY_BRACKET_PROPERTY_PATTERN.matcher(flowStringBuilder);
+				} else {
+					throw new FormFlowFactoryException("Property not found '" + group + "'");
 				}
 			}
 		}

@@ -19,7 +19,7 @@
 									type: "10",
 									paramA: "[dataDocument]"
 								},
-								messageOnHttpError: "Could not reach the web service.",
+								messageOnHttpError: "{{$message.dummy.submission}}",
 								postTransform: "xslt/fromServerFormat.xsl",
 								resultInsertPoint: "/myData/submissionResult"
 							},

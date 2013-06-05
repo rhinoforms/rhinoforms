@@ -78,6 +78,7 @@ public class FormFlowFactoryTest {
 		Assert.assertTrue(flowActionToServer.isClearTargetFormDocBase());
 		
 		Submission submission2 = submissions.get(1);
+		Assert.assertEquals("Url injected from properties file", "http://localhost/dummy-url", submission2.getUrl());
 		Assert.assertEquals(0, submission2.getData().size());
 		
 		FlowAction cancelAction = actions.get("cancel-back-to-one");
