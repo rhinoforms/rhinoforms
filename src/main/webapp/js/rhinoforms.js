@@ -167,8 +167,8 @@ function Rhinoforms() {
 	/** Private methods **/
 	
 	function ajaxError(message, jqXHR, textStatus, errorThrown) {
-		if ("text/plain" == jqXHR.getResponseHeader("Content-Type")) {
-			message += ": " + jqXHR.responseText;
+		if (jqXHR.getResponseHeader("Content-Type").indexOf("text/plain") != -1) {
+			message = jqXHR.responseText;
 		} else {
 			message += ": " + errorThrown + ".";
 		}

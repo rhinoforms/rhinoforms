@@ -83,7 +83,7 @@ public class FormFlow implements Serializable {
 					xsltParameters.put("rf.actionName", actionName);
 					remoteSubmissionHelper.handleSubmission(submission, xsltParameters, this);
 				} catch (RemoteSubmissionHelperException e) {
-					throw new FlowExceptionActionError("Remote submission failed.", e);
+					throw new FlowExceptionActionError(e.getMessage(), e);
 				}
 				times.add((int) (startTime - new Date().getTime()));
 			}

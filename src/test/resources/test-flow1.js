@@ -19,6 +19,7 @@
 									type: "10",
 									paramA: "[dataDocument]"
 								},
+								messageOnHttpError: "Could not reach the web service.",
 								postTransform: "xslt/fromServerFormat.xsl",
 								resultInsertPoint: "/myData/submissionResult"
 							},

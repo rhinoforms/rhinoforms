@@ -119,6 +119,9 @@ function loadFlow(flowMap) {
 						if (thisSubmission.postTransform) {
 							submissionJ.setPostTransform(formFlow.resolveResourcePathIfRelative(thisSubmission.postTransform));
 						}
+						if (thisSubmission.messageOnHttpError) {
+							submissionJ.setMessageOnHttpError(thisSubmission.messageOnHttpError);
+						}
 						submissionsListJ.add(submissionJ);
 					}
 					flowActionJ.setSubmissions(submissionsListJ);
