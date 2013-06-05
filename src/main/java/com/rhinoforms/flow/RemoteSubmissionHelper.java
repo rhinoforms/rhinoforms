@@ -260,15 +260,11 @@ public class RemoteSubmissionHelper {
 					inputStream.close();
 				}
 			} else {
-				String messageOnHttpError = submission.getMessageOnHttpError();
-				if (messageOnHttpError == null) {
-					messageOnHttpError = "Bad response from target service. Status:" + responseCode + ", message:"
-							+ connection.getResponseMessage();
-				}
-				throw new RemoteSubmissionHelperException(messageOnHttpError);
+				throw new RemoteSubmissionHelperException(submission.getMessageOnHttpErrorOrDefault("Bad response from target service. Status:" + responseCode + ", message:"
+						+ connection.getResponseMessage()));
 			}
 		} catch (ConnectException e) {
-			throw new RemoteSubmissionHelperException("Failed to connect to a service that this form uses.", e);
+			throw new RemoteSubmissionHelperException(submission.getMessageOnHttpErrorOrDefault("Failed to connect to a service that this form uses."));
 		} catch (IOException e) {
 			throw new RemoteSubmissionHelperException("IOException while handling submission.", e);
 		} catch (TransformerException e) {

@@ -72,6 +72,14 @@ public class Submission implements Serializable {
 		return messageOnHttpError;
 	}
 
+	public String getMessageOnHttpErrorOrDefault(String defaultMessage) {
+		if (messageOnHttpError != null) {
+			return messageOnHttpError;
+		} else {
+			return defaultMessage;
+		}
+	}
+
 	public void setMessageOnHttpError(String errorMessage) {
 		this.messageOnHttpError = errorMessage;
 	}
