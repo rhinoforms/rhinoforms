@@ -108,6 +108,17 @@ public class ValueInjectorTest {
 	}
 	
 	@Test
+	public void testProcessRemainingCurlyBracketsAttributeXPath() throws Exception {
+		dataDocument = createDocument("<myData><fishes><fish name='1'>One</fish><fish name='2'>Two</fish></fishes></myData>");
+		formHtml = htmlCleaner.clean(new StringReader("<span>{{//*[@name='2']}}</span>"));
+		
+		valueInjector.processCurlyBrackets(dataDocument, formHtml, properties, "/myData");
+
+		String actual = serialiseHtmlCleanerNode(formHtml);
+		Assert.assertTrue("Placeholder replaced with dataDocument content.", actual.contains("<span>Two</span>"));
+	}
+	
+	@Test
 	public void testProcessRemainingCurlyBracketsSomeProperties() throws Exception {
 		formHtml = htmlCleaner.clean(new StringReader("<span class=\"ocean\">{{$someUrl}}{{name}}</span>"));
 		Assert.assertTrue("Placeholder present.", serialiseHtmlCleanerNode(formHtml).contains("<span class=\"ocean\">{{$someUrl}}{{name}}</span>"));

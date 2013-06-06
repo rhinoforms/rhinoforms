@@ -74,9 +74,11 @@ public class FormFlowFactoryTest {
 		Assert.assertEquals("/myData/submissionResult", submission.getResultInsertPoint());
 		Assert.assertEquals("xslt/toServerFormat.xsl", submission.getPreTransform());
 		Assert.assertEquals("xslt/fromServerFormat.xsl", submission.getPostTransform());
+		Assert.assertEquals("Could not reach the web service.", submission.getMessageOnHttpError());
 		Assert.assertTrue(flowActionToServer.isClearTargetFormDocBase());
 		
 		Submission submission2 = submissions.get(1);
+		Assert.assertEquals("Url injected from properties file", "http://localhost/dummy-url", submission2.getUrl());
 		Assert.assertEquals(0, submission2.getData().size());
 		
 		FlowAction cancelAction = actions.get("cancel-back-to-one");

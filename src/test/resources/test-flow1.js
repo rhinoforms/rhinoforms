@@ -19,6 +19,7 @@
 									type: "10",
 									paramA: "[dataDocument]"
 								},
+								messageOnHttpError: "{{$message.dummy.submission}}",
 								postTransform: "xslt/fromServerFormat.xsl",
 								resultInsertPoint: "/myData/submissionResult"
 							},
