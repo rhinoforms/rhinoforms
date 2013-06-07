@@ -34,6 +34,7 @@ public class RemoteSubmissionHelperTest {
 		TestApplicationContext applicationContext = new TestApplicationContext();
 		remoteSubmissionHelper = applicationContext.getRemoteSubmissionHelper();
 		testConnectionFactory = new TestConnectionFactory();
+		testConnectionFactory.setContentType("application/xml");
 		remoteSubmissionHelper.setConnectionFactory(testConnectionFactory);
 		dataDocumentString = "<myData><something>a</something><another>anotherVal</another></myData>";
 		dataDocument = TestUtil.createDocument(dataDocumentString);
@@ -408,6 +409,22 @@ public class RemoteSubmissionHelperTest {
 		Assert.assertEquals("myXml=" + dataDocumentString, URLDecoder.decode(submittedData, "UTF-8"));
 		String dataDocumentStringAfterSubmission = documentHelper.documentToString(dataDocument);
 		Assert.assertEquals("<myData><something>a</something><another>anotherVal</another><submissionResult><submissionResult><premium>10.00</premium></submissionResult></submissionResult></myData>", dataDocumentStringAfterSubmission);
+	}
+	
+	@Test
+	public void testSimplestHandleSubmissionPlainTextResponse() throws Exception {
+		String requestUrl = "http://localhost/dummyURL";
+		Submission submission = new Submission(requestUrl);
+		submission.setResultInsertPoint("/myData/plainTestResponse");
+		submission.setMethod("get");
+		testConnectionFactory.setContentType("text/plain");
+		testConnectionFactory.setResponseString("one");
+		
+		Assert.assertEquals("<myData><something>a</something><another>anotherVal</another></myData>", documentHelper.documentToString(dataDocument));
+		
+		remoteSubmissionHelper.handleSubmission(submission, xsltParameters, formFlow);
+		
+		Assert.assertEquals("<myData><something>a</something><another>anotherVal</another><plainTestResponse>one</plainTestResponse></myData>", documentHelper.documentToString(dataDocument));
 	}
 	
 	@Test
