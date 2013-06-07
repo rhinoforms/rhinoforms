@@ -51,6 +51,7 @@ public class RemoteSubmissionHelper {
 	private ResourceLoader resourceLoader;
 	private TransformerFactory transformerFactory;
 	private ValueInjector valueInjector;
+	private StreamUtils streamUtils;
 	private static final String UTF8 = "UTF-8";
 	private static final String DATA_DOCUMENT_VALUE_KEY = "[dataDocument]";
 	private static final Logger LOGGER = LoggerFactory.getLogger(RemoteSubmissionHelper.class);
@@ -62,6 +63,7 @@ public class RemoteSubmissionHelper {
 		connectionFactory = new ConnectionFactoryImpl();
 		documentHelper = new DocumentHelper();
 		transformerFactory = new TransformerFactoryImpl(); // Saxon Impl
+		streamUtils = new StreamUtils();
 	}
 
 	public void handleSubmission(Submission submission, Map<String, String> xsltParameters, FormFlow formFlow)
@@ -224,36 +226,44 @@ public class RemoteSubmissionHelper {
 				String resultInsertPoint = submission.getResultInsertPoint();
 				String contentType = connection.getContentType();
 				LOGGER.info("Response content type: {}", contentType);
+				
 				InputStream inputStream = connection.getInputStream();
 				try {
 					if (resultInsertPoint != null) {
-						Document resultDocument = documentHelper.streamToDocument(inputStream);
-
-						if (LOGGER.isDebugEnabled()) {
-							LOGGER.debug("Result document: {}", documentHelper.documentToString(resultDocument));
-						}
-
-						Node nodeToImport = null;
-						if (postTransform != null) {
-							Transformer transformer = getTransformer(postTransform, true);
-							DOMResult domResult = new DOMResult();
-							transformer.transform(new DOMSource(resultDocument), domResult);
-							nodeToImport = domResult.getNode().getChildNodes().item(0);
-							if (LOGGER.isDebugEnabled()) {
-								LOGGER.debug("Transformed result: {}", documentHelper.documentToString(nodeToImport));
-							}
-						} else {
-							nodeToImport = resultDocument.getChildNodes().item(0);
-						}
-
-						Node importedNode = dataDocument.importNode(nodeToImport, true);
+						
 						Node insertPointNode = documentHelper.lookupOrCreateNode(dataDocument, resultInsertPoint);
+						
+						if (contentType != null && contentType.startsWith("text/plain")) {
+							byte[] streamData = streamUtils.readStream(inputStream);
+							insertPointNode.setTextContent(new String(streamData));
+						} else {
+							Document resultDocument = documentHelper.streamToDocument(inputStream);
 
-						NodeList childNodes = insertPointNode.getChildNodes();
-						for (int i = 0; i < childNodes.getLength(); i++) {
-							insertPointNode.removeChild(childNodes.item(i));
+							if (LOGGER.isDebugEnabled()) {
+								LOGGER.debug("Result document: {}", documentHelper.documentToString(resultDocument));
+							}
+
+							Node nodeToImport = null;
+							if (postTransform != null) {
+								Transformer transformer = getTransformer(postTransform, true);
+								DOMResult domResult = new DOMResult();
+								transformer.transform(new DOMSource(resultDocument), domResult);
+								nodeToImport = domResult.getNode().getChildNodes().item(0);
+								if (LOGGER.isDebugEnabled()) {
+									LOGGER.debug("Transformed result: {}", documentHelper.documentToString(nodeToImport));
+								}
+							} else {
+								nodeToImport = resultDocument.getChildNodes().item(0);
+							}
+
+							Node importedNode = dataDocument.importNode(nodeToImport, true);
+
+							NodeList childNodes = insertPointNode.getChildNodes();
+							for (int i = 0; i < childNodes.getLength(); i++) {
+								insertPointNode.removeChild(childNodes.item(i));
+							}
+							insertPointNode.appendChild(importedNode);
 						}
-						insertPointNode.appendChild(importedNode);
 					} else {
 						LOGGER.info("Response body: {}", new String(new StreamUtils().readStream(connection.getInputStream())));
 					}
