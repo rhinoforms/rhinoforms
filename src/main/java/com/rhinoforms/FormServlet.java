@@ -116,30 +116,34 @@ public class FormServlet extends HttpServlet {
 			catch (FlowExceptionBadRequest e) {
 				String message = e.getMessage();
 				LOGGER.info(message, e);
-				sendError(HttpServletResponse.SC_BAD_REQUEST, message, response);
+				sendFrontendError(HttpServletResponse.SC_BAD_REQUEST, message, response);
 			} catch (FlowException e) {
 				String message = e.getMessage();
 				LOGGER.info(message, e);
-				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
+				String frontendMessage = e.getFrontendMessage();
+				if (frontendMessage != null) {
+					message = frontendMessage;
+				}
+				sendFrontendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 			} catch (FormSubmissionHelperException e) {
 				String message = e.getMessage();
 				LOGGER.info(message, e);
-				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
+				sendFrontendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 			} catch (FormParserException e) {
 				String message = e.getMessage();
 				LOGGER.info(message, e);
-				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
+				sendFrontendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 			} catch (TransformerException e) {
 				String message = "Failed to output DataDocument";
 				LOGGER.error(message, e);
-				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
+				sendFrontendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 			} catch (TransformHelperException e) {
 				String message = "Failed to transform DataDocument";
 				LOGGER.error(message, e);
-				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
+				sendFrontendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 			}
 		} else {
-			sendError(HttpServletResponse.SC_FORBIDDEN, "Your session has expired.", response);
+			sendFrontendError(HttpServletResponse.SC_FORBIDDEN, "Your session has expired.", response);
 		}
 	}
 
@@ -151,15 +155,19 @@ public class FormServlet extends HttpServlet {
 		} catch (FormFlowFactoryException e) {
 			String message = "Failed to create form flow.";
 			LOGGER.error(message, e);
-			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
+			sendFrontendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 		} catch (FormParserException e) {
 			String message = "Failed to load the first form.";
 			LOGGER.error(message, e);
-			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
+			sendFrontendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 		} catch (FlowException e) {
 			String message = "Failed to navigate to the first form.";
 			LOGGER.error(message, e);
-			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
+			String frontendMessage = e.getFrontendMessage();
+			if (frontendMessage != null) {
+				message = frontendMessage;
+			}
+			sendFrontendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 		}
 	}
 
@@ -203,12 +211,12 @@ public class FormServlet extends HttpServlet {
 			} catch (FieldSourceProxyException e) {
 				String message = "Failed to perform proxy request.";
 				LOGGER.debug(message, e);
-				sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
+				sendFrontendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 			}
 		} else {
 			String message = "Your session has expired.";
 			LOGGER.debug(message);
-			sendError(HttpServletResponse.SC_FORBIDDEN, message, response);
+			sendFrontendError(HttpServletResponse.SC_FORBIDDEN, message, response);
 		}
 	}
 
@@ -218,7 +226,7 @@ public class FormServlet extends HttpServlet {
 			response.getWriter().write("Successfully notified Resource Loader.");
 		} catch (ResourceLoaderException e) {
 			LOGGER.error(e.getMessage(), e);
-			sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), response);
+			sendFrontendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), response);
 		}
 	}
 
@@ -234,7 +242,7 @@ public class FormServlet extends HttpServlet {
 		}
 	}
 
-	private void sendError(int errorCode, String message, HttpServletResponse response) throws IOException {
+	private void sendFrontendError(int errorCode, String message, HttpServletResponse response) throws IOException {
 		response.setStatus(errorCode);
 		response.setContentType("text/plain");
 		response.getWriter().write(message);

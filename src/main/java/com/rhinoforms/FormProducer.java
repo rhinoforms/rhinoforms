@@ -61,10 +61,6 @@ public class FormProducer {
 			FormFlow newFormFlow = formFlowFactory.createFlow(flowRequest.getFormFlowPath(), flowRequest.getInitData());
 			SessionHelper.setFlow(newFormFlow, session);
 
-			if (!newFormFlow.isDisableInputsOnSubmit()) {
-				response.setHeader("rf.disableInputsOnSubmit", "false");
-			}
-
 			String formPath = newFormFlow.navigateToFirstForm(documentHelper);
 			writeForm(response, newFormFlow, formPath, flowRequest.isSuppressDebugBar());
 		} finally {
@@ -102,6 +98,10 @@ public class FormProducer {
 		formPath = formFlow.resolveResourcePathIfRelative(formPath);
 		String currentFormId = formFlow.getCurrentFormId();
 		response.setHeader("rf.formId", currentFormId);
+		
+		if (!formFlow.isDisableInputsOnSubmit()) {
+			response.setHeader("rf.disableInputsOnSubmit", "false");
+		}
 
 		InputStream formStream = resourceLoader.getFormResourceAsStream(formPath);
 		response.setContentType("text/html");

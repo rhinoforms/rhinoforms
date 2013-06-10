@@ -1,0 +1,12 @@
+<h1>Thank you</h1>
+
+<p>{{firstName}}, thank you for your order.</p>
+
+<h2>Order Summary</h2>
+<ul>
+	<rf.forEach select="/order/items/item" as="i">
+	<li>{{i.name}}</li>
+	</rf.forEach>
+</ul>
+
+<p>We hope to see you again soon.</p>

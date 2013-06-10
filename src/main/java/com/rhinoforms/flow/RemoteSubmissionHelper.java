@@ -1,11 +1,13 @@
 package com.rhinoforms.flow;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.util.Map;
@@ -36,15 +38,20 @@ public class RemoteSubmissionHelper {
 	private DocumentHelper documentHelper;
 	private TransformHelper transformHelper;
 	private ValueInjector valueInjector;
+	private StreamUtils streamUtils;
+	private ResourceLoader resourceLoader;
 	private static final String UTF8 = "UTF-8";
 	private static final String DATA_DOCUMENT_VALUE_KEY = "[dataDocument]";
 	private static final Logger LOGGER = LoggerFactory.getLogger(RemoteSubmissionHelper.class);
+	private static final String HTML_TEMPLATE_PREFIX = "htmlTemplate:";
 
 	public RemoteSubmissionHelper(ResourceLoader resourceLoader, ValueInjector valueInjector, TransformHelper transformHelper) {
+		this.resourceLoader = resourceLoader;
 		this.valueInjector = valueInjector;
 		this.transformHelper = transformHelper;
 		connectionFactory = new ConnectionFactoryImpl();
 		documentHelper = new DocumentHelper();
+		streamUtils = new StreamUtils();
 	}
 
 	public void handleSubmission(Submission submission, Map<String, String> xsltParameters, FormFlow formFlow)
@@ -121,6 +128,17 @@ public class RemoteSubmissionHelper {
 							requestDataBuilder.append("=");
 							if (DATA_DOCUMENT_VALUE_KEY.equals(dataValue)) {
 								dataValue = dataDocumentString;
+							} else if (dataValue.startsWith(HTML_TEMPLATE_PREFIX)) {
+								String templatePath = dataValue.substring(HTML_TEMPLATE_PREFIX.length());
+								templatePath = formFlow.resolveResourcePathIfRelative(templatePath);
+								InputStream templateStream = resourceLoader.getFormResourceAsStream(templatePath);
+								ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+								valueInjector.processHtmlTemplate(templateStream, dataDocument, "*", formFlow.getProperties(), outputStream);
+								dataValue = outputStream.toString();
+							} else if (dataValue.contains("{{")) {
+								StringBuilder stringBuilder = new StringBuilder(dataValue);
+								valueInjector.replaceCurlyBrackets(formFlow.getProperties(), stringBuilder, formFlow.getDataDocument());
+								dataValue = stringBuilder.toString();
 							}
 							requestDataBuilder.append(URLEncoder.encode(dataValue, UTF8));
 						}
@@ -132,9 +150,13 @@ public class RemoteSubmissionHelper {
 			}
 			
 		} catch (UnsupportedEncodingException e) {
-			throw new RemoteSubmissionHelperException("Failed to encode values for submission", e);
+			throw new RemoteSubmissionHelperException("Failed to encode values for submission request.", e);
 		} catch (XPathExpressionException e) {
-			throw new RemoteSubmissionHelperException("Failed to build values for submission. XPathExpressionException.", e);
+			throw new RemoteSubmissionHelperException("Failed to build values for submission request. XPathExpressionException.", e);
+		} catch (IOException e) {
+			throw new RemoteSubmissionHelperException("Failed to build values for submission request. IOException.", e);
+		} catch (ValueInjectorException e) {
+			throw new RemoteSubmissionHelperException("Failed to process HTML Template for submission request.", e);
 		}
 		
 
@@ -143,7 +165,7 @@ public class RemoteSubmissionHelper {
 		StringBuilder urlBuilder = new StringBuilder(url);
 		if (urlBuilder.indexOf("{{") != -1) {
 			try {
-				valueInjector.replaceCurlyBrackets(formFlow, urlBuilder, dataDocument);
+				valueInjector.replaceCurlyBrackets(formFlow.getProperties(), urlBuilder, dataDocument);
 			} catch (ValueInjectorException e) {
 				throw new RemoteSubmissionHelperException("Failed to build submission URL.", e);
 			}
@@ -182,33 +204,41 @@ public class RemoteSubmissionHelper {
 				String resultInsertPoint = submission.getResultInsertPoint();
 				String contentType = connection.getContentType();
 				LOGGER.info("Response content type: {}", contentType);
+				
 				InputStream inputStream = connection.getInputStream();
 				try {
 					if (resultInsertPoint != null) {
-						Document resultDocument = documentHelper.streamToDocument(inputStream);
-
-						if (LOGGER.isDebugEnabled()) {
-							LOGGER.debug("Result document: {}", documentHelper.documentToString(resultDocument));
-						}
-
-						Node nodeToImport = null;
-						if (postTransform != null) {
-							nodeToImport = transformHelper.handleTransform(postTransform, true, resultDocument);
-							if (LOGGER.isDebugEnabled()) {
-								LOGGER.debug("Transformed result: {}", documentHelper.documentToString(nodeToImport));
-							}
-						} else {
-							nodeToImport = resultDocument.getChildNodes().item(0);
-						}
-
-						Node importedNode = dataDocument.importNode(nodeToImport, true);
+						
 						Node insertPointNode = documentHelper.lookupOrCreateNode(dataDocument, resultInsertPoint);
+						
+						if (contentType != null && contentType.startsWith("text/plain")) {
+							byte[] streamData = streamUtils.readStream(inputStream);
+							insertPointNode.setTextContent(new String(streamData));
+						} else {
+							Document resultDocument = documentHelper.streamToDocument(inputStream);
 
-						NodeList childNodes = insertPointNode.getChildNodes();
-						for (int i = 0; i < childNodes.getLength(); i++) {
-							insertPointNode.removeChild(childNodes.item(i));
+							if (LOGGER.isDebugEnabled()) {
+								LOGGER.debug("Result document: {}", documentHelper.documentToString(resultDocument));
+							}
+
+							Node nodeToImport = null;
+							if (postTransform != null) {
+								nodeToImport = transformHelper.handleTransform(postTransform, true, resultDocument);
+								if (LOGGER.isDebugEnabled()) {
+									LOGGER.debug("Transformed result: {}", documentHelper.documentToString(nodeToImport));
+								}
+							} else {
+								nodeToImport = resultDocument.getChildNodes().item(0);
+							}
+
+							Node importedNode = dataDocument.importNode(nodeToImport, true);
+
+							NodeList childNodes = insertPointNode.getChildNodes();
+							for (int i = 0; i < childNodes.getLength(); i++) {
+								insertPointNode.removeChild(childNodes.item(i));
+							}
+							insertPointNode.appendChild(importedNode);
 						}
-						insertPointNode.appendChild(importedNode);
 					} else {
 						LOGGER.info("Response body: {}", new String(new StreamUtils().readStream(connection.getInputStream())));
 					}
@@ -217,13 +247,14 @@ public class RemoteSubmissionHelper {
 				}
 			} else {
 				throw new RemoteSubmissionHelperException("Bad response from target service. Status:" + responseCode + ", message:"
-						+ connection.getResponseMessage());
+						+ connection.getResponseMessage(), submission.getMessageOnHttpError());
 			}
+		} catch (ConnectException e) {
+			throw new RemoteSubmissionHelperException("Failed to connect to a service that this form uses.", submission.getMessageOnHttpError(), e);
 		} catch (IOException e) {
 			throw new RemoteSubmissionHelperException("IOException while handling submission.", e);
 		} catch (TransformerException e) {
-			throw new RemoteSubmissionHelperException(
-					"Failed to transform the submission response document serialise the DataDocument for submission.", e);
+			throw new RemoteSubmissionHelperException("Failed to transform the submission response document.", e);
 		} catch (DocumentHelperException e) {
 			throw new RemoteSubmissionHelperException("Failed to insert submission result into the DataDocument.", e);
 		}

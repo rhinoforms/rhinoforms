@@ -28,11 +28,11 @@ public class SelectOptionHelper {
 				while (reader.ready()) {
 					String line = reader.readLine();
 					if (csv) {
-						String[] split = line.split(",");
+						String[] split = line.split("(?<!\\\\),");
 						if (split.length > 1) {
-							options.add(new SelectOptionPojo(split[1].trim(), split[0].trim()));
+							options.add(new SelectOptionPojo(prepareValue(split[1]), prepareValue(split[0])));
 						} else {
-							options.add(new SelectOptionPojo(split[0].trim()));
+							options.add(new SelectOptionPojo(prepareValue(split[0])));
 						}
 					} else {
 						options.add(new SelectOptionPojo(line));
@@ -45,6 +45,10 @@ public class SelectOptionHelper {
 			throw new ResourceLoaderException("Failed to load select options, source: '" + source + "'", e);
 		}
 		return options;
+	}
+
+	private String prepareValue(String value) {
+		return value.trim().replace("\\,", ",");
 	}
 
 }

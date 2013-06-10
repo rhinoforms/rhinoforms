@@ -229,6 +229,7 @@ public class FormParserTest {
 		formParser.parseForm(new FileInputStream("src/test/resources/empty-form.html"), formFlow, new PrintWriter(outputStream), masterScope, false);
 		String string = outputStream.toString();
 		Assert.assertTrue(string.contains("<div class=\"rf-debugbar\">"));
+		Assert.assertTrue(string.contains("<div class=\"rf-debugbar\">&lt;DebugBar&gt; <a href=\"rhinoforms/data-document/" + formFlow.getId() + "\" target=\"rhinoforms-data-document\">DataDocument</a></div>"));
 	}
 	
 	@Test
@@ -249,6 +250,22 @@ public class FormParserTest {
 		Assert.assertFalse(html.contains("forEach"));
 	}
 
+	@Test
+	public void testFormIdClassAndAttributeSet() throws Exception {
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		formParser.parseForm(new FileInputStream("src/test/resources/empty-form.html"), formFlow, new PrintWriter(outputStream), masterScope, false);
+		String string = outputStream.toString();
+		Assert.assertTrue(string.contains("<form rhinoforms=\"true\" class=\"one\" rf.formid=\"one\" parsed=\"true\">"));
+	}
+	
+	@Test
+	public void testFormIdClassAddedAndAttributeSet() throws Exception {
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		formParser.parseForm(new FileInputStream("src/test/resources/empty-form-with-class.html"), formFlow, new PrintWriter(outputStream), masterScope, false);
+		String string = outputStream.toString();
+		Assert.assertTrue(string.contains("<form rhinoforms=\"true\" class=\"myForm one\" rf.formid=\"one\" parsed=\"true\">"));
+	}
+	
 	private String grep(String string, String parsedFormHtml) throws IOException {
 		BufferedReader bufferedReader = new BufferedReader(new StringReader(parsedFormHtml));
 		String line;

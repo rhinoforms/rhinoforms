@@ -82,6 +82,7 @@ public class FormParser {
 			Document dataDocument = formFlow.getDataDocument();
 			String docBase = formFlow.getCurrentDocBase();
 			String currentPath = formFlow.getCurrentPath();
+			String formId = formFlow.getCurrentFormId();
 			Map<String, FlowAction> currentActions = formFlow.getCurrentActions();
 	
 			// Process rf.include
@@ -93,9 +94,9 @@ public class FormParser {
 			}
 	
 			// Process rf.forEach statements
-			valueInjector.processForEachStatements(formFlow, formHtml, dataDocument, docBase);
+			valueInjector.processForEachStatements(formFlow.getProperties(), formHtml, dataDocument, docBase);
 			
-			valueInjector.processRemainingCurlyBrackets(formFlow, formHtml, dataDocument, docBase);
+			valueInjector.processCurlyBrackets(dataDocument, formHtml, formFlow.getProperties(), docBase);
 	
 			// Process first Rhinoforms form in doc
 			Object[] rfFormNodes = formHtml.evaluateXPath("//form[@" + Constants.RHINOFORMS_FLAG + "='true']");
@@ -123,6 +124,10 @@ public class FormParser {
 				// Add flowId as hidden field
 				addFlowId(flowID, formNode);
 	
+				// Add the form id as a class on the form
+				formNode.setAttribute(Constants.CLASS, addClass(formNode.getAttributeByName(Constants.CLASS), formId));
+				formNode.setAttribute(Constants.FORM_ID_ATTR, formId);
+
 				// Mark form as parsed
 				formNode.setAttribute("parsed", "true");
 			} else {
@@ -456,6 +461,16 @@ public class FormParser {
 		}
 	}
 
+	private String addClass(String existingClassString, String classToAdd) {
+		if (existingClassString == null) {
+			existingClassString = "";
+		} else if (!existingClassString.isEmpty()) {
+			existingClassString += " ";
+		}
+		existingClassString += classToAdd;
+		return existingClassString;
+	}
+	
 	public void setShowDebugBar(boolean showDebugBar) {
 		this.showDebugBar = showDebugBar;
 	}

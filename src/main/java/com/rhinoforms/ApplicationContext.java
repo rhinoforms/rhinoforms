@@ -17,6 +17,7 @@ import com.rhinoforms.flow.RemoteSubmissionHelper;
 import com.rhinoforms.flow.SubmissionTimeKeeper;
 import com.rhinoforms.flow.TransformHelper;
 import com.rhinoforms.formparser.FormParser;
+import com.rhinoforms.formparser.HtmlTags;
 import com.rhinoforms.formparser.ValueInjector;
 import com.rhinoforms.js.JSMasterScope;
 import com.rhinoforms.js.RhinoFormsMasterScopeFactory;
@@ -51,6 +52,7 @@ public class ApplicationContext {
 	private ValueInjector valueInjector;
 
 	public ApplicationContext(ServletContext servletContext) throws ResourceLoaderException, IOException {
+		RhinoFormsMasterScopeFactory.enableDynamicScopeFeature();
 		Context jsContext = Context.enter();
 		try {
 			this.servletContext = servletContext;
@@ -63,7 +65,7 @@ public class ApplicationContext {
 			this.htmlCleaner = new HtmlCleaner(htmlCleanerProperties);
 			SimpleHtmlSerializer simpleHtmlSerializer = new SimpleHtmlSerializer(htmlCleanerProperties);
 
-			this.valueInjector = new ValueInjector(htmlCleaner, simpleHtmlSerializer);
+			this.valueInjector = new ValueInjector(htmlCleaner, simpleHtmlSerializer, new HtmlTags());
 			
 			this.formParser = new FormParser(htmlCleaner, valueInjector, resourceLoader, submissionTimeKeeper);
 			this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);

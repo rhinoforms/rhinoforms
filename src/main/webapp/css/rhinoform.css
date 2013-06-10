@@ -23,6 +23,10 @@ input[type='radio']+label {
 	visibility: hidden;
 }
 
+.rf-included-false {
+	display: none;
+}
+
 /** Auto-complete **/
 .rf-dropdown {
 	position: absolute;
@@ -41,7 +45,6 @@ input[type='radio']+label {
 .rf-dropdown li.over {
 	background-color: lightblue;
 }
-
 
 /** DebugBar **/
 .rf-debugbar {

@@ -114,10 +114,13 @@ public class FormFlowFactory {
 		
 		Properties flowProperties = loadFlowProperties(formFlowJSDefinitionPath);
 		if (flowProperties != null) {
-			flowProperties.put("contextPath", servletContextPath);
 			fillPlaceholders(flowProperties);
-			formFlow.setProperties(flowProperties);
+		} else {
+			flowProperties = new Properties();
 		}
+		flowProperties.put("contextPath", servletContextPath);
+		flowProperties.put("rf.flowId", formFlow.getId());
+		formFlow.setProperties(flowProperties);
 		
 		Object wrappedFormFlow = Context.javaToJS(formFlow, scope);
 		ScriptableObject.putProperty(scope, "formFlow", wrappedFormFlow);

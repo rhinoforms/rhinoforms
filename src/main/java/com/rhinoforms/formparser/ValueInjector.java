@@ -1,10 +1,9 @@
 package com.rhinoforms.formparser;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -22,7 +21,6 @@ import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.HtmlNode;
 import org.htmlcleaner.SimpleHtmlSerializer;
 import org.htmlcleaner.TagNode;
-import org.htmlcleaner.XPatherException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -30,32 +28,60 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.rhinoforms.Constants;
-import com.rhinoforms.flow.FormFlow;
 import com.rhinoforms.flow.FormFlowFactoryException;
 import com.rhinoforms.xml.DocumentHelper;
 
 public class ValueInjector {
 
 	private static final Pattern CURLY_BRACKET_CONTENTS_PATTERN = Pattern.compile(".*?\\{\\{([^} ]+)\\}\\}.*", Pattern.DOTALL);
+	private static final Pattern CURLY_BRACKET_PROPERTY_PATTERN = Pattern.compile(".*?\\{\\{\\$([^} ]+)\\}\\}.*", Pattern.DOTALL);
 	private static final XPathFactory xPathFactory = XPathFactory.newInstance();
 	private HtmlCleaner htmlCleaner;
 	private SimpleHtmlSerializer simpleHtmlSerializer;
 	private DocumentHelper documentHelper;
+	private HtmlTags tags;
 	
 	private final Logger logger = LoggerFactory.getLogger(ValueInjector.class);
 
-	public ValueInjector(HtmlCleaner htmlCleaner, SimpleHtmlSerializer simpleHtmlSerializer) {
+	public ValueInjector(HtmlCleaner htmlCleaner, SimpleHtmlSerializer simpleHtmlSerializer, HtmlTags tags) {
 		this.htmlCleaner = htmlCleaner;
 		this.simpleHtmlSerializer = simpleHtmlSerializer;
+		this.tags = tags;
 		documentHelper = new DocumentHelper();
 	}
+	
+	public void processHtmlTemplate(InputStream htmlTemplateInputStream, Document dataDocument, String docBase, Properties properties, OutputStream processedHtmlOutputStream) throws IOException, XPathExpressionException, ValueInjectorException {
+		TagNode html = htmlCleaner.clean(htmlTemplateInputStream);
+		if (docBase == null) {
+			docBase = "";
+		}
+		processForEachStatements(properties, html, dataDocument, docBase);
+		processCurlyBrackets(dataDocument, html, properties, docBase);
+		
+		TagNode bodyElement = html.getElementsByName("body", false)[0];
+		serializeChildren(bodyElement, processedHtmlOutputStream);
+	}
 
-	public void processForEachStatements(FormFlow formFlow, TagNode formHtml, Document dataDocument, String docBase) throws XPatherException,
-			XPathExpressionException, IOException, ValueInjectorException {
-		Object[] forEachNodes = formHtml.evaluateXPath("//" + Constants.FOR_EACH_ELEMENT);
-		logger.debug("Processing {} nodes. Found: {}", Constants.FOR_EACH_ELEMENT, forEachNodes.length);
-		for (Object forEachNodeO : forEachNodes) {
-			TagNode forEachNode = (TagNode) forEachNodeO;
+	private void serializeChildren(TagNode bodyElement, OutputStream processedHtmlOutputStream) throws IOException {
+		@SuppressWarnings("unchecked")
+		List<Object> children = bodyElement.getChildren();
+		OutputStreamWriter outputStreamWriter = new OutputStreamWriter(processedHtmlOutputStream);
+		for (Object object : children) {
+			if (object instanceof ContentNode) {
+				ContentNode contentNode = (ContentNode) object;
+				contentNode.serialize(simpleHtmlSerializer, outputStreamWriter);
+			} else if (object instanceof TagNode) {
+				TagNode tagNode = (TagNode) object;
+				tagNode.serialize(simpleHtmlSerializer, outputStreamWriter);
+			}
+		}
+		outputStreamWriter.flush();
+	}
+
+	public void processForEachStatements(Properties properties, TagNode formHtml, Document dataDocument, String docBase) throws XPathExpressionException, IOException, ValueInjectorException {
+		TagNode[] forEachNodes = formHtml.getElementsByName(tags.getForEachTag(), true);
+		logger.debug("Processing {} nodes. Found: {}", tags.getForEachTag(), forEachNodes.length);
+		for (TagNode forEachNode : forEachNodes) {
 			TagNode parent = forEachNode.getParent();
 			String selectPath = forEachNode.getAttributeByName("select");
 			String selectAsName = forEachNode.getAttributeByName("as");
@@ -73,21 +99,14 @@ public class ValueInjector {
 				for (int dataNodeindex = 0; dataNodeindex < dataNodeList.getLength(); dataNodeindex++) {
 					Node dataNode = dataNodeList.item(dataNodeindex);
 					StringBuilder thisForEachNodeContents = new StringBuilder(forEachNodeContents);
-					replaceCurlyBrackets(formFlow, thisForEachNodeContents, dataDocument, dataNode, selectAsName, dataNodeindex + 1);
-					
-					System.out.println("thisForEachNodeContents:");
-					System.out.println(thisForEachNodeContents);
-					
+					replaceCurlyBrackets(properties, thisForEachNodeContents, dataDocument, dataNode, selectAsName, dataNodeindex + 1);
 					TagNode processedForEachNode = stringBuilderToNode(thisForEachNodeContents);
-					
-					StringWriter stringWriter = new StringWriter();
-					new SimpleHtmlSerializer(htmlCleaner.getProperties()).write(processedForEachNode, new PrintWriter(stringWriter), "utf-8");
-					System.out.println("processedForEachNode:");
-					System.out.println(stringWriter);
-					
 					@SuppressWarnings("unchecked")
 					List<HtmlNode> children = processedForEachNode.getChildren();
 					trimFirstNewline(children);
+					if (dataNodeindex == dataNodeList.getLength() - 1) {
+						trimTrailingWhitespace(children);
+					}
 					for (HtmlNode child : children) {
 						parent.insertChildBefore(forEachNode, child);
 					}
@@ -107,7 +126,7 @@ public class ValueInjector {
 			if (htmlNode instanceof ContentNode) {	
 				ContentNode contentNode = (ContentNode) htmlNode;
 				StringBuilder content = contentNode.getContent();
-				if (content.length() >= 1 && content.substring(0, 1).equals("\n")) {
+				if (content.length() > 0 && content.substring(0, 1).equals("\n")) {
 					content.delete(0, 1);
 				} else if (content.length() >= 2 && content.substring(0, 2).equals("\r\n")) {
 					content.delete(0, 2);
@@ -115,35 +134,55 @@ public class ValueInjector {
 			}
 		}
 	}
+	
+	private void trimTrailingWhitespace(List<HtmlNode> children) {
+		HtmlNode htmlNode = children.get(children.size() - 1);
+		if (htmlNode instanceof ContentNode) {
+			ContentNode contentNode = (ContentNode) htmlNode;
+			StringBuilder contentBuilder = contentNode.getContent();
+			String content = contentBuilder.toString();
+			String trailingWhitespaceRegex = "\\s+$";
+			if (content.matches(trailingWhitespaceRegex)) {
+				content = content.replaceFirst(trailingWhitespaceRegex, "");
+				contentBuilder.setLength(0);
+				contentBuilder.append(content);
+			}
+		}
+	}
 
-	public void processRemainingCurlyBrackets(FormFlow formFlow, TagNode formHtml, Document dataDocument, String docBase) throws IOException,
-			XPathExpressionException, ValueInjectorException {
-		XPathExpression selectExpression = xPathFactory.newXPath().compile(docBase);
-		Node dataDocAtDocBase = (Node) selectExpression.evaluate(dataDocument, XPathConstants.NODE);
+	public void processCurlyBrackets(Document dataDocument, TagNode formHtml, Properties properties, String docBase) throws IOException,
+			ValueInjectorException {
+
+		XPathExpression selectExpression;
+		Node dataDocAtDocBase;
+		
+		try {
+			selectExpression = xPathFactory.newXPath().compile(docBase);
+			dataDocAtDocBase = (Node) selectExpression.evaluate(dataDocument, XPathConstants.NODE);
+		} catch (XPathExpressionException e) {
+			throw new ValueInjectorException("Invalid docBase '" + docBase + "'", e);
+		}
 
 		TagNode[] bodyElements = formHtml.getElementsByName("body", false);
 		if (bodyElements.length > 0) {
 			TagNode bodyElement = bodyElements[0];
 			StringBuilder builder = nodeToStringBuilder(bodyElement);
-			replaceCurlyBrackets(formFlow, builder, dataDocAtDocBase, null, null, null);
+			replaceCurlyBrackets(properties, builder, dataDocAtDocBase, null, null, null);
 			TagNode processedBodyElement = stringBuilderBodyToNode(builder);
 			TagNode parent = bodyElement.getParent();
 			parent.replaceChild(bodyElement, processedBodyElement);
 		}
 	}
 
-	public void replaceCurlyBrackets(FormFlow formFlow, StringBuilder builder, Node dataDocument)
+	public void replaceCurlyBrackets(Properties properties, StringBuilder builder, Node dataDocument)
 			throws ValueInjectorException {
-		replaceCurlyBrackets(formFlow, builder, dataDocument, null, null, null);
+		replaceCurlyBrackets(properties, builder, dataDocument, null, null, null);
 	}
 	
-	private void replaceCurlyBrackets(FormFlow formFlow, StringBuilder builder, Node dataDocument, Node contextNode, String contextName, Integer contextindex)
+	private void replaceCurlyBrackets(Properties properties, StringBuilder builder, Node dataDocument, Node contextNode, String contextName, Integer contextindex)
 			throws ValueInjectorException {
 		StringBuffer completedText = new StringBuffer();
 		
-		String flowID = formFlow.getId();
-		Properties properties = formFlow.getProperties();
-
 		Matcher matcher = CURLY_BRACKET_CONTENTS_PATTERN.matcher(builder);
 		while (matcher.matches()) {
 			// get brackets contents
@@ -153,8 +192,6 @@ public class ValueInjector {
 				if (group.length() > 1 && properties != null) {
 					value = properties.getProperty(group.substring(1));
 				}
-			} else if (group.equals(Constants.FLOW_ID_FIELD_NAME) && flowID != null) {
-				value = flowID;
 			} else {
 				if (contextNode != null && group.equals(contextName)) {
 					Node firstChild = contextNode.getFirstChild();
@@ -225,7 +262,7 @@ public class ValueInjector {
 
 	StringBuilder nodeToStringBuilder(TagNode forEachNode) throws IOException {
 		StringBuilderWriter forEachNodeWriter = new StringBuilderWriter();
-		simpleHtmlSerializer.write(forEachNode, forEachNodeWriter, "utf-8");
+		simpleHtmlSerializer.write(forEachNode, forEachNodeWriter, Constants.UTF8);
 		StringBuilder forEachNodeContents = forEachNodeWriter.getBuilder();
 		return forEachNodeContents;
 	}
@@ -238,29 +275,19 @@ public class ValueInjector {
 		return (TagNode) stringBuilderBodyToNode(nodeContents).getChildren().get(0);
 	}
 	
-	public String serialiseNode(TagNode node) throws IOException {
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		simpleHtmlSerializer.write(node, new OutputStreamWriter(outputStream), "utf-8");
-		String actual = new String(outputStream.toByteArray());
-		return actual;
-	}
-
 	public void processFlowDefinitionCurlyBrackets(StringBuilder flowStringBuilder, Properties flowProperties) throws FormFlowFactoryException {
 		if (flowProperties != null) {
-			Matcher matcher = CURLY_BRACKET_CONTENTS_PATTERN.matcher(flowStringBuilder);
+			Matcher matcher = CURLY_BRACKET_PROPERTY_PATTERN.matcher(flowStringBuilder);
 			while (matcher.find()) {
 				String group = matcher.group(1);
-				if (group.startsWith("$") && group.length() > 1) {
-					group = group.substring(1);
-					String property = flowProperties.getProperty(group);
-					if (property != null) {
-						int groupStart = flowStringBuilder.indexOf("{{$" + group + "}}");
-						int groupEnd = groupStart + group.length() + 5;
-						flowStringBuilder.replace(groupStart, groupEnd, property);
-						matcher = CURLY_BRACKET_CONTENTS_PATTERN.matcher(flowStringBuilder);
-					} else {
-						throw new FormFlowFactoryException("Property not found '" + group + "'");
-					}
+				String property = flowProperties.getProperty(group);
+				if (property != null) {
+					int groupStart = flowStringBuilder.indexOf("{{$" + group + "}}");
+					int groupEnd = groupStart + group.length() + 5;
+					flowStringBuilder.replace(groupStart, groupEnd, property);
+					matcher = CURLY_BRACKET_PROPERTY_PATTERN.matcher(flowStringBuilder);
+				} else {
+					throw new FormFlowFactoryException("Property not found '" + group + "'");
 				}
 			}
 		}

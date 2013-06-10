@@ -80,15 +80,11 @@ public class FormFlow implements Serializable {
 			long startTime;
 			for (Submission submission : submissions) {
 				startTime = new Date().getTime();
-				try {
-					Map<String, String> xsltParameters = new HashMap<String, String>();
-					xsltParameters.put("rf.flowId", flowId);
-					xsltParameters.put("rf.formId", getCurrentFormId());
-					xsltParameters.put("rf.actionName", actionName);
-					remoteSubmissionHelper.handleSubmission(submission, xsltParameters, this);
-				} catch (RemoteSubmissionHelperException e) {
-					throw new FlowExceptionActionError("Remote submission failed.", e);
-				}
+				Map<String, String> xsltParameters = new HashMap<String, String>();
+				xsltParameters.put("rf.flowId", flowId);
+				xsltParameters.put("rf.formId", getCurrentFormId());
+				xsltParameters.put("rf.actionName", actionName);
+				remoteSubmissionHelper.handleSubmission(submission, xsltParameters, this);
 				times.add((int) (startTime - new Date().getTime()));
 			}
 			submissionTimeKeeper.recordTimeTaken(getCurrentFormId(), actionName, times);
