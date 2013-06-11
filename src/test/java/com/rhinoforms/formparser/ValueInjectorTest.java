@@ -17,6 +17,7 @@ import org.w3c.dom.Document;
 
 import com.rhinoforms.Constants;
 import com.rhinoforms.TestApplicationContext;
+import com.rhinoforms.util.StreamUtils;
 
 public class ValueInjectorTest {
 
@@ -25,6 +26,8 @@ public class ValueInjectorTest {
 	private TagNode formHtml;
 	private Document dataDocument;
 	private Properties properties;
+	private Document nestedForEachDataDocument;
+	private StreamUtils streamUtils;
 
 	@Before
 	public void setup() throws Exception {
@@ -32,9 +35,12 @@ public class ValueInjectorTest {
 		htmlCleaner = applicationContext.getHtmlCleaner();
 		formHtml = htmlCleaner.clean(new FileInputStream("src/test/resources/fishes.html"));
 		dataDocument = createDocument("<myData><ocean><name>Pacific</name><fishes><fish><name>One</name></fish><fish><name>Two</name></fish></fishes></ocean></myData>");
+		
+		nestedForEachDataDocument = createDocument("<mydata><policy> <name>Motor</name> <vehicles>  <vehicle><name>Ford Capri</name></vehicle>  <vehicle><name>AC Cobra</name></vehicle>  <vehicle><name>Jaguar E-type</name></vehicle> </vehicles> <drivers>  <driver><name>Mickey Mouse</name></driver>  <driver><name>Fred Flintstone</name></driver>  <driver><name>Super Ted</name></driver> </drivers></policy></mydata>");
 
 		this.valueInjector = applicationContext.getValueInjector();
 		properties = new Properties();
+		streamUtils = new StreamUtils();
 	}
 
 	@Test
@@ -54,6 +60,9 @@ public class ValueInjectorTest {
 		valueInjector.processForEachStatements(properties, formHtml, dataDocument, "/myData");
 
 		String actual = serialiseHtmlCleanerNode(formHtml);
+		
+		System.out.println(actual);
+		
 		Assert.assertFalse(actual.contains("foreach"));
 		Assert.assertTrue(actual.contains("<span>One</span>"));
 		Assert.assertTrue(actual.contains("<span>Two</span>"));
@@ -168,6 +177,21 @@ public class ValueInjectorTest {
 		valueInjector.processFlowDefinitionCurlyBrackets(flowStringBuilder, flowProperties);
 		
 		Assert.assertEquals(expectedFlowDef, flowStringBuilder.toString());
+	}
+	
+	@Test
+	public void testNestedForLoopsOneLevelNesting() throws Exception {
+		formHtml = htmlCleaner.clean(getClass().getResourceAsStream("nested-for-each-source.html"));
+		String expectedHtml = new String(streamUtils.readStream(getClass().getResourceAsStream("nested-for-each-expected.html")));
+		
+		// Assert not true
+		Assert.assertFalse(expectedHtml.equals(serialiseHtmlCleanerNode(formHtml)));
+		
+		// Do something
+		valueInjector.processForEachStatements(null, formHtml, nestedForEachDataDocument, "/mydata");
+		
+		// Assert true
+		Assert.assertEquals(expectedHtml, serialiseHtmlCleanerNode(formHtml));
 	}
 
 }

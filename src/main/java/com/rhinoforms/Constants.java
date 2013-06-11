@@ -28,7 +28,7 @@ public interface Constants {
 	String INCLUDE_IF_ATTR = "rf.includeif";
 	String CALCULATED_ATTR = "rf.calculated";
 	String INCLUDE_ELEMENT = "rf.include";
-	String FOR_EACH_ELEMENT = "rf.forEach";
+	String FOR_EACH_ELEMENT = "rf.foreach";
 	String ACTION_ATTR = "rf.action";
 	String ACTION_TYPE_ATTR = "rf.actionType";
 	String ACTION_TIME_ESTIMATE_ATTR = "rf.actionTimeEstimate";

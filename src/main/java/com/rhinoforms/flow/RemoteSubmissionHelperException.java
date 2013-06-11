@@ -1,15 +1,22 @@
 package com.rhinoforms.flow;
 
-public class RemoteSubmissionHelperException extends Exception {
-
-	private static final long serialVersionUID = 2129946195361462794L;
-
-	public RemoteSubmissionHelperException(String message, Throwable cause) {
-		super(message, cause);
-	}
+@SuppressWarnings("serial")
+public class RemoteSubmissionHelperException extends FlowExceptionActionError {
 
 	public RemoteSubmissionHelperException(String message) {
 		super(message);
 	}
 
+	public RemoteSubmissionHelperException(String message, String frontendMessage) {
+		super(message, frontendMessage);
+	}
+	
+	public RemoteSubmissionHelperException(String message, Throwable cause) {
+		super(message, cause);
+	}
+	
+	public RemoteSubmissionHelperException(String message, String frontendMessage, Throwable cause) {
+		super(message, frontendMessage, cause);
+	}
+	
 }
