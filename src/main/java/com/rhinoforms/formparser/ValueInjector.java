@@ -4,7 +4,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -79,45 +85,95 @@ public class ValueInjector {
 	}
 
 	public void processForEachStatements(Properties properties, TagNode formHtml, Document dataDocument, String docBase) throws XPathExpressionException, IOException, ValueInjectorException {
-		TagNode[] forEachNodes = formHtml.getElementsByName(tags.getForEachTag(), true);
-		logger.debug("Processing {} nodes. Found: {}", tags.getForEachTag(), forEachNodes.length);
-		for (TagNode forEachNode : forEachNodes) {
-			TagNode parent = forEachNode.getParent();
-			String selectPath = forEachNode.getAttributeByName("select");
-			String selectAsName = forEachNode.getAttributeByName("as");
+		ArrayList<TagNode> forEachNodes = new ArrayList<TagNode>();
+		Collections.addAll(forEachNodes, formHtml.getElementsByName(tags.getForEachTag(), true));
 
-			if (selectPath != null && !selectPath.isEmpty()) {
-				String xpath;
-				if (!selectPath.startsWith("/")) {
-					xpath = docBase + "/" + selectPath;
-				} else {
-					xpath = selectPath;
-				}
-				XPathExpression selectExpression = xPathFactory.newXPath().compile(xpath);
-				NodeList dataNodeList = (NodeList) selectExpression.evaluate(dataDocument, XPathConstants.NODESET);
-				StringBuilder forEachNodeContents = nodeToStringBuilder(forEachNode);
-				for (int dataNodeindex = 0; dataNodeindex < dataNodeList.getLength(); dataNodeindex++) {
-					Node dataNode = dataNodeList.item(dataNodeindex);
-					StringBuilder thisForEachNodeContents = new StringBuilder(forEachNodeContents);
-					replaceCurlyBrackets(properties, thisForEachNodeContents, dataDocument, dataNode, selectAsName, dataNodeindex + 1);
-					TagNode processedForEachNode = stringBuilderToNode(thisForEachNodeContents);
-					@SuppressWarnings("unchecked")
-					List<HtmlNode> children = processedForEachNode.getChildren();
-					trimFirstNewline(children);
-					if (dataNodeindex == dataNodeList.getLength() - 1) {
-						trimTrailingWhitespace(children);
-					}
-					for (HtmlNode child : children) {
-						parent.insertChildBefore(forEachNode, child);
-					}
-				}
-				parent.removeChild(forEachNode);
+		filterNestedForEachElements(forEachNodes);
+		
+		logger.debug("Processing {} nodes. Found at top level: {}", new Object[] {tags.getForEachTag(), forEachNodes.size()});
+		
+		for (TagNode forEachNode : forEachNodes) {
+			Map<String, Node> contextNodes = new HashMap<String, Node>();
+			processForEachStatements(properties, forEachNode, forEachNode, dataDocument, docBase, contextNodes, 0);
+		}
+	}	
+	
+	public void processForEachStatements(Properties properties, TagNode forEachNode, TagNode markerNode, Document dataDocument, String docBase, Map<String, Node> contextNodes, int level) throws XPathExpressionException, IOException, ValueInjectorException {
+		String selectPath = forEachNode.getAttributeByName("select");
+		String selectAsName = forEachNode.getAttributeByName("as");
+		StringBuilder forEachNodeContents = nodeToStringBuilder(forEachNode);
+		TagNode markerNodeParent = markerNode.getParent();
+
+		if (selectPath != null && !selectPath.isEmpty()) {
+			String selectXpath;
+			if (!selectPath.startsWith("/")) {
+				selectXpath = docBase + "/" + selectPath;
 			} else {
-				String message = "'select' attribute is empty or missing";
-				logger.warn("forEach error - {}", message);
-				forEachNode.setAttribute("error", message);
+				selectXpath = selectPath;
+			}
+			XPathExpression selectExpression = xPathFactory.newXPath().compile(selectXpath);
+			NodeList dataNodeList = (NodeList) selectExpression.evaluate(dataDocument, XPathConstants.NODESET);
+			for (int dataNodeindex = 0; dataNodeindex < dataNodeList.getLength(); dataNodeindex++) {
+				Node dataNode = dataNodeList.item(dataNodeindex);
+				contextNodes.put(selectAsName, dataNode);
+				
+				// Process nested for loops
+				TagNode[] nestedForEachNodeArray = forEachNode.getElementsByName(tags.getForEachTag(), true);
+				List<TagNode> nestedForEachNodes = Arrays.asList(nestedForEachNodeArray);
+				filterNestedForEachElements(nestedForEachNodes);
+				logger.debug("Processing nested {} nodes. Level: {}, Found: {}", new Object[] {tags.getForEachTag(), level, nestedForEachNodes.size()});
+				for (TagNode nestedForEachNode : nestedForEachNodes) {
+					String forEachIterationDocBase = selectXpath += "[" + (dataNodeindex + 1) + "]";
+					processForEachStatements(properties, nestedForEachNode, markerNode, dataDocument, forEachIterationDocBase, contextNodes, level + 1);
+				}
+				
+				StringBuilder thisForEachNodeContents = new StringBuilder(forEachNodeContents);
+				replaceCurlyBrackets(properties, thisForEachNodeContents, dataDocument, contextNodes, dataNodeindex + 1);
+				contextNodes.remove(selectAsName);
+				
+				TagNode processedForEachNode = stringBuilderToNode(thisForEachNodeContents);
+				@SuppressWarnings("unchecked")
+				List<HtmlNode> children = processedForEachNode.getChildren();
+				trimFirstNewline(children);
+				if (dataNodeindex == dataNodeList.getLength() - 1) {
+					trimTrailingWhitespace(children);
+				}
+				for (HtmlNode child : children) {
+					if (!(child instanceof TagNode) || !((TagNode) child).getName().equals(tags.getForEachTag())) {
+						markerNodeParent.insertChildBefore(markerNode, child);
+					}
+				}
+			}
+			if (forEachNode == markerNode) {
+				markerNodeParent.removeChild(markerNode);
+			}
+		} else {
+			String message = "'select' attribute is empty or missing";
+			logger.warn("forEach error - {}", message);
+			forEachNode.setAttribute("error", message);
+		}
+	}
+
+	private void filterNestedForEachElements(List<TagNode> forEachNodes) {
+		HashSet<TagNode> tagNodesToRemove = new HashSet<TagNode>();
+		for (TagNode tagNode : forEachNodes) {
+			if (hasForEachParent(tagNode)) {
+				tagNodesToRemove.remove(tagNode);
 			}
 		}
+		forEachNodes.removeAll(tagNodesToRemove);
+	}
+
+	private boolean hasForEachParent(TagNode tagNode) {
+		TagNode parent = tagNode.getParent();
+		if (parent != null) {
+			if (!parent.getName().equals(tags.getForEachTag())) {
+				return hasForEachParent(parent);
+			} else {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private void trimFirstNewline(List<HtmlNode> children) {
@@ -167,7 +223,7 @@ public class ValueInjector {
 		if (bodyElements.length > 0) {
 			TagNode bodyElement = bodyElements[0];
 			StringBuilder builder = nodeToStringBuilder(bodyElement);
-			replaceCurlyBrackets(properties, builder, dataDocAtDocBase, null, null, null);
+			replaceCurlyBrackets(properties, builder, dataDocAtDocBase);
 			TagNode processedBodyElement = stringBuilderBodyToNode(builder);
 			TagNode parent = bodyElement.getParent();
 			parent.replaceChild(bodyElement, processedBodyElement);
@@ -176,10 +232,10 @@ public class ValueInjector {
 
 	public void replaceCurlyBrackets(Properties properties, StringBuilder builder, Node dataDocument)
 			throws ValueInjectorException {
-		replaceCurlyBrackets(properties, builder, dataDocument, null, null, null);
+		replaceCurlyBrackets(properties, builder, dataDocument,new HashMap<String, Node>(), null);
 	}
 	
-	private void replaceCurlyBrackets(Properties properties, StringBuilder builder, Node dataDocument, Node contextNode, String contextName, Integer contextindex)
+	private void replaceCurlyBrackets(Properties properties, StringBuilder builder, Node dataDocument, Map<String, Node> contextNodes, Integer contextindex)
 			throws ValueInjectorException {
 		StringBuffer completedText = new StringBuffer();
 		
@@ -193,17 +249,21 @@ public class ValueInjector {
 					value = properties.getProperty(group.substring(1));
 				}
 			} else {
-				if (contextNode != null && group.equals(contextName)) {
-					Node firstChild = contextNode.getFirstChild();
-					if (firstChild != null) {
-						value = firstChild.getTextContent();
-					}
-				} else if (contextNode != null && group.startsWith(contextName + ".")) {
-					if (group.equals(contextName + ".index")) {
-						value = "" + contextindex;
+				String groupContextName = group.split("\\.")[0];
+				if (contextNodes.containsKey(groupContextName)) {
+					Node contextNode = contextNodes.get(groupContextName);
+					if (group.equals(groupContextName)) {
+						Node firstChild = contextNode.getFirstChild();
+						if (firstChild != null) {
+							value = firstChild.getTextContent();
+						}
 					} else {
-						// lookup value from context node
-						value = lookupValue(contextNode, group.substring(contextName.length() + 1));
+						if (group.equals(groupContextName + ".index")) {
+							value = "" + contextindex;
+						} else {
+							// lookup value from context node
+							value = lookupValue(contextNode, group.substring(groupContextName.length() + 1));
+						}
 					}
 				} else {
 					// lookup value from main dataDoc

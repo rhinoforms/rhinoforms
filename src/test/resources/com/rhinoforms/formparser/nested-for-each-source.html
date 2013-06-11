@@ -1,0 +1,9 @@
+<h3>Vehicles and Drivers</h3>
+<form rhinoforms="true">
+<rf.forEach select="//driver" as="d" >
+<rf.forEach select="//vehicle" as="v" >
+  <input type="checkbox" name="{{d.name}}-{{v.name}}" />
+</rf.forEach>
+</rf.forEach>
+</form>
+<div>End of form</div>
