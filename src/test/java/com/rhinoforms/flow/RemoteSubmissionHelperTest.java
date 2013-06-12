@@ -452,8 +452,8 @@ public class RemoteSubmissionHelperTest {
 				Constants.NEW_LINE +
 				"<h2>Order Summary</h2>" + Constants.NEW_LINE +
 				"<ul>" + Constants.NEW_LINE +
-				"  <li>Sony Vaio Laptop</li>" + Constants.NEW_LINE +
-				"  <li>Kiteboard</li>" + Constants.NEW_LINE +
+				" <li>Sony Vaio Laptop</li>" + Constants.NEW_LINE +
+				" <li>Kiteboard</li>" + Constants.NEW_LINE +
 				"</ul>" + Constants.NEW_LINE +
 				Constants.NEW_LINE +
 				"<p>We hope to see you again soon.</p>" + Constants.NEW_LINE;
