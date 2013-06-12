@@ -1,0 +1,11 @@
+<h3>Oceans and their Fish</h3>
+<rf.forEach select="ocean" as="o" >
+Ocean: {{o.name}}
+<ul>
+<rf.forEach select="fishes/fish" as="f" >
+	<li>{{f.name}}</li>
+</rf.forEach>
+</ul>
+
+</rf.forEach>
+<div>End of form</div>

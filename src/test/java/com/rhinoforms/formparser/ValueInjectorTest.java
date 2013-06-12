@@ -26,7 +26,6 @@ public class ValueInjectorTest {
 	private TagNode formHtml;
 	private Document dataDocument;
 	private Properties properties;
-	private Document nestedForEachDataDocument;
 	private StreamUtils streamUtils;
 
 	@Before
@@ -36,8 +35,6 @@ public class ValueInjectorTest {
 		formHtml = htmlCleaner.clean(new FileInputStream("src/test/resources/fishes.html"));
 		dataDocument = createDocument("<myData><ocean><name>Pacific</name><fishes><fish><name>One</name></fish><fish><name>Two</name></fish></fishes></ocean></myData>");
 		
-		nestedForEachDataDocument = createDocument("<mydata><policy> <name>Motor</name> <vehicles>  <vehicle><name>Ford Capri</name></vehicle>  <vehicle><name>AC Cobra</name></vehicle>  <vehicle><name>Jaguar E-type</name></vehicle> </vehicles> <drivers>  <driver><name>Mickey Mouse</name></driver>  <driver><name>Fred Flintstone</name></driver>  <driver><name>Super Ted</name></driver> </drivers></policy></mydata>");
-
 		this.valueInjector = applicationContext.getValueInjector();
 		properties = new Properties();
 		streamUtils = new StreamUtils();
@@ -181,6 +178,8 @@ public class ValueInjectorTest {
 	
 	@Test
 	public void testNestedForLoopsOneLevelNesting() throws Exception {
+		dataDocument = createDocument("<mydata><policy> <name>Motor</name> <vehicles>  <vehicle><name>Ford Capri</name></vehicle>  <vehicle><name>AC Cobra</name></vehicle>  <vehicle><name>Jaguar E-type</name></vehicle> </vehicles> <drivers>  <driver><name>Mickey Mouse</name></driver>  <driver><name>Fred Flintstone</name></driver>  <driver><name>Super Ted</name></driver> </drivers></policy></mydata>");
+
 		formHtml = htmlCleaner.clean(getClass().getResourceAsStream("nested-for-each-source.html"));
 		String expectedHtml = new String(streamUtils.readStream(getClass().getResourceAsStream("nested-for-each-expected.html")));
 		
@@ -188,10 +187,27 @@ public class ValueInjectorTest {
 		Assert.assertFalse(expectedHtml.equals(serialiseHtmlCleanerNode(formHtml)));
 		
 		// Do something
-		valueInjector.processForEachStatements(null, formHtml, nestedForEachDataDocument, "/mydata");
+		valueInjector.processForEachStatements(null, formHtml, dataDocument, "/mydata");
 		
 		// Assert true
 		Assert.assertEquals(expectedHtml, serialiseHtmlCleanerNode(formHtml));
 	}
 
+	@Test
+	public void testNestedForLoopsOneLevelNestingWithNestedIteration() throws Exception {
+		dataDocument = createDocument("<myData><ocean><name>Atlantic</name><fishes><fish><name>A One</name></fish><fish><name>A Two</name></fish></fishes></ocean><ocean><name>Pacific</name><fishes><fish><name>P One</name></fish><fish><name>P Two</name></fish><fish><name>P Three</name></fish></fishes></ocean></myData>");
+
+		formHtml = htmlCleaner.clean(getClass().getResourceAsStream("nested-for-each-with-nested-iteration-source.html"));
+		String expectedHtml = new String(streamUtils.readStream(getClass().getResourceAsStream("nested-for-each-with-nested-iteration-expected.html")));
+		
+		// Assert not true
+		Assert.assertFalse(expectedHtml.equals(serialiseHtmlCleanerNode(formHtml)));
+		
+		// Do something
+		valueInjector.processForEachStatements(null, formHtml, dataDocument, "/myData");
+		
+		// Assert true
+		Assert.assertEquals(expectedHtml, serialiseHtmlCleanerNode(formHtml));
+	}
+	
 }
