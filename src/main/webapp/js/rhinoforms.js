@@ -250,7 +250,7 @@ function Rhinoforms() {
 			if (mask) {
 				var re = new RegExp(mask);
 				$input.keypress(function(event) {
-					if (0 != event.charCode) {
+					if (0 != event.which && 13 != event.which) {
 						var val = $input.val();
 						var pos = getCursorPos(input);
 						if (pos) {
@@ -290,7 +290,7 @@ function Rhinoforms() {
 		$form.addClass("rf-active-form");
 		
 		// Give first input focus
-		var $forFocus = $(":input[rf\\.action!='back'][type!='hidden']:enabled", $container);
+		var $forFocus = $(":input[rf\\.action!='back']:enabled:visible", $container);
 		$forFocus.first().focus();
 		
 		doOnFormLoad(formId);
