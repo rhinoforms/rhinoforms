@@ -290,7 +290,7 @@ function Rhinoforms() {
 		$form.addClass("rf-active-form");
 		
 		// Give first input focus
-		var $forFocus = $(":input[rf\\.action!='back'][type!='hidden']:enabled", $container);
+		var $forFocus = $(":input[rf\\.action!='back']:enabled:visible", $container);
 		$forFocus.first().focus();
 		
 		doOnFormLoad(formId);
