@@ -122,6 +122,15 @@ function loadFlow(flowMap) {
 						if (thisSubmission.messageOnHttpError) {
 							submissionJ.setMessageOnHttpError(thisSubmission.messageOnHttpError);
 						}
+						if (typeof thisSubmission.jsonToXml != 'undefined' && (thisSubmission.jsonToXml == false || thisSubmission.jsonToXml.toLowerCase() == "false")) {
+							submissionJ.setJsonToXml(false);
+						}
+						if (typeof thisSubmission.jsonToXmlTypeHints != 'undefined' && (thisSubmission.jsonToXmlTypeHints == false || thisSubmission.jsonToXmlTypeHints.toLowerCase() == "false")) {
+							submissionJ.setJsonToXmlTypeHints(false);
+						}
+						if (typeof thisSubmission.jsonToXmlRootName != 'undefined') {
+							submissionJ.setJsonToXmlRootName(thisSubmission.jsonToXmlRootName);
+						}
 						submissionsListJ.add(submissionJ);
 					}
 					flowActionJ.setSubmissions(submissionsListJ);

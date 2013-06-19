@@ -1,5 +1,6 @@
 package com.rhinoforms.flow;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -25,8 +26,12 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.xpath.XPathExpressionException;
 
+import net.sf.json.JSON;
+import net.sf.json.JSONSerializer;
+import net.sf.json.xml.XMLSerializer;
 import net.sf.saxon.TransformerFactoryImpl;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -236,8 +241,24 @@ public class RemoteSubmissionHelper {
 							byte[] streamData = streamUtils.readStream(inputStream);
 							insertPointNode.setTextContent(new String(streamData));
 						} else {
-							Document resultDocument = documentHelper.streamToDocument(inputStream);
-
+							Document resultDocument;
+							if (contentType != null && contentType.startsWith("application/json")) {
+								String jsonData = IOUtils.toString(inputStream);
+								JSON json = JSONSerializer.toJSON(jsonData);
+								
+								XMLSerializer xmlSerializer = new XMLSerializer();
+								xmlSerializer.setTypeHintsEnabled(submission.isJsonToXmlTypeHints());
+								String rootName = submission.getJsonToXmlRootName();
+								if (rootName != null) {
+									xmlSerializer.setRootName(rootName);
+								}
+								
+								String xml = xmlSerializer.write(json);
+								resultDocument = documentHelper.streamToDocument(new ByteArrayInputStream(xml.getBytes()));
+							} else {
+								resultDocument = documentHelper.streamToDocument(inputStream);
+							}
+	
 							if (LOGGER.isDebugEnabled()) {
 								LOGGER.debug("Result document: {}", documentHelper.documentToString(resultDocument));
 							}
