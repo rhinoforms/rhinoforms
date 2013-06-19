@@ -21,7 +21,10 @@
 								},
 								messageOnHttpError: "{{$message.dummy.submission}}",
 								postTransform: "xslt/fromServerFormat.xsl",
-								resultInsertPoint: "/myData/submissionResult"
+								resultInsertPoint: "/myData/submissionResult",
+								jsonToXml: false,
+								jsonToXmlTypeHints: false,
+								jsonToXmlRootName: "JsonResponse"
 							},
 							submissions: [
 								{

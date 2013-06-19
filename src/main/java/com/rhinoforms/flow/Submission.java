@@ -15,6 +15,9 @@ public class Submission implements Serializable {
 	private String messageOnHttpError;
 	private boolean omitXmlDeclaration;
 	private boolean rawXmlRequest;
+	private boolean jsonToXml;
+	private boolean jsonToXmlTypeHints;
+	private String jsonToXmlRootName;
 	private static final long serialVersionUID = -6314856649818697445L;
 
 	public Submission(String url) {
@@ -22,6 +25,8 @@ public class Submission implements Serializable {
 		data = new LinkedHashMap<String, String>();
 		method = "POST";
 		omitXmlDeclaration = false;
+		jsonToXml = true;
+		jsonToXmlTypeHints = true;
 	}
 
 	public String getUrl() {
@@ -90,6 +95,30 @@ public class Submission implements Serializable {
 
 	public void setRawXmlRequest(boolean rawXmlRequest) {
 		this.rawXmlRequest = rawXmlRequest;
+	}
+
+	public boolean isJsonToXml() {
+		return jsonToXml;
+	}
+
+	public void setJsonToXml(boolean jsonToXml) {
+		this.jsonToXml = jsonToXml;
+	}
+
+	public boolean isJsonToXmlTypeHints() {
+		return jsonToXmlTypeHints;
+	}
+
+	public void setJsonToXmlTypeHints(boolean jsonToXmlTypeHints) {
+		this.jsonToXmlTypeHints = jsonToXmlTypeHints;
+	}
+
+	public String getJsonToXmlRootName() {
+		return jsonToXmlRootName;
+	}
+
+	public void setJsonToXmlRootName(String jsonToXmlRootName) {
+		this.jsonToXmlRootName = jsonToXmlRootName;
 	}
 
 }

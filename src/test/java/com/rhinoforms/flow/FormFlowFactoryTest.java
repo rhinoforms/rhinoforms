@@ -76,6 +76,9 @@ public class FormFlowFactoryTest {
 		Assert.assertEquals("xslt/toServerFormat.xsl", submission.getPreTransform());
 		Assert.assertEquals("xslt/fromServerFormat.xsl", submission.getPostTransform());
 		Assert.assertEquals("Could not reach the web service.", submission.getMessageOnHttpError());
+		Assert.assertFalse(submission.isJsonToXml());
+		Assert.assertFalse(submission.isJsonToXmlTypeHints());
+		Assert.assertEquals("JsonResponse", submission.getJsonToXmlRootName());
 		Assert.assertTrue(flowActionToServer.isClearTargetFormDocBase());
 		
 		Submission submission2 = submissions.get(1);
@@ -132,6 +135,8 @@ public class FormFlowFactoryTest {
 		Assert.assertEquals("/myData/submissionResult", submission.getResultInsertPoint());
 		Assert.assertEquals(null, submission.getPreTransform());
 		Assert.assertEquals(null, submission.getPostTransform());
+		Assert.assertTrue(submission.isJsonToXml());
+		Assert.assertTrue(submission.isJsonToXmlTypeHints());
 	}
 	
 	@Test
