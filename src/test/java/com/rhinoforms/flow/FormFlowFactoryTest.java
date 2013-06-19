@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import junit.framework.Assert;
 
@@ -78,7 +79,7 @@ public class FormFlowFactoryTest {
 		Assert.assertTrue(flowActionToServer.isClearTargetFormDocBase());
 		
 		Submission submission2 = submissions.get(1);
-		Assert.assertEquals("Url injected from properties file", "http://localhost/dummy-url", submission2.getUrl());
+		Assert.assertEquals("Url injected from properties file", "http://localhost//static.xml", submission2.getUrl());
 		Assert.assertEquals(0, submission2.getData().size());
 		
 		FlowAction cancelAction = actions.get("cancel-back-to-one");
@@ -102,6 +103,10 @@ public class FormFlowFactoryTest {
 		Assert.assertNotNull(indexTestAction);
 		Assert.assertEquals(FlowActionType.NEXT, indexTestAction.getType());
 		Assert.assertEquals("next", indexTestAction.getParams().get("fishIndex"));
+		
+		Properties properties = formFlow.getProperties();
+		Assert.assertEquals("http://localhost//static.xml", properties.get("static-xml-in-webapp-url"));
+		Assert.assertEquals("123/456/789/0", properties.get("cc"));
 	}
 	
 	@Test
