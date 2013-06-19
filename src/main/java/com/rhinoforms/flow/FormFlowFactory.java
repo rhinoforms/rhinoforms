@@ -22,6 +22,7 @@ import org.w3c.dom.Document;
 import com.rhinoforms.formparser.ValueInjector;
 import com.rhinoforms.js.JSMasterScope;
 import com.rhinoforms.resourceloader.ResourceLoader;
+import com.rhinoforms.util.LinkedProperties;
 import com.rhinoforms.xml.DocumentHelper;
 import com.rhinoforms.xml.DocumentHelperException;
 import com.rhinoforms.xml.FlowExceptionXPath;
@@ -112,14 +113,11 @@ public class FormFlowFactory {
 	private void loadFlowFromJSDefinition(FormFlow formFlow, String formFlowJSDefinitionPath, Scriptable scope, Context jsContext)
 			throws IOException, FileNotFoundException, FormFlowFactoryException {
 		
-		Properties flowProperties = loadFlowProperties(formFlowJSDefinitionPath);
-		if (flowProperties != null) {
-			fillPlaceholders(flowProperties);
-		} else {
-			flowProperties = new Properties();
-		}
+		Properties flowProperties = new LinkedProperties();
+		loadFlowProperties(flowProperties, formFlowJSDefinitionPath);
 		flowProperties.put("contextPath", servletContextPath);
 		flowProperties.put("rf.flowId", formFlow.getId());
+		fillPlaceholders(flowProperties);
 		formFlow.setProperties(flowProperties);
 		
 		Object wrappedFormFlow = Context.javaToJS(formFlow, scope);
@@ -153,19 +151,16 @@ public class FormFlowFactory {
 		}
 	}
 	
-	private Properties loadFlowProperties(String formFlowJSDefinitionPath) throws IOException {
+	private void loadFlowProperties(Properties properties, String formFlowJSDefinitionPath) throws IOException {
 		String flowPropertiesPath = formFlowJSDefinitionPath.replace(".js", ".properties");
 		try {
 			InputStream formPropertiesStream = resourceLoader.getFormResourceAsStream(flowPropertiesPath);
 			if (formPropertiesStream != null) {
-				Properties properties = new Properties();
 				properties.load(formPropertiesStream);
-				return properties;
 			}
 		} catch (FileNotFoundException e) {
 			// No problem, properties file is optional
 		}
-		return null;
 	}
 	
 	public void fillPlaceholders(Properties properties) {

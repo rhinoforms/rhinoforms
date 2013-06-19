@@ -25,7 +25,7 @@
 							},
 							submissions: [
 								{
-									url: "{{$dummy-submission-url}}",
+									url: "{{$static-xml-in-webapp-url}}",
 								},
 								{
 									url: "{{$dummy-submission-url}}",
