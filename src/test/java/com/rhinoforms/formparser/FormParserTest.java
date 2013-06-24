@@ -240,8 +240,8 @@ public class FormParserTest {
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		formParser.parseForm(new FileInputStream("src/test/resources/empty-form.html"), formFlow, new PrintWriter(outputStream), masterScope, false);
 		String string = outputStream.toString();
-		Assert.assertTrue(string.contains("<div class=\"rf-debugbar\">"));
-		Assert.assertTrue(string.contains("<div class=\"rf-debugbar\">&lt;DebugBar&gt; <a href=\"rhinoforms/data-document/" + formFlow.getId() + "\" target=\"rhinoforms-data-document\">DataDocument</a></div>"));
+		Assert.assertTrue(string.contains("<div class=\"rf-debugbar\""));
+		Assert.assertTrue(string.contains("<div class=\"rf-debugbar\" title=\"Rhinoforms development bar\">&lt;Rhinoforms&gt; <a href=\"rhinoforms/data-document/" + formFlow.getId() + "\" target=\"rhinoforms-data-document\" title=\"Rhinoforms DataDocument development view\">DataDocument</a></div>"));
 	}
 	
 	@Test
