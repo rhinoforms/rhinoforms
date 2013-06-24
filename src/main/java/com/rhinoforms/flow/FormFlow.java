@@ -11,6 +11,8 @@ import java.util.Stack;
 
 import javax.xml.xpath.XPathExpressionException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
 import com.rhinoforms.xml.DocumentHelper;
@@ -35,6 +37,7 @@ public class FormFlow implements Serializable {
 	
 	private boolean disableInputsOnSubmit;
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(FormFlow.class);
 	private static final long serialVersionUID = -5683469121328756822L;
 
 	public FormFlow() {
@@ -83,6 +86,7 @@ public class FormFlow implements Serializable {
 				remoteSubmissionHelper.handleSubmission(submission, xsltParameters, this);
 				times.add((int) (startTime - new Date().getTime()));
 			}
+			LOGGER.debug("submissionTimeKeeper {} formId {} actionName {} times {}", new Object[] {submissionTimeKeeper, getCurrentFormId(), actionName, times});
 			submissionTimeKeeper.recordTimeTaken(getCurrentFormId(), actionName, times);
 		}
 		

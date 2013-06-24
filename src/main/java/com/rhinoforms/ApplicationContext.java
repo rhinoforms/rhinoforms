@@ -87,7 +87,7 @@ public class ApplicationContext {
 		cleanerProperties.setTranslateSpecialEntities(false);
 		
 		DefaultTagProvider tagInfoProvider = DefaultTagProvider.getInstance();
-		tagInfoProvider.getTagInfo("select").defineAllowedChildrenTags("option,optgroup,rf.forEach");
+		tagInfoProvider.getTagInfo("select").defineAllowedChildrenTags("option,optgroup,rf.forEach,div");
 		
 		TagInfo optionTagInfo = new TagInfo("option",  2, 2, false, false, true);
         optionTagInfo.defineCloseBeforeTags("option");
