@@ -156,6 +156,18 @@ public class FormParserTest {
 		Assert.assertTrue(parsedFormHtml.contains("<select name=\"year\"><option>2000</option><option>2010</option><option>2020</option></select>"));
 	}
 	
+ 	@Test
+	public void testSelectsForLoops() throws Exception {
+		this.formFlow = formFlowFactory.createFlow("test-flow1.js", "<myData><brands><brand><name>One</name><logins><login>One A</login><login>One B</login></logins></brand><brand><name>Two</name><logins><login>Two A</login><login>Two B</login></logins></brand></brands></myData>");
+		this.formFlow.navigateToFirstForm(documentHelper);
+
+		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+		formParser.parseForm(new FileInputStream("src/test/resources/selects-options-for-loops.html"), formFlow, new PrintWriter(byteArrayOutputStream), masterScope, false);
+		String parsedFormHtml = new String(byteArrayOutputStream.toByteArray());
+		Assert.assertTrue(parsedFormHtml.contains("<select name=\"login\"><option>One A</option><option>One B</option></select>"));
+		Assert.assertTrue(parsedFormHtml.contains("<select name=\"login\"><option>Two A</option><option>Two B</option></select>"));
+	}
+	
 	@Test
 	public void testlookupValueByFieldName() throws Exception {
 		Document createDocument = createDocument("<myData><customer>One</customer></myData>");

@@ -1,0 +1,12 @@
+<form rhinoforms="true">
+<rf.forEach select="brands/brand" as="b" >
+  <div class="field">
+    <label for="input_user">User ({{b.name}})</label>
+    <select name="login" >
+    <rf.forEach select="logins/login" as="l" >
+      <option>{{l}}</option>
+    </rf.forEach>
+    </select>
+  </div>
+</rf.forEach>
+</form>
