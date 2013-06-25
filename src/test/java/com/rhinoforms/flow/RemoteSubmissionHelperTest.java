@@ -64,6 +64,15 @@ public class RemoteSubmissionHelperTest {
 	}
 	
 	@Test
+	public void testSimplestHandleSubmissionPOSTEncodeSpace() throws Exception {
+		Submission submission = new Submission("http://localhost/dummyURL 2");
+		
+		remoteSubmissionHelper.handleSubmission(submission, xsltParameters, formFlow);
+		
+		Assert.assertEquals("http://localhost/dummyURL+2", testConnectionFactory.getRecordedRequestUrl());
+	}
+	
+	@Test
 	public void testSimplestHandleSubmissionGET() throws Exception {
 		String requestUrl = "http://localhost/dummyURL";
 		Submission submission = new Submission(requestUrl);

@@ -208,6 +208,7 @@ public class RemoteSubmissionHelper {
 			}
 			
 			String resolvedUrl = urlBuilder.toString();
+			resolvedUrl = resolvedUrl.replaceAll(" ", "+");
 			if (!url.equals(resolvedUrl)) {
 				LOGGER.debug("Resolved url: '{}'", resolvedUrl);
 			}
