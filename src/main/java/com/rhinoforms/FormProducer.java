@@ -21,6 +21,7 @@ import com.rhinoforms.flow.FormSubmissionHelper;
 import com.rhinoforms.flow.FormSubmissionHelperException;
 import com.rhinoforms.flow.FormSubmissionResult;
 import com.rhinoforms.flow.RemoteSubmissionHelper;
+import com.rhinoforms.flow.SubmissionTimeKeeper;
 import com.rhinoforms.formparser.FormParser;
 import com.rhinoforms.formparser.FormParserException;
 import com.rhinoforms.js.FlowExceptionFileNotFound;
@@ -38,6 +39,7 @@ public class FormProducer {
 	private FormParser formParser;
 	private FormSubmissionHelper formSubmissionHelper;
 	private RemoteSubmissionHelper remoteSubmissionHelper;
+	private SubmissionTimeKeeper submissionTimeKeeper;
 
 	public FormProducer(ApplicationContext appContext) {
 		formFlowFactory = appContext.getFormFlowFactory();
@@ -47,7 +49,7 @@ public class FormProducer {
 		formParser = appContext.getFormParser();
 		formSubmissionHelper = appContext.getFormSubmissionHelper();
 		remoteSubmissionHelper = appContext.getRemoteSubmissionHelper();
-
+		submissionTimeKeeper = appContext.getSubmissionTimeKeeper();
 	}
 
 	public void createFlowWriteForm(FlowCreationRequest flowRequest, HttpSession session, HttpServletResponse response) throws IOException, FormFlowFactoryException, FlowExceptionActionError, FlowExceptionXPath, FormParserException {
@@ -68,6 +70,8 @@ public class FormProducer {
 		Context.enter();
 		try {
 			formFlow.setRemoteSubmissionHelper(remoteSubmissionHelper);
+			formFlow.setSubmissionTimeKeeper(submissionTimeKeeper);
+			
 			Map<String, String> parameterMap = formActionRequest.getParameterMap();
 			FormSubmissionResult submissionResult = formSubmissionHelper.handlePost(formFlow, parameterMap);
 
