@@ -250,12 +250,7 @@ public class DocumentHelper {
 	}
 	
 	public Document stringToDocument(String inputString) throws DocumentHelperException {
-		try {
-			InputStream is = new ByteArrayInputStream(inputString.getBytes());
-			return documentBuilder.parse(is);
-		} catch (Exception e) {
-			throw new DocumentHelperException("Failed to parse input stream.", e);
-		}
+		return streamToDocument(new ByteArrayInputStream(inputString.getBytes()));
 	}
 
 	public Document newDocument() {

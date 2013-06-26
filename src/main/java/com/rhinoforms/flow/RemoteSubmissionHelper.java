@@ -14,6 +14,7 @@ import java.net.URLEncoder;
 import java.util.Map;
 
 import javax.xml.transform.TransformerException;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPathExpressionException;
 
 import net.sf.json.JSON;
@@ -42,10 +43,10 @@ public class RemoteSubmissionHelper {
 
 	private ConnectionFactory connectionFactory;
 	private DocumentHelper documentHelper;
+	private ResourceLoader resourceLoader;
 	private TransformHelper transformHelper;
 	private ValueInjector valueInjector;
 	private StreamUtils streamUtils;
-	private ResourceLoader resourceLoader;
 	private static final String UTF8 = "UTF-8";
 	private static final String DATA_DOCUMENT_VALUE_KEY = "[dataDocument]";
 	private static final Logger LOGGER = LoggerFactory.getLogger(RemoteSubmissionHelper.class);
@@ -61,7 +62,7 @@ public class RemoteSubmissionHelper {
 	}
 
 	public void handleSubmission(Submission submission, Map<String, String> xsltParameters, FormFlow formFlow)
-			throws RemoteSubmissionHelperException, FlowExceptionXPath, TransformerException {
+			throws RemoteSubmissionHelperException, FlowExceptionXPath {
 		String url = submission.getUrl();
 		String method = submission.getMethod();
 		Map<String, String> data = submission.getData();
@@ -76,7 +77,10 @@ public class RemoteSubmissionHelper {
 		String message = null;
 		try {
 			if (preTransform != null) {
-				dataDocumentString = transformHelper.handleTransform(preTransform, submission.isOmitXmlDeclaration(), xsltParameters, dataDocument, "transforming DataDocument using preTransform for submission.");
+				message = "transforming Data Document using preTransform for submission.";
+				StringWriter transformResultWriter = new StringWriter();
+				transformHelper.handleTransform(preTransform, submission.isOmitXmlDeclaration(), xsltParameters, dataDocument, new StreamResult(transformResultWriter));
+				dataDocumentString = transformResultWriter.toString();
 				LOGGER.debug("preTransform result: {}", dataDocumentString);
 			} else {
 				LOGGER.debug("No transform provided");
@@ -85,9 +89,11 @@ public class RemoteSubmissionHelper {
 				documentHelper.documentToWriter(dataDocument, stringWriter, submission.isOmitXmlDeclaration());
 				dataDocumentString = stringWriter.toString();
 			}
-		} catch (TransformHelperException e) {
+		} catch (TransformerException e) {
 			throw new RemoteSubmissionHelperException("Error while " + message, e);
-		} 
+		} catch (IOException e) {
+			throw new RemoteSubmissionHelperException("Error while " + message, e);
+		}
 
 		String requestDataString;
 		try {

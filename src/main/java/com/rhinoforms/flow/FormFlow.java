@@ -11,6 +11,7 @@ import java.util.Properties;
 import java.util.Stack;
 
 import javax.xml.transform.TransformerException;
+import javax.xml.transform.dom.DOMResult;
 import javax.xml.xpath.XPathExpressionException;
 
 import org.slf4j.Logger;
@@ -18,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
 import com.rhinoforms.xml.DocumentHelper;
-import com.rhinoforms.xml.DocumentHelperException;
 import com.rhinoforms.xml.FlowExceptionXPath;
 
 public class FormFlow implements Serializable {
@@ -30,15 +30,15 @@ public class FormFlow implements Serializable {
 	private Map<String, List<Form>> formLists;
 	private Document dataDocument;
 	private Properties properties;
-	
+
 	private Stack<FlowNavigationLevel> navigationStack;
 	private List<InputPojo> currentInputPojos;
 	private Map<String, FieldSourceProxy> fieldSourceProxies;
 	private String resourcesBase;
 	private transient RemoteSubmissionHelper remoteSubmissionHelper;
 	private transient SubmissionTimeKeeper submissionTimeKeeper;
-	private TransformHelper transformHelper;
-		
+	private transient TransformHelper transformHelper;
+
 	private boolean disableInputsOnSubmit;
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(FormFlow.class);
@@ -65,7 +65,7 @@ public class FormFlow implements Serializable {
 		return currentNavigationLevel.getCurrentForm().getPath();
 	}
 
-	public String doAction(String actionName, Map<String, String> paramsFromFontend, DocumentHelper documentHelper) throws FlowExceptionActionError, FlowExceptionXPath, IOException, RemoteSubmissionHelperException, TransformerException, DocumentHelperException, TransformHelperException {
+	public String doAction(String actionName, Map<String, String> paramsFromFontend, DocumentHelper documentHelper) throws FlowExceptionActionError, FlowExceptionXPath {
 		clearPreviousFormResources();
 
 		FlowAction flowAction = getAction(actionName);
@@ -94,9 +94,17 @@ public class FormFlow implements Serializable {
 			submissionTimeKeeper.recordTimeTaken(getCurrentFormId(), actionName, times);
 		}
 		
-		if (flowAction.getDataDocTransform() != null){
-			String docResult = transformHelper.handleTransform(flowAction.getDataDocTransform(), true, null, dataDocument, "transforming DataDocument using action transform.");
-			dataDocument = documentHelper.stringToDocument(docResult);
+		if (flowAction.getDataDocTransform() != null) {
+			String message = "Error while transforming DataDocument using action transform.";
+			try {
+				DOMResult domResult = new DOMResult();
+				transformHelper.handleTransform(flowAction.getDataDocTransform(), true, null, dataDocument, domResult);
+				dataDocument = (Document) domResult.getNode();
+			} catch (TransformerException e) {
+				throw new FlowExceptionActionError(message, e);
+			} catch (IOException e) {
+				throw new FlowExceptionActionError(message, e);
+			}
 		}
 		
 		if (actionTarget.isEmpty()) {

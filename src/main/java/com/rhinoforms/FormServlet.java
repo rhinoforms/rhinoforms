@@ -24,14 +24,11 @@ import com.rhinoforms.flow.FlowExceptionBadRequest;
 import com.rhinoforms.flow.FormFlow;
 import com.rhinoforms.flow.FormFlowFactoryException;
 import com.rhinoforms.flow.FormSubmissionHelperException;
-import com.rhinoforms.flow.RemoteSubmissionHelperException;
-import com.rhinoforms.flow.TransformHelperException;
 import com.rhinoforms.formparser.FormParserException;
 import com.rhinoforms.resourceloader.ResourceLoader;
 import com.rhinoforms.resourceloader.ResourceLoaderException;
 import com.rhinoforms.util.ServletHelper;
 import com.rhinoforms.xml.DocumentHelper;
-import com.rhinoforms.xml.DocumentHelperException;
 
 @SuppressWarnings("serial")
 public class FormServlet extends HttpServlet {
@@ -105,15 +102,7 @@ public class FormServlet extends HttpServlet {
 			
 			try {
 				formProducer.doActionWriteForm(formActionRequest, formFlow, response);
-			} //handle better
-			catch (RemoteSubmissionHelperException e){
-				String message = e.getMessage();
-				LOGGER.info(message, e);
-			} catch (DocumentHelperException e) {
-				String message = e.getMessage();
-				LOGGER.info(message, e);
-			} //end
-			catch (FlowExceptionBadRequest e) {
+			} catch (FlowExceptionBadRequest e) {
 				String message = e.getMessage();
 				LOGGER.info(message, e);
 				sendFrontendError(HttpServletResponse.SC_BAD_REQUEST, message, response);
@@ -135,10 +124,6 @@ public class FormServlet extends HttpServlet {
 				sendFrontendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 			} catch (TransformerException e) {
 				String message = "Failed to output DataDocument";
-				LOGGER.error(message, e);
-				sendFrontendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
-			} catch (TransformHelperException e) {
-				String message = "Failed to transform DataDocument";
 				LOGGER.error(message, e);
 				sendFrontendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 			}

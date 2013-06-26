@@ -22,16 +22,13 @@ import com.rhinoforms.flow.FormSubmissionHelperException;
 import com.rhinoforms.flow.FormSubmissionResult;
 import com.rhinoforms.flow.RemoteSubmissionHelper;
 import com.rhinoforms.flow.SubmissionTimeKeeper;
-import com.rhinoforms.flow.RemoteSubmissionHelperException;
 import com.rhinoforms.flow.TransformHelper;
-import com.rhinoforms.flow.TransformHelperException;
 import com.rhinoforms.formparser.FormParser;
 import com.rhinoforms.formparser.FormParserException;
 import com.rhinoforms.js.FlowExceptionFileNotFound;
 import com.rhinoforms.js.JSMasterScope;
 import com.rhinoforms.resourceloader.ResourceLoader;
 import com.rhinoforms.xml.DocumentHelper;
-import com.rhinoforms.xml.DocumentHelperException;
 import com.rhinoforms.xml.FlowExceptionXPath;
 
 public class FormProducer {
@@ -72,13 +69,12 @@ public class FormProducer {
 	}
 
 	public void doActionWriteForm(FormActionRequest formActionRequest, FormFlow formFlow, HttpServletResponse response) throws IOException, FlowExceptionActionError,
-			FormSubmissionHelperException, FlowExceptionBadRequest, FlowExceptionFileNotFound, FlowExceptionJavaScript, FlowExceptionXPath, FormParserException, TransformerException, RemoteSubmissionHelperException, DocumentHelperException, TransformHelperException {
+			FormSubmissionHelperException, FlowExceptionBadRequest, FlowExceptionFileNotFound, FlowExceptionJavaScript, FlowExceptionXPath, FormParserException, TransformerException {
 		Context.enter();
 		try {
 			formFlow.setRemoteSubmissionHelper(remoteSubmissionHelper);
 			formFlow.setSubmissionTimeKeeper(submissionTimeKeeper);
 			formFlow.setTransformHelper(transformHelper);
-
 
 			Map<String, String> parameterMap = formActionRequest.getParameterMap();
 			FormSubmissionResult submissionResult = formSubmissionHelper.handlePost(formFlow, parameterMap);
