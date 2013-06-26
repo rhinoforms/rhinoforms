@@ -1,5 +1,6 @@
 package com.rhinoforms.xml;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -246,6 +247,10 @@ public class DocumentHelper {
 		} catch (Exception e) {
 			throw new DocumentHelperException("Failed to parse input stream.", e);
 		}
+	}
+	
+	public Document stringToDocument(String inputString) throws DocumentHelperException {
+		return streamToDocument(new ByteArrayInputStream(inputString.getBytes()));
 	}
 
 	public Document newDocument() {

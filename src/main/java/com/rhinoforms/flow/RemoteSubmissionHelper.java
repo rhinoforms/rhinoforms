@@ -2,7 +2,6 @@ package com.rhinoforms.flow;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -14,22 +13,13 @@ import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.util.Map;
 
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.TransformerFactoryConfigurationError;
-import javax.xml.transform.dom.DOMResult;
-import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
 import javax.xml.xpath.XPathExpressionException;
 
 import net.sf.json.JSON;
 import net.sf.json.JSONSerializer;
 import net.sf.json.xml.XMLSerializer;
-import net.sf.saxon.TransformerFactoryImpl;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -54,7 +44,7 @@ public class RemoteSubmissionHelper {
 	private ConnectionFactory connectionFactory;
 	private DocumentHelper documentHelper;
 	private ResourceLoader resourceLoader;
-	private TransformerFactory transformerFactory;
+	private TransformHelper transformHelper;
 	private ValueInjector valueInjector;
 	private StreamUtils streamUtils;
 	private static final String UTF8 = "UTF-8";
@@ -62,12 +52,12 @@ public class RemoteSubmissionHelper {
 	private static final Logger LOGGER = LoggerFactory.getLogger(RemoteSubmissionHelper.class);
 	private static final String HTML_TEMPLATE_PREFIX = "htmlTemplate:";
 
-	public RemoteSubmissionHelper(ResourceLoader resourceLoader, ValueInjector valueInjector) {
+	public RemoteSubmissionHelper(ResourceLoader resourceLoader, ValueInjector valueInjector, TransformHelper transformHelper) {
 		this.resourceLoader = resourceLoader;
 		this.valueInjector = valueInjector;
+		this.transformHelper = transformHelper;
 		connectionFactory = new ConnectionFactoryImpl();
 		documentHelper = new DocumentHelper();
-		transformerFactory = new TransformerFactoryImpl(); // Saxon Impl
 		streamUtils = new StreamUtils();
 	}
 
@@ -88,15 +78,12 @@ public class RemoteSubmissionHelper {
 		try {
 			if (preTransform != null) {
 				message = "transforming Data Document using preTransform for submission.";
-				Transformer transformer = getTransformer(preTransform, submission.isOmitXmlDeclaration());
-				for (String paramKey : xsltParameters.keySet()) {
-					transformer.setParameter(paramKey, xsltParameters.get(paramKey));
-				}
-
-				StringWriter requestDataAfterTransformWriter = new StringWriter();
-				transformer.transform(new DOMSource(dataDocument), new StreamResult(requestDataAfterTransformWriter));
-				dataDocumentString = requestDataAfterTransformWriter.toString();
+				StringWriter transformResultWriter = new StringWriter();
+				transformHelper.handleTransform(preTransform, submission.isOmitXmlDeclaration(), xsltParameters, dataDocument, new StreamResult(transformResultWriter));
+				dataDocumentString = transformResultWriter.toString();
+				LOGGER.debug("preTransform result: {}", dataDocumentString);
 			} else {
+				LOGGER.debug("No transform provided");
 				message = "transforming Data Document into a String for submission.";
 				StringWriter stringWriter = new StringWriter();
 				documentHelper.documentToWriter(dataDocument, stringWriter, submission.isOmitXmlDeclaration());
@@ -266,10 +253,7 @@ public class RemoteSubmissionHelper {
 
 							Node nodeToImport = null;
 							if (postTransform != null) {
-								Transformer transformer = getTransformer(postTransform, true);
-								DOMResult domResult = new DOMResult();
-								transformer.transform(new DOMSource(resultDocument), domResult);
-								nodeToImport = domResult.getNode().getChildNodes().item(0);
+								nodeToImport = transformHelper.handleTransform(postTransform, true, resultDocument);
 								if (LOGGER.isDebugEnabled()) {
 									LOGGER.debug("Transformed result: {}", documentHelper.documentToString(nodeToImport));
 								}
@@ -306,22 +290,12 @@ public class RemoteSubmissionHelper {
 		}
 	}
 
-	private Transformer getTransformer(String preTransform, boolean omitXmlDeclaration) throws IOException,
-			TransformerFactoryConfigurationError, TransformerConfigurationException {
-		InputStream preTransformStream = resourceLoader.getFormResourceAsStream(preTransform);
-		if (preTransformStream != null) {
-			Transformer transformer = transformerFactory.newTransformer(new StreamSource(preTransformStream));
-			if (omitXmlDeclaration) {
-				transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-			}
-			return transformer;
-		} else {
-			throw new FileNotFoundException(preTransform);
-		}
-	}
-
 	public void setConnectionFactory(ConnectionFactory connectionFactory) {
 		this.connectionFactory = connectionFactory;
+	}
+
+	public void setTransformHelper(TransformHelper transformHelper) {
+		this.transformHelper = transformHelper;
 	}
 
 }

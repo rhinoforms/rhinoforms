@@ -46,7 +46,17 @@
 				}
 		],
 		anotherList: [
-			{ id: "editFish", docBase: "fishes/fish[fishIndex]", url: "editFish.html", actions: [ "cancel", "addGill:gills.editGill(gillIndex=next)", "next" ] }
+			{ id: "editFish", docBase: "fishes/fish[fishIndex]", url: "editFish.html",
+				actions: [
+				          "cancel",
+				          "addGill:gills.editGill(gillIndex=next)",
+				          {
+				        	  name: "transform",
+				        	  dataDocTransform: "something.xsl"  
+				          },
+				          "next" 
+				          ] 
+			}
 		],
 		gills: [
 			{ id: "editGill", docBase: "gills/gill[gillIndex]", url: "editGill.html", actions: [ "cancel", "next" ] }

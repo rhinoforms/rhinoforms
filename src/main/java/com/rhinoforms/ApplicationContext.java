@@ -15,6 +15,7 @@ import com.rhinoforms.flow.FormFlowFactory;
 import com.rhinoforms.flow.FormSubmissionHelper;
 import com.rhinoforms.flow.RemoteSubmissionHelper;
 import com.rhinoforms.flow.SubmissionTimeKeeper;
+import com.rhinoforms.flow.TransformHelper;
 import com.rhinoforms.formparser.FormParser;
 import com.rhinoforms.formparser.HtmlTags;
 import com.rhinoforms.formparser.ValueInjector;
@@ -42,6 +43,7 @@ public class ApplicationContext {
 	private FormSubmissionHelper formSubmissionHelper;
 	private FormFlowFactory formFlowFactory;
 	private RemoteSubmissionHelper remoteSubmissionHelper;
+	private TransformHelper transformHelper;
 	private FormProducer formProducer;
 	private FlowRequestFactory flowRequestFactory;
 	private FormActionRequestFactory formActionRequestFactory;
@@ -69,7 +71,8 @@ public class ApplicationContext {
 			this.masterScope = new RhinoFormsMasterScopeFactory().createMasterScope(jsContext, resourceLoader);
 			this.formSubmissionHelper = new FormSubmissionHelper(masterScope);
 			this.formFlowFactory = new FormFlowFactory(resourceLoader, valueInjector, masterScope, servletContext.getContextPath(), submissionTimeKeeper);
-			this.remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader, valueInjector);
+			this.remoteSubmissionHelper = new RemoteSubmissionHelper(resourceLoader, valueInjector, transformHelper);
+			this.transformHelper = new TransformHelper(resourceLoader);
 			this.flowRequestFactory = new FlowRequestFactory();
 			this.servletHelper = new ServletHelper();
 			this.formActionRequestFactory = new FormActionRequestFactory(servletHelper);
@@ -125,7 +128,6 @@ public class ApplicationContext {
 
 	public FormParser getFormParser() {
 		return formParser;
-		
 	}
 
 	public SubmissionTimeKeeper getSubmissionTimeKeeper() {
@@ -146,6 +148,10 @@ public class ApplicationContext {
 	
 	public RemoteSubmissionHelper getRemoteSubmissionHelper() {
 		return remoteSubmissionHelper;
+	}
+	
+	public TransformHelper getTransformHelper(){
+		return transformHelper;
 	}
 	
 	public FormProducer getFormProducer() {

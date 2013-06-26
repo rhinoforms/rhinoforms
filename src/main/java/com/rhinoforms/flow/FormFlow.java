@@ -1,5 +1,6 @@
 package com.rhinoforms.flow;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
@@ -9,6 +10,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Stack;
 
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.dom.DOMResult;
 import javax.xml.xpath.XPathExpressionException;
 
 import org.slf4j.Logger;
@@ -27,14 +30,15 @@ public class FormFlow implements Serializable {
 	private Map<String, List<Form>> formLists;
 	private Document dataDocument;
 	private Properties properties;
-	
+
 	private Stack<FlowNavigationLevel> navigationStack;
 	private List<InputPojo> currentInputPojos;
 	private Map<String, FieldSourceProxy> fieldSourceProxies;
 	private String resourcesBase;
 	private transient RemoteSubmissionHelper remoteSubmissionHelper;
 	private transient SubmissionTimeKeeper submissionTimeKeeper;
-	
+	private transient TransformHelper transformHelper;
+
 	private boolean disableInputsOnSubmit;
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(FormFlow.class);
@@ -88,6 +92,19 @@ public class FormFlow implements Serializable {
 			}
 			LOGGER.debug("submissionTimeKeeper {} formId {} actionName {} times {}", new Object[] {submissionTimeKeeper, getCurrentFormId(), actionName, times});
 			submissionTimeKeeper.recordTimeTaken(getCurrentFormId(), actionName, times);
+		}
+		
+		if (flowAction.getDataDocTransform() != null) {
+			String message = "Error while transforming DataDocument using action transform.";
+			try {
+				DOMResult domResult = new DOMResult();
+				transformHelper.handleTransform(flowAction.getDataDocTransform(), true, null, dataDocument, domResult);
+				dataDocument = (Document) domResult.getNode();
+			} catch (TransformerException e) {
+				throw new FlowExceptionActionError(message, e);
+			} catch (IOException e) {
+				throw new FlowExceptionActionError(message, e);
+			}
 		}
 		
 		if (actionTarget.isEmpty()) {
@@ -350,6 +367,10 @@ public class FormFlow implements Serializable {
 	
 	public void setSubmissionTimeKeeper(SubmissionTimeKeeper submissionTimeKeeper) {
 		this.submissionTimeKeeper = submissionTimeKeeper;
+	}
+	
+	public void setTransformHelper(TransformHelper transformHelper) {
+		this.transformHelper = transformHelper;
 	}
 
 	public void setDisableInputsOnSubmit(boolean disableInputsOnSubmit) {
