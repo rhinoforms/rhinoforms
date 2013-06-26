@@ -1,5 +1,6 @@
 package com.rhinoforms.flow;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
@@ -9,6 +10,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Stack;
 
+import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPathExpressionException;
 
 import org.slf4j.Logger;
@@ -16,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
 import com.rhinoforms.xml.DocumentHelper;
+import com.rhinoforms.xml.DocumentHelperException;
 import com.rhinoforms.xml.FlowExceptionXPath;
 
 public class FormFlow implements Serializable {
@@ -34,7 +37,8 @@ public class FormFlow implements Serializable {
 	private String resourcesBase;
 	private transient RemoteSubmissionHelper remoteSubmissionHelper;
 	private transient SubmissionTimeKeeper submissionTimeKeeper;
-	
+	private TransformHelper transformHelper;
+		
 	private boolean disableInputsOnSubmit;
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(FormFlow.class);
@@ -61,7 +65,7 @@ public class FormFlow implements Serializable {
 		return currentNavigationLevel.getCurrentForm().getPath();
 	}
 
-	public String doAction(String actionName, Map<String, String> paramsFromFontend, DocumentHelper documentHelper) throws FlowExceptionActionError, FlowExceptionXPath {
+	public String doAction(String actionName, Map<String, String> paramsFromFontend, DocumentHelper documentHelper) throws FlowExceptionActionError, FlowExceptionXPath, IOException, RemoteSubmissionHelperException, TransformerException, DocumentHelperException, TransformHelperException {
 		clearPreviousFormResources();
 
 		FlowAction flowAction = getAction(actionName);
@@ -88,6 +92,11 @@ public class FormFlow implements Serializable {
 			}
 			LOGGER.debug("submissionTimeKeeper {} formId {} actionName {} times {}", new Object[] {submissionTimeKeeper, getCurrentFormId(), actionName, times});
 			submissionTimeKeeper.recordTimeTaken(getCurrentFormId(), actionName, times);
+		}
+		
+		if (flowAction.getDataDocTransform() != null){
+			String docResult = transformHelper.handleTransform(flowAction.getDataDocTransform(), true, null, dataDocument, "transforming DataDocument using action transform.");
+			dataDocument = documentHelper.stringToDocument(docResult);
 		}
 		
 		if (actionTarget.isEmpty()) {
@@ -350,6 +359,10 @@ public class FormFlow implements Serializable {
 	
 	public void setSubmissionTimeKeeper(SubmissionTimeKeeper submissionTimeKeeper) {
 		this.submissionTimeKeeper = submissionTimeKeeper;
+	}
+	
+	public void setTransformHelper(TransformHelper transformHelper) {
+		this.transformHelper = transformHelper;
 	}
 
 	public void setDisableInputsOnSubmit(boolean disableInputsOnSubmit) {

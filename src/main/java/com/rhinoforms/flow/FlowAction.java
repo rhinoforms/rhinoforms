@@ -10,6 +10,7 @@ public class FlowAction implements Serializable {
 	private String name;
 	private String target;
 	private String type;
+	private String dataDocTransform;
 	private Map<String, String> params;
 	private List<Submission> submissions;
 	private boolean clearTargetFormDocBase;
@@ -55,6 +56,14 @@ public class FlowAction implements Serializable {
 		this.type = type;
 	}
 	
+	public String getDataDocTransform() {
+		return dataDocTransform;
+	}
+
+	public void setDataDocTransform(String dataDocTransform) {
+		this.dataDocTransform = dataDocTransform;
+	}
+
 	public Map<String, String> getParams() {
 		return params;
 	}
