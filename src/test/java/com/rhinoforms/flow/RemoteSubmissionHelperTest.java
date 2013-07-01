@@ -331,7 +331,7 @@ public class RemoteSubmissionHelperTest {
 	@Test
 	public void testHandleSubmissionInsertJsonResult() throws Exception {
 		// Skip in travis-ci build as getting unreproducable error: 'nu/xom/ParentNode'
-		if (!"travis-ci".equals(System.getProperty("build.environment"))) {
+		if (!"TRUE".equals(System.getenv("TRAVIS"))) {
 			Submission submission = new Submission("http://localhost/dummyURL");
 			submission.setOmitXmlDeclaration(true);
 			submission.setResultInsertPoint("/myData/submissionResult");
