@@ -1,1 +1,2 @@
 language: java
+env: build.environment=travis-ci
