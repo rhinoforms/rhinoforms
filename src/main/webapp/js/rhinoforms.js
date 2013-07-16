@@ -475,6 +475,9 @@ function Rhinoforms() {
 				// Focus first invalid field
 				$(":input.invalid", $form).first().focus();
 			}
+			
+			$form.trigger('rf.validationFailed');
+			
 			return false;
 		} else {
 			// return true if no errors, otherwise false
