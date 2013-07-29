@@ -1,22 +1,5 @@
 package com.rhinoforms;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import javax.xml.transform.TransformerException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-
 import com.rhinoforms.flow.FieldSourceProxy;
 import com.rhinoforms.flow.FieldSourceProxyException;
 import com.rhinoforms.flow.FlowException;
@@ -29,6 +12,21 @@ import com.rhinoforms.resourceloader.ResourceLoader;
 import com.rhinoforms.resourceloader.ResourceLoaderException;
 import com.rhinoforms.util.ServletHelper;
 import com.rhinoforms.xml.DocumentHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import javax.xml.transform.TransformerException;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @SuppressWarnings("serial")
 public class FormServlet extends HttpServlet {
@@ -75,7 +73,10 @@ public class FormServlet extends HttpServlet {
 		// Method switch based on request URL
 		if (pathInfo == null) {
 			// New flow request
-			doGetCreateFormFlow(request, response, session);
+			FormFlow formFlow = doGetCreateFormFlow(request, response, session);
+			// Setting the formFlow session attribute again to trigger session serialisation in
+			// Google App Engine deployment or Shiro framework.
+			SessionHelper.setFlow(formFlow, request.getSession());
 		} else {
 			LOGGER.debug("pathInfo = {}", pathInfo);
 			if (pathInfo.startsWith(VIEW_DATA_DOC_PATH_PREFIX)) {
@@ -102,6 +103,9 @@ public class FormServlet extends HttpServlet {
 			
 			try {
 				formProducer.doActionWriteForm(formActionRequest, formFlow, response);
+				// Setting the formFlow session attribute again to trigger session serialisation in
+				// Google App Engine deployment or Shiro framework.
+				SessionHelper.setFlow(formFlow, request.getSession());
 			} catch (FlowExceptionBadRequest e) {
 				String message = e.getMessage();
 				LOGGER.info(message, e);
@@ -132,11 +136,11 @@ public class FormServlet extends HttpServlet {
 		}
 	}
 
-	private void doGetCreateFormFlow(HttpServletRequest request, HttpServletResponse response, HttpSession session) throws IOException,
+	private FormFlow doGetCreateFormFlow(HttpServletRequest request, HttpServletResponse response, HttpSession session) throws IOException,
 			ServletException {
 		FlowCreationRequest flowRequest = flowRequestFactory.createNewFlowRequest(request);
 		try {
-			formProducer.createFlowWriteForm(flowRequest, request.getSession(), response);
+			return formProducer.createFlowWriteForm(flowRequest, request.getSession(), response);
 		} catch (FormFlowFactoryException e) {
 			String message = "Failed to create form flow.";
 			LOGGER.error(message, e);
@@ -154,6 +158,7 @@ public class FormServlet extends HttpServlet {
 			}
 			sendFrontendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
 		}
+		return null;
 	}
 
 	private void doGetShowDataDocument(HttpServletResponse response, HttpSession session, String flowId) throws IOException,

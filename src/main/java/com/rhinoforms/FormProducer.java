@@ -55,7 +55,7 @@ public class FormProducer {
 		transformHelper = appContext.getTransformHelper();
 	}
 
-	public void createFlowWriteForm(FlowCreationRequest flowRequest, HttpSession session, HttpServletResponse response) throws IOException, FormFlowFactoryException, FlowExceptionActionError, FlowExceptionXPath, FormParserException {
+	public FormFlow createFlowWriteForm(FlowCreationRequest flowRequest, HttpSession session, HttpServletResponse response) throws IOException, FormFlowFactoryException, FlowExceptionActionError, FlowExceptionXPath, FormParserException {
 		Context.enter();
 		try {
 			FormFlow newFormFlow = formFlowFactory.createFlow(flowRequest.getFormFlowPath(), flowRequest.getInitData());
@@ -63,6 +63,7 @@ public class FormProducer {
 
 			String formPath = newFormFlow.navigateToFirstForm(documentHelper);
 			writeForm(response, newFormFlow, formPath, flowRequest.isSuppressDebugBar());
+			return newFormFlow;
 		} finally {
 			Context.exit();
 		}
