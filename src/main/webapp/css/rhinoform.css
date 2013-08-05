@@ -1,53 +1,53 @@
 /** Layout **/
-.field {
+.rhinoforms .field {
 	margin: 15px 0;
 }
-button {
+.rhinoforms button {
 	margin-top: 20px;
 }
-label {
+.rhinoforms label {
 	width: 150px;
 	display: inline-block;
 }
-input[type='radio']+label {
+.rhinoforms input[type='radio']+label {
 	width: auto;
 }
-.invalid {
+.rhinoforms .invalid {
 	background-color: Salmon;
 }
-.invalid-message {
+.rhinoforms .invalid-message {
 	margin: 0 5px;
 }
 
-.invalid-message-cleared {
+.rhinoforms .invalid-message-cleared {
 	visibility: hidden;
 }
 
-.rf-included-false {
+.rhinoforms .rf-included-false {
 	display: none;
 }
 
 /** Auto-complete **/
-.rf-dropdown {
+.rhinoforms .rf-dropdown {
 	position: absolute;
 }
-.rf-dropdown ul {
+.rhinoforms .rf-dropdown ul {
 	margin: 0;
 	padding: 0;
 	height: 9em;
 	overflow-y: scroll;
 	border: 1px solid lightGrey;
 }
-.rf-dropdown li {
+.rhinoforms .rf-dropdown li {
 	list-style-type: none;
 	background-color: white;
 }
-.rf-dropdown li.over {
+.rhinoforms .rf-dropdown li.over {
 	background-color: lightblue;
 }
 
 /** DebugBar **/
-.rf-debugbar {
+.rhinoforms .rf-debugbar {
     background-color: #45BCD2;
     opacity: 0.7;
     border-radius: 5px;
