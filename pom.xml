@@ -4,7 +4,7 @@
 
 	<groupId>com.rhinoforms</groupId>
 	<artifactId>rhinoforms</artifactId>
-	<version>1.2.5-SNAPSHOT</version>
+	<version>1.2.5</version>
 	<packaging>war</packaging>
 
 	<name>Rhinoforms</name>
@@ -149,8 +149,35 @@
 					</execution>
 				</executions>
 			</plugin>
-
+			<plugin>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>deploy</phase>
+						<goals>
+							<goal>deploy-file</goal>
+						</goals>
+						<configuration>
+							<packaging>jar</packaging>
+							<artifactId>${project.artifactId}</artifactId>
+							<groupId>${project.groupId}</groupId>
+							<version>${project.version}</version>
+							<file>${project.build.directory}/${project.artifactId}-${project.version}.jar</file>
+							<repositoryId>rhinoforms.s3.release</repositoryId>
+							<url>s3://maven.rhinoforms.com/release</url>
+							<pomFile>pom.xml</pomFile>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
+		<extensions>
+			<extension>
+				<groupId>org.kuali.maven.wagons</groupId>
+				<artifactId>maven-s3-wagon</artifactId>
+				<version>1.1.22</version>
+			</extension>
+		</extensions>
 	</build>
 
 	<profiles>
@@ -180,5 +207,12 @@
 			</dependencies>
 		</profile>
 	</profiles>
+
+	<distributionManagement>
+		<repository>
+			<id>rhinoforms.s3.release</id>
+			<url>s3://maven.rhinoforms.com/release</url>
+		</repository>
+	</distributionManagement>
 
 </project>
