@@ -375,7 +375,8 @@ function Rhinoforms() {
 			rf_trace("processCalculated index:" + index + ", statement:'" + calculatedStatement + "'");
 			var result = eval(calculatedStatement);
 			rf_trace("processCalculated result = " + result + "");
-			$input.val(result).text(result);
+			$input.filter(":input").val(result);
+			$input.not(":input").text(result);
 		})
 	}
 	
