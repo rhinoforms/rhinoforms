@@ -5,7 +5,7 @@ import java.util.Set;
 
 public enum FlowActionType {
 
-	FIRST, NEXT, BACK, CANCEL, DELETE, FINISH;
+	NEXT, BACK, CANCEL, DELETE, FINISH;
 
 	private static final Set<String> stringValues;
 	static {
