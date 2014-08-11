@@ -3,7 +3,7 @@
 
 	<groupId>com.rhinoforms</groupId>
 	<artifactId>rhinoforms</artifactId>
-	<version>1.2.7-SNAPSHOT</version>
+	<version>1.2.6</version>
 	<packaging>war</packaging>
 
 	<name>Rhinoforms</name>
