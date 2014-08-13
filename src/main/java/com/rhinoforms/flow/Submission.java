@@ -22,7 +22,7 @@ public class Submission implements Serializable {
 
 	public Submission(String url) {
 		this.url = url;
-		data = new LinkedHashMap<String, String>();
+		data = new LinkedHashMap<>();
 		method = "POST";
 		omitXmlDeclaration = false;
 		jsonToXml = true;

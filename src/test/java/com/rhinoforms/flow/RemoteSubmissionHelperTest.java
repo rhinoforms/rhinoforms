@@ -1,24 +1,21 @@
 package com.rhinoforms.flow;
 
-import java.net.URLDecoder;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-
-import javax.xml.transform.TransformerException;
-
-import junit.framework.Assert;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.w3c.dom.Document;
-
 import com.rhinoforms.Constants;
 import com.rhinoforms.TestApplicationContext;
 import com.rhinoforms.TestConnectionFactory;
 import com.rhinoforms.TestUtil;
 import com.rhinoforms.xml.DocumentHelper;
 import com.rhinoforms.xml.FlowExceptionXPath;
+import junit.framework.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.w3c.dom.Document;
+
+import javax.xml.transform.TransformerException;
+import java.net.URLDecoder;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 public class RemoteSubmissionHelperTest {
 	
@@ -43,7 +40,7 @@ public class RemoteSubmissionHelperTest {
 		remoteSubmissionHelper.setTransformHelper(transformHelper);
 		dataDocumentString = "<myData><something>a</something><another>anotherVal</another></myData>";
 		dataDocument = TestUtil.createDocument(dataDocumentString);
-		xsltParameters = new HashMap<String, String>();
+		xsltParameters = new HashMap<>();
 		formFlow = new FormFlow();
 		formFlow.setDataDocument(dataDocument);
 		formFlow.setResourcesBase("");

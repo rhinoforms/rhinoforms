@@ -1,13 +1,13 @@
 package com.rhinoforms.flow;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SubmissionTimeKeeperTest {
 
@@ -44,7 +44,7 @@ public class SubmissionTimeKeeperTest {
 	}
 
 	private static List<Integer> list(int... i) {
-		ArrayList<Integer> list = new ArrayList<Integer>();
+		ArrayList<Integer> list = new ArrayList<>();
 		for (int anInt : i) {
 			list.add(anInt);
 		}

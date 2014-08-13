@@ -118,11 +118,7 @@ public class FormServlet extends HttpServlet {
 					message = frontendMessage;
 				}
 				sendFrontendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
-			} catch (FormSubmissionHelperException e) {
-				String message = e.getMessage();
-				LOGGER.info(message, e);
-				sendFrontendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
-			} catch (FormParserException e) {
+			} catch (FormSubmissionHelperException | FormParserException e) {
 				String message = e.getMessage();
 				LOGGER.info(message, e);
 				sendFrontendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, response);
@@ -186,7 +182,7 @@ public class FormServlet extends HttpServlet {
 			@SuppressWarnings("unchecked")
 			Map<String, String[]> parameterMapMultiValue = request.getParameterMap();
 			Map<String, String> parameterMap = servletHelper.mapOfArraysToMapOfFirstValues(parameterMapMultiValue);
-			Set<String> paramsToRemove = new HashSet<String>();
+			Set<String> paramsToRemove = new HashSet<>();
 			// remove rf.xx values
 			for (String paramName : parameterMap.keySet()) {
 				if (paramName.startsWith("rf.")) {

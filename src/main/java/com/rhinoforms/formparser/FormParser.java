@@ -1,24 +1,13 @@
 package com.rhinoforms.formparser;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
-
-import org.htmlcleaner.ContentNode;
-import org.htmlcleaner.HtmlCleaner;
-import org.htmlcleaner.HtmlNode;
-import org.htmlcleaner.SimpleHtmlSerializer;
-import org.htmlcleaner.TagNode;
-import org.htmlcleaner.XPatherException;
+import com.rhinoforms.Constants;
+import com.rhinoforms.RhinoformsProperties;
+import com.rhinoforms.flow.*;
+import com.rhinoforms.js.JSMasterScope;
+import com.rhinoforms.resourceloader.ResourceLoader;
+import com.rhinoforms.resourceloader.ResourceLoaderException;
+import com.rhinoforms.util.StreamUtils;
+import org.htmlcleaner.*;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.slf4j.Logger;
@@ -27,19 +16,13 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.rhinoforms.Constants;
-import com.rhinoforms.RhinoformsProperties;
-import com.rhinoforms.flow.FieldSourceProxy;
-import com.rhinoforms.flow.FlowAction;
-import com.rhinoforms.flow.FlowActionType;
-import com.rhinoforms.flow.FormFlow;
-import com.rhinoforms.flow.InputPojo;
-import com.rhinoforms.flow.ProxyFactory;
-import com.rhinoforms.flow.SubmissionTimeKeeper;
-import com.rhinoforms.js.JSMasterScope;
-import com.rhinoforms.resourceloader.ResourceLoader;
-import com.rhinoforms.resourceloader.ResourceLoaderException;
-import com.rhinoforms.util.StreamUtils;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.util.*;
 
 public class FormParser {
 
@@ -136,15 +119,7 @@ public class FormParser {
 	
 			// Write out processed document
 			new SimpleHtmlSerializer(htmlCleaner.getProperties()).write(formHtml, writer, "utf-8");
-		} catch (IOException e) {
-			throw new FormParserException(e);
-		} catch (XPatherException e) {
-			throw new FormParserException(e);
-		} catch (ResourceLoaderException e) {
-			throw new FormParserException(e);
-		} catch (XPathExpressionException e) {
-			throw new FormParserException(e);
-		} catch (ValueInjectorException e) {
+		} catch (IOException | XPatherException | ResourceLoaderException | XPathExpressionException | ValueInjectorException e) {
 			throw new FormParserException(e);
 		}
 	}
@@ -284,8 +259,8 @@ public class FormParser {
 
 	private void recordInputFieldsPushInValues(TagNode formNode, FormFlow formFlow, Document dataDocument, String docBase)
 			throws XPathExpressionException, XPatherException {
-		List<InputPojo> inputPojos = new ArrayList<InputPojo>();
-		Map<String, InputPojo> inputPojosMap = new HashMap<String, InputPojo>();
+		List<InputPojo> inputPojos = new ArrayList<>();
+		Map<String, InputPojo> inputPojosMap = new HashMap<>();
 
 		@SuppressWarnings("unchecked")
 		List<TagNode> inputs = formNode.getElementListByName(INPUT, true);
@@ -313,7 +288,7 @@ public class FormParser {
 					if (!(type.equals(RADIO) && inputPojosMap.containsKey(name))) {
 
 						// Collect all rf.xxx attributes
-						Map<String, String> rfAttributes = new HashMap<String, String>();
+						Map<String, String> rfAttributes = new HashMap<>();
 						Map<String, String> attributes = inputTagNode.getAttributes();
 						for (String attName : attributes.keySet()) {
 							if (attName.startsWith("rf.")) {

@@ -1,25 +1,17 @@
 package com.rhinoforms.flow;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Stack;
-
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.dom.DOMResult;
-import javax.xml.xpath.XPathExpressionException;
-
+import com.rhinoforms.xml.DocumentHelper;
+import com.rhinoforms.xml.FlowExceptionXPath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
-import com.rhinoforms.xml.DocumentHelper;
-import com.rhinoforms.xml.FlowExceptionXPath;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.dom.DOMResult;
+import javax.xml.xpath.XPathExpressionException;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.*;
 
 public class FormFlow implements Serializable {
 
@@ -46,10 +38,10 @@ public class FormFlow implements Serializable {
 
 	public FormFlow() {
 		this.flowId = (int) (Math.random() * 100000000f) + "";
-		this.formLists = new HashMap<String, List<Form>>();
-		this.navigationStack = new Stack<FlowNavigationLevel>();
-		this.fieldSourceProxies = new HashMap<String, FieldSourceProxy>();
-		this.libraries = new ArrayList<String>();
+		this.formLists = new HashMap<>();
+		this.navigationStack = new Stack<>();
+		this.fieldSourceProxies = new HashMap<>();
+		this.libraries = new ArrayList<>();
 		
 		this.disableInputsOnSubmit = true;
 	}
@@ -79,11 +71,11 @@ public class FormFlow implements Serializable {
 		
 		List<Submission> submissions = flowAction.getSubmissions();
 		if (submissions != null) {
-			List<Integer> times = new ArrayList<Integer>();
+			List<Integer> times = new ArrayList<>();
 			long startTime;
 			for (Submission submission : submissions) {
 				startTime = new Date().getTime();
-				Map<String, String> xsltParameters = new HashMap<String, String>();
+				Map<String, String> xsltParameters = new HashMap<>();
 				xsltParameters.put("rf.flowId", flowId);
 				xsltParameters.put("rf.formId", getCurrentFormId());
 				xsltParameters.put("rf.actionName", actionName);
@@ -100,9 +92,7 @@ public class FormFlow implements Serializable {
 				DOMResult domResult = new DOMResult();
 				transformHelper.handleTransform(flowAction.getDataDocTransform(), true, null, dataDocument, domResult);
 				dataDocument = (Document) domResult.getNode();
-			} catch (TransformerException e) {
-				throw new FlowExceptionActionError(message, e);
-			} catch (IOException e) {
+			} catch (TransformerException | IOException e) {
 				throw new FlowExceptionActionError(message, e);
 			}
 		}
@@ -248,7 +238,7 @@ public class FormFlow implements Serializable {
 	}
 
 	protected Map<String, String> filterActionParams(Map<String, String> paramsFromFontend, Map<String, String> paramsFromFlowAction) {
-		HashMap<String, String> filteredActionParams = new HashMap<String, String>();
+		HashMap<String, String> filteredActionParams = new HashMap<>();
 		if (paramsFromFlowAction != null) {
 			for (String key : paramsFromFlowAction.keySet()) {
 				String value = paramsFromFlowAction.get(key);

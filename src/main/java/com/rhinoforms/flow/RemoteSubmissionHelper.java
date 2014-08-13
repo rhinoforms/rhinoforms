@@ -1,34 +1,5 @@
 package com.rhinoforms.flow;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.ConnectException;
-import java.net.HttpURLConnection;
-import java.net.URLEncoder;
-import java.util.Map;
-
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPathExpressionException;
-
-import net.sf.json.JSON;
-import net.sf.json.JSONSerializer;
-import net.sf.json.xml.XMLSerializer;
-
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Text;
-
 import com.rhinoforms.formparser.ValueInjector;
 import com.rhinoforms.formparser.ValueInjectorException;
 import com.rhinoforms.net.ConnectionFactory;
@@ -38,6 +9,25 @@ import com.rhinoforms.util.StreamUtils;
 import com.rhinoforms.xml.DocumentHelper;
 import com.rhinoforms.xml.DocumentHelperException;
 import com.rhinoforms.xml.FlowExceptionXPath;
+import net.sf.json.JSON;
+import net.sf.json.JSONSerializer;
+import net.sf.json.xml.XMLSerializer;
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
+
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPathExpressionException;
+import java.io.*;
+import java.net.ConnectException;
+import java.net.HttpURLConnection;
+import java.net.URLEncoder;
+import java.util.Map;
 
 public class RemoteSubmissionHelper {
 
@@ -89,9 +79,7 @@ public class RemoteSubmissionHelper {
 				documentHelper.documentToWriter(dataDocument, stringWriter, submission.isOmitXmlDeclaration());
 				dataDocumentString = stringWriter.toString();
 			}
-		} catch (TransformerException e) {
-			throw new RemoteSubmissionHelperException("Error while " + message, e);
-		} catch (IOException e) {
+		} catch (TransformerException | IOException e) {
 			throw new RemoteSubmissionHelperException("Error while " + message, e);
 		}
 
@@ -219,8 +207,8 @@ public class RemoteSubmissionHelper {
 				String contentType = connection.getContentType();
 				LOGGER.info("Response content type: {}", contentType);
 				
-				InputStream inputStream = connection.getInputStream();
-				try {
+
+				try (InputStream inputStream = connection.getInputStream()) {
 					if (resultInsertPoint != null) {
 						
 						Node insertPointNode = documentHelper.lookupOrCreateNode(dataDocument, resultInsertPoint);
@@ -272,8 +260,6 @@ public class RemoteSubmissionHelper {
 					} else {
 						LOGGER.info("Response body: {}", new String(new StreamUtils().readStream(connection.getInputStream())));
 					}
-				} finally {
-					inputStream.close();
 				}
 			} else {
 				throw new RemoteSubmissionHelperException("Bad response from target service. Status:" + responseCode + ", message:"

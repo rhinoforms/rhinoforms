@@ -1,31 +1,19 @@
 package com.rhinoforms.flow;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.EcmaError;
-import org.mozilla.javascript.NativeArray;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.WrappedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.rhinoforms.Constants;
 import com.rhinoforms.js.FlowExceptionFileNotFound;
 import com.rhinoforms.js.JSMasterScope;
 import com.rhinoforms.js.JSSerialiser;
 import com.rhinoforms.xml.DocumentHelper;
 import com.rhinoforms.xml.FlowExceptionXPath;
+import org.mozilla.javascript.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.*;
 
 public class FormSubmissionHelper {
 
@@ -44,7 +32,7 @@ public class FormSubmissionHelper {
 			throws IOException, FlowExceptionActionError, FlowExceptionBadRequest, FlowExceptionFileNotFound, FlowExceptionJavaScript, FlowExceptionXPath {
 		FormSubmissionResult formSubmissionResult = new FormSubmissionResult();
 		
-		Map<String, String> actionParams = new HashMap<String, String>();
+		Map<String, String> actionParams = new HashMap<>();
 		String actionName = collectActionParameters(actionParams, parameterMap);
 
 		FlowAction flowAction = formFlow.getCurrentActions().get(actionName);
@@ -113,7 +101,7 @@ public class FormSubmissionHelper {
 
 		// If Back action remove any invalid input
 		if (actionType == FlowActionType.BACK && !fieldsInError.isEmpty()) {
-			HashSet<InputPojo> inputPOJOsToRemove = new HashSet<InputPojo>();
+			HashSet<InputPojo> inputPOJOsToRemove = new HashSet<>();
 			for (InputPojo inputPojo : inputPojos) {
 				if (fieldsInError.contains(inputPojo.getName())) {
 					inputPOJOsToRemove.add(inputPojo);
@@ -134,8 +122,8 @@ public class FormSubmissionHelper {
 	}
 
 	List<InputPojo> getIncludeFalseInputs(List<InputPojo> inputPojos, Scriptable workingScope) {
-		List<InputPojo> includeFalseInputPojos = new ArrayList<InputPojo>();
-		List<InputPojo> inputsWithIncludeIfStatements = new ArrayList<InputPojo>();
+		List<InputPojo> includeFalseInputPojos = new ArrayList<>();
+		List<InputPojo> inputsWithIncludeIfStatements = new ArrayList<>();
 		for (InputPojo inputPojo : inputPojos) {
 			if (inputPojo.getRfAttributes().containsKey(Constants.INCLUDE_IF_ATTR)) {
 				inputsWithIncludeIfStatements.add(inputPojo);
@@ -159,7 +147,7 @@ public class FormSubmissionHelper {
 	}
 
 	void processCalculatedFields(List<InputPojo> inputPojos, Scriptable workingScope) {
-		List<InputPojo> inputsWithCalculatedStatements = new ArrayList<InputPojo>();
+		List<InputPojo> inputsWithCalculatedStatements = new ArrayList<>();
 		for (InputPojo inputPojo : inputPojos) {
 			if (inputPojo.getRfAttributes().containsKey(Constants.CALCULATED_ATTR)) {
 				inputsWithCalculatedStatements.add(inputPojo);
@@ -185,7 +173,7 @@ public class FormSubmissionHelper {
 	}
 	
 	Set<String> validateInput(List<InputPojo> inputPojos, String actionName, Scriptable workingScope) throws FlowExceptionJavaScript {
-		Set<String> fieldsInError = new HashSet<String>();
+		Set<String> fieldsInError = new HashSet<>();
 		String jsPojoMapString = jsSerialiser.inputPOJOListToJS(inputPojos);
 		logger.debug("inputPojos as js:{}", jsPojoMapString);
 		StringBuilder commandStringBuilder = new StringBuilder();
@@ -221,7 +209,7 @@ public class FormSubmissionHelper {
 	}
 	
 	private Map<String, String> paramsStringToMap(String params) {
-		Map<String, String> paramsMap = new HashMap<String, String>();
+		Map<String, String> paramsMap = new HashMap<>();
 		if (params != null) {
 			StringTokenizer st = new StringTokenizer(params, "&");
 			while (st.hasMoreTokens()) {

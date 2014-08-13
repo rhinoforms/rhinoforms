@@ -1,27 +1,5 @@
 package com.rhinoforms.formparser;
 
-import static com.rhinoforms.TestUtil.createDocument;
-import static com.rhinoforms.TestUtil.serialiseHtmlCleanerNode;
-
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
-
-import junit.framework.Assert;
-
-import org.htmlcleaner.HtmlCleaner;
-import org.htmlcleaner.TagNode;
-import org.junit.Before;
-import org.junit.Test;
-import org.mozilla.javascript.Context;
-import org.w3c.dom.Document;
-
 import com.rhinoforms.TestApplicationContext;
 import com.rhinoforms.flow.FormFlow;
 import com.rhinoforms.flow.FormFlowFactory;
@@ -29,6 +7,20 @@ import com.rhinoforms.flow.InputPojo;
 import com.rhinoforms.flow.SubmissionTimeKeeper;
 import com.rhinoforms.js.JSMasterScope;
 import com.rhinoforms.xml.DocumentHelper;
+import junit.framework.Assert;
+import org.htmlcleaner.HtmlCleaner;
+import org.htmlcleaner.TagNode;
+import org.junit.Before;
+import org.junit.Test;
+import org.mozilla.javascript.Context;
+import org.w3c.dom.Document;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.rhinoforms.TestUtil.createDocument;
+import static com.rhinoforms.TestUtil.serialiseHtmlCleanerNode;
 
 public class FormParserTest {
 
@@ -113,7 +105,7 @@ public class FormParserTest {
 	
 	@Test
 	public void testActionEstimate() throws Exception {
-		ArrayList<Integer> times = new ArrayList<Integer>();
+		ArrayList<Integer> times = new ArrayList<>();
 		times.add(5133);
 		submissionTimeKeeper.recordTimeTaken("one", "next", times);
 		

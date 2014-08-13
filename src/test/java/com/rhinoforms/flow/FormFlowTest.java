@@ -1,20 +1,18 @@
 package com.rhinoforms.flow;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.rhinoforms.ApplicationContext;
+import com.rhinoforms.TestApplicationContext;
+import com.rhinoforms.resourceloader.ResourceLoaderException;
+import com.rhinoforms.xml.DocumentHelper;
 import junit.framework.Assert;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 
-import com.rhinoforms.ApplicationContext;
-import com.rhinoforms.TestApplicationContext;
-import com.rhinoforms.resourceloader.ResourceLoaderException;
-import com.rhinoforms.xml.DocumentHelper;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FormFlowTest {
 
@@ -25,7 +23,7 @@ public class FormFlowTest {
 
 	@Before
 	public void setup() throws IOException, FormFlowFactoryException, ResourceLoaderException {
-		this.actionParams = new HashMap<String, String>();
+		this.actionParams = new HashMap<>();
 		this.documentHelper = new DocumentHelper();
 		
 		Context.enter();
@@ -108,11 +106,11 @@ public class FormFlowTest {
 
 	@Test
 	public void testFilterActionParams() throws Exception {
-		HashMap<String, String> paramsFromFlowAction = new HashMap<String, String>();
+		HashMap<String, String> paramsFromFlowAction = new HashMap<>();
 		paramsFromFlowAction.put("pondIndex", "?");
 		paramsFromFlowAction.put("fishIndex", "next");
 
-		HashMap<String, String> paramsFromFontend = new HashMap<String, String>();
+		HashMap<String, String> paramsFromFontend = new HashMap<>();
 		paramsFromFontend.put("pondIndex", "2");
 		paramsFromFontend.put("fishIndex", "3");
 		paramsFromFontend.put("anotherIndex", "5");

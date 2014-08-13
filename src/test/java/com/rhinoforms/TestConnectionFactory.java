@@ -1,5 +1,8 @@
 package com.rhinoforms;
 
+import com.rhinoforms.net.ConnectionFactory;
+import org.apache.commons.io.output.ByteArrayOutputStream;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,15 +13,11 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.io.output.ByteArrayOutputStream;
-
-import com.rhinoforms.net.ConnectionFactory;
-
 public class TestConnectionFactory implements ConnectionFactory {
 
 	private String recordedRequestUrl;
 	private ByteArrayOutputStream recordedRequestStream = new ByteArrayOutputStream();
-	private Map<String, String> recordedRequestProperties = new HashMap<String, String>();
+	private Map<String, String> recordedRequestProperties = new HashMap<>();
 
 	private String testResponseString = "<defaultTestResult/>";
 	private int testResponseCode = 200;

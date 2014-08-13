@@ -1,12 +1,11 @@
 package com.rhinoforms.flow;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.w3c.dom.Document;
-
 import com.rhinoforms.TestApplicationContext;
 import com.rhinoforms.TestUtil;
+import org.w3c.dom.Document;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class RemoteSubmissionHelperIntegrationTestManual {
 	
@@ -26,7 +25,7 @@ public class RemoteSubmissionHelperIntegrationTestManual {
 		remoteSubmissionHelper = applicationContext.getRemoteSubmissionHelper();
 		dataDocumentString = "<myData><something>aaa</something></myData>";
 		dataDocument = TestUtil.createDocument(dataDocumentString);
-		xsltParameters = new HashMap<String, String>();
+		xsltParameters = new HashMap<>();
 		formFlow = new FormFlow();
 		formFlow.setDataDocument(dataDocument);
 	}

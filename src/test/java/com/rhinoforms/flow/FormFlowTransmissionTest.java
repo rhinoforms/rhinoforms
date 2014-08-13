@@ -1,21 +1,18 @@
 package com.rhinoforms.flow;
 
-import java.util.HashMap;
-
-import javax.xml.transform.TransformerException;
-
+import com.rhinoforms.ApplicationContext;
+import com.rhinoforms.TestApplicationContext;
+import com.rhinoforms.TestUtil;
+import com.rhinoforms.xml.DocumentHelper;
 import junit.framework.Assert;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.w3c.dom.Document;
 
-import com.rhinoforms.ApplicationContext;
-import com.rhinoforms.TestApplicationContext;
-import com.rhinoforms.TestUtil;
-import com.rhinoforms.xml.DocumentHelper;
+import javax.xml.transform.TransformerException;
+import java.util.HashMap;
 
 public class FormFlowTransmissionTest {
 
@@ -29,7 +26,7 @@ public class FormFlowTransmissionTest {
 
 	@Before
 	public void setup() throws Exception {
-		this.actionParams = new HashMap<String, String>();
+		this.actionParams = new HashMap<>();
 		this.documentHelper = new DocumentHelper();
 		
 		dataDocumentString = "<myData><toCopy>Pre transform string</toCopy><another>anotherVal</another></myData>";

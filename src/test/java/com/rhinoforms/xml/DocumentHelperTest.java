@@ -1,22 +1,19 @@
 package com.rhinoforms.xml;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
+import com.rhinoforms.flow.InputPojo;
 import junit.framework.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
-import com.rhinoforms.flow.InputPojo;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class DocumentHelperTest {
 
@@ -29,7 +26,7 @@ public class DocumentHelperTest {
 	public void setup() throws Exception {
 		this.documentHelper = new DocumentHelper();
 		this.documentBasePath = "/myData";
-		this.inputPOJOs = new ArrayList<InputPojo>();
+		this.inputPOJOs = new ArrayList<>();
 	}
 
 	@Test
@@ -162,7 +159,7 @@ public class DocumentHelperTest {
 	public void testResolveXpathIndexesForAction_oneNumbered() throws Exception {
 		String initialDoc = "<myData><customers><customer><name>Kai</name></customer><customer><name>Sam</name></customer></customers></myData>";
 		setDoc(initialDoc);
-		HashMap<String, String> actionParams = new HashMap<String, String>();
+		HashMap<String, String> actionParams = new HashMap<>();
 		actionParams.put("indexA", "2");
 		
 		String resolvedXPath = documentHelper.resolveXPathIndexesForAction("testAction", "/myData/customers/customer[indexA]", actionParams, dataDocument);
@@ -174,7 +171,7 @@ public class DocumentHelperTest {
 	public void testResolveXpathIndexesForAction_twoNumbered() throws Exception {
 		String initialDoc = "<myData><customers><customer><name>Kai</name></customer><customer><name>Sam</name></customer></customers></myData>";
 		setDoc(initialDoc);
-		HashMap<String, String> actionParams = new HashMap<String, String>();
+		HashMap<String, String> actionParams = new HashMap<>();
 		actionParams.put("indexA", "1");
 		actionParams.put("indexB", "2");
 		
@@ -187,7 +184,7 @@ public class DocumentHelperTest {
 	public void testResolveXpathIndexesForAction_oneNamed() throws Exception {
 		String initialDoc = "<myData><customers><customer><name>Kai</name></customer><customer><name>Sam</name></customer></customers></myData>";
 		setDoc(initialDoc);
-		HashMap<String, String> actionParams = new HashMap<String, String>();
+		HashMap<String, String> actionParams = new HashMap<>();
 		actionParams.put("index", "next");
 		
 		String resolvedXPath = documentHelper.resolveXPathIndexesForAction("testAction", "/myData/customers/customer[index]", actionParams, dataDocument);

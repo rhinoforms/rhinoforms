@@ -1,5 +1,8 @@
 package com.rhinoforms.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -7,16 +10,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class URIUtil {
 
 	final Logger logger = LoggerFactory.getLogger(URIUtil.class);
 	private static final String UTF8 = "UTF-8";
 
 	public Map<String, String> paramsStringToMap(String params) {
-		Map<String, String> paramsMap = new HashMap<String, String>();
+		Map<String, String> paramsMap = new HashMap<>();
 		if (params != null) {
 			StringTokenizer st = new StringTokenizer(params, "&");
 			String paramValue = null;

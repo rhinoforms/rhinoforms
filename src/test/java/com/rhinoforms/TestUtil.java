@@ -1,20 +1,14 @@
 package com.rhinoforms;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
 import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.SimpleHtmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.w3c.dom.Document;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.*;
 
 /**
  * Hacky methods to help build tests
@@ -23,14 +17,11 @@ public class TestUtil {
 
 	public static String readFileContents(String filePath) throws IOException {
 		StringBuilder builder = new StringBuilder();
-		BufferedReader reader = new BufferedReader(new FileReader(filePath));
-		try {
+		try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
 			while (reader.ready()) {
 				builder.append(reader.readLine());
 				builder.append(Constants.NEW_LINE);
 			}
-		} finally {
-			reader.close();
 		}
 		return builder.toString();
 	}

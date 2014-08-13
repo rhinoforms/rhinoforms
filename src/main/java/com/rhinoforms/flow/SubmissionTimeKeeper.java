@@ -10,7 +10,7 @@ public class SubmissionTimeKeeper {
 	private int averageOf = 3;
 	
 	public SubmissionTimeKeeper() {
-		averages = new HashMap<String, List<Integer>>();
+		averages = new HashMap<>();
 	}
 	
 	public void recordTimeTaken(String formId, String action, List<Integer> times) {

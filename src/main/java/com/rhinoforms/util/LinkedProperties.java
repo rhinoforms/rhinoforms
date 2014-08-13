@@ -1,21 +1,17 @@
 package com.rhinoforms.util;
 
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.LinkedHashSet;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 public class LinkedProperties extends Properties {
 
 	private static final long serialVersionUID = 6565227944227691622L;
-	private final LinkedHashSet<Object> keys = new LinkedHashSet<Object>();
+	private final LinkedHashSet<Object> keys = new LinkedHashSet<>();
 
 	@Override
 	public Enumeration<Object> keys() {
-		return Collections.<Object> enumeration(keys);
+		return Collections.enumeration(keys);
 	}
-	
+
 	@Override
 	public Set<Object> keySet() {
 		return keys;

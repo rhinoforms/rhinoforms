@@ -1,18 +1,5 @@
 package com.rhinoforms.flow;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-
-import junit.framework.Assert;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
-
 import com.rhinoforms.Constants;
 import com.rhinoforms.TestNetUtil;
 import com.rhinoforms.TestResourceLoader;
@@ -20,6 +7,17 @@ import com.rhinoforms.js.JSMasterScope;
 import com.rhinoforms.js.RhinoFormsMasterScopeFactory;
 import com.rhinoforms.js.TestRhinoFormsMasterScopeFactory;
 import com.rhinoforms.resourceloader.ResourceLoaderImpl;
+import junit.framework.Assert;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Scriptable;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 
 public class FormSubmissionHelperTest {
 
@@ -53,8 +51,8 @@ public class FormSubmissionHelperTest {
 	
 	@Test
 	public void testValidationKeyword_required() throws Exception {
-		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
-		HashMap<String, String> rfAttributes = new HashMap<String, String>();
+		ArrayList<InputPojo> inputs = new ArrayList<>();
+		HashMap<String, String> rfAttributes = new HashMap<>();
 		rfAttributes.put(Constants.VALIDATION_ATTR, "required");
 		InputPojo married = new InputPojo("name", "text", rfAttributes);
 		married.setValue("");
@@ -70,8 +68,8 @@ public class FormSubmissionHelperTest {
 	
 	@Test
 	public void testValidationWithSpecialCharacter() throws Exception {
-		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
-		HashMap<String, String> rfAttributes = new HashMap<String, String>();
+		ArrayList<InputPojo> inputs = new ArrayList<>();
+		HashMap<String, String> rfAttributes = new HashMap<>();
 		rfAttributes.put(Constants.VALIDATION_ATTR, "required");
 		InputPojo married = new InputPojo("name", "text", rfAttributes);
 		married.setValue("\"");
@@ -83,8 +81,8 @@ public class FormSubmissionHelperTest {
 	
 	@Test
 	public void testValidationKeyword_date() throws Exception {
-		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
-		HashMap<String, String> rfAttributes = new HashMap<String, String>();
+		ArrayList<InputPojo> inputs = new ArrayList<>();
+		HashMap<String, String> rfAttributes = new HashMap<>();
 		rfAttributes.put(Constants.VALIDATION_ATTR, "date");
 		InputPojo dob = new InputPojo("dob", "text", rfAttributes);
 		dob.setValue("1");
@@ -103,8 +101,8 @@ public class FormSubmissionHelperTest {
 	@Test
 	public void testValidationKeyword_fromSource() throws Exception {
 		
-		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
-		HashMap<String, String> rfAttributes = new HashMap<String, String>();
+		ArrayList<InputPojo> inputs = new ArrayList<>();
+		HashMap<String, String> rfAttributes = new HashMap<>();
 		rfAttributes.put(Constants.SELECT_SOURCE_ATTR, "http://somewhere/something?value=[value]");
 		rfAttributes.put(Constants.VALIDATION_ATTR, "fromSource");
 		InputPojo occupation = new InputPojo("occupation", "text", rfAttributes);
@@ -126,11 +124,11 @@ public class FormSubmissionHelperTest {
 	
 	@Test
 	public void testValidationFunction() throws Exception {
-		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
+		ArrayList<InputPojo> inputs = new ArrayList<>();
 		InputPojo marriedInputPojo = new InputPojo("married", "checkbox", new HashMap<String, String>());
 		marriedInputPojo.setValue("true");
 		inputs.add(marriedInputPojo);
-		HashMap<String, String> rfAttributes = new HashMap<String, String>();
+		HashMap<String, String> rfAttributes = new HashMap<>();
 		rfAttributes.put(Constants.VALIDATION_FUNCTION_ATTR, "{ if(fields.married.value == true) { this.validate('required'); } }");
 		InputPojo madenNameInputPojo = new InputPojo("madenName", "text", rfAttributes);
 		inputs.add(madenNameInputPojo);
@@ -145,7 +143,7 @@ public class FormSubmissionHelperTest {
 	
 	@Test
 	public void testTextareaValidation() throws Exception {
-		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
+		ArrayList<InputPojo> inputs = new ArrayList<>();
 		InputPojo marriedInputPojo = new InputPojo("text", "textarea", new HashMap<String, String>());
 		marriedInputPojo.setValue("first line\nsecond line");
 		inputs.add(marriedInputPojo);
@@ -156,11 +154,11 @@ public class FormSubmissionHelperTest {
 	
 	@Test
 	public void testValidationFunctionUsingActionCondition() throws Exception {
-		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
+		ArrayList<InputPojo> inputs = new ArrayList<>();
 		InputPojo marriedInputPojo = new InputPojo("married", "checkbox", new HashMap<String, String>());
 		marriedInputPojo.setValue("true");
 		inputs.add(marriedInputPojo);
-		HashMap<String, String> rfAttributes = new HashMap<String, String>();
+		HashMap<String, String> rfAttributes = new HashMap<>();
 		rfAttributes.put(Constants.VALIDATION_FUNCTION_ATTR, "{ if(action == 'next' && fields.married.value == true) { this.validate('required'); } }");
 		InputPojo madenNameInputPojo = new InputPojo("madenName", "text", rfAttributes);
 		inputs.add(madenNameInputPojo);
@@ -179,15 +177,15 @@ public class FormSubmissionHelperTest {
 	
 //	@Test TODO: FIX - seems to only fail sometimes
 	public void testValidationFunctionUsingFlowLibrary() throws Exception {
-		ArrayList<String> librariesToPreload = new ArrayList<String>();
+		ArrayList<String> librariesToPreload = new ArrayList<>();
 		librariesToPreload.add("com/rhinoforms/flow/flow-library-example.js");
 		Scriptable scope = masterScope.createWorkingScope(librariesToPreload);
 		
-		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
+		ArrayList<InputPojo> inputs = new ArrayList<>();
 		InputPojo marriedInputPojo = new InputPojo("married", "checkbox", new HashMap<String, String>());
 		marriedInputPojo.setValue("true");
 		inputs.add(marriedInputPojo);
-		HashMap<String, String> rfAttributes = new HashMap<String, String>();
+		HashMap<String, String> rfAttributes = new HashMap<>();
 		rfAttributes.put(Constants.VALIDATION_FUNCTION_ATTR, "{ if( isTrue(fields.married.value) ) { this.validate('required'); } }");
 		InputPojo madenNameInputPojo = new InputPojo("madenName", "text", rfAttributes);
 		inputs.add(madenNameInputPojo);
@@ -202,13 +200,13 @@ public class FormSubmissionHelperTest {
 	
 	@Test
 	public void testGetIncludeFalseInputs() throws Exception {
-		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
+		ArrayList<InputPojo> inputs = new ArrayList<>();
 		
 		InputPojo movedHouseInput = new InputPojo("movedHouse", "checkbox", new HashMap<String, String>());
 		movedHouseInput.setValue("true");
 		inputs.add(movedHouseInput);
 		
-		HashMap<String, String> oldAddressRfAttributes = new HashMap<String, String>();
+		HashMap<String, String> oldAddressRfAttributes = new HashMap<>();
 		oldAddressRfAttributes.put(Constants.INCLUDE_IF_ATTR, "{ fields.movedHouse.value == true }");
 		InputPojo oldAddressInput = new InputPojo("oldAddress", "text", oldAddressRfAttributes);
 		inputs.add(oldAddressInput);
@@ -224,7 +222,7 @@ public class FormSubmissionHelperTest {
 	
 	@Test
 	public void testProcessCalculatedFields() {
-		ArrayList<InputPojo> inputs = new ArrayList<InputPojo>();
+		ArrayList<InputPojo> inputs = new ArrayList<>();
 		
 		InputPojo basePremium = new InputPojo("basePremium", "text", new HashMap<String, String>());
 		basePremium.setValue("100");
@@ -233,7 +231,7 @@ public class FormSubmissionHelperTest {
 		InputPojo voluntaryExcess = new InputPojo("voluntaryExcess", "text", new HashMap<String, String>());
 		inputs.add(voluntaryExcess);
 		
-		HashMap<String, String> premiumAttributes = new HashMap<String, String>();
+		HashMap<String, String> premiumAttributes = new HashMap<>();
 		premiumAttributes.put(Constants.CALCULATED_ATTR, "{ new Number(fields.basePremium.value) + ( 30 - (fields.voluntaryExcess.value * 3) ) }");
 		InputPojo premium = new InputPojo("premium", "text", premiumAttributes);
 		inputs.add(premium);

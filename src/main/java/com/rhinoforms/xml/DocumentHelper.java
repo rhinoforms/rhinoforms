@@ -1,15 +1,11 @@
 package com.rhinoforms.xml;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.rhinoforms.flow.InputPojo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -24,14 +20,16 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
-import com.rhinoforms.flow.InputPojo;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Stack;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DocumentHelper {
 
@@ -131,7 +129,7 @@ public class DocumentHelper {
 				throw new FlowExceptionXPath("XPath matches more than one node '" + xPathString + "'.");
 			} else {
 				String[] xPathStringParts = xPathString.split("/");
-				Stack<String> xPathPartsStack = new Stack<String>();
+				Stack<String> xPathPartsStack = new Stack<>();
 				Collections.addAll(xPathPartsStack, xPathStringParts);
 				Collections.reverse(xPathPartsStack);
 				xPathPartsStack.pop(); // discard blank string from before first

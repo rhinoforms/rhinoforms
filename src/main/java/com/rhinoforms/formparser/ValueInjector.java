@@ -1,39 +1,28 @@
 package com.rhinoforms.formparser;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.xml.transform.TransformerException;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-
+import com.rhinoforms.Constants;
+import com.rhinoforms.flow.FormFlowFactoryException;
+import com.rhinoforms.xml.DocumentHelper;
 import org.apache.commons.io.output.StringBuilderWriter;
-import org.htmlcleaner.ContentNode;
-import org.htmlcleaner.HtmlCleaner;
-import org.htmlcleaner.HtmlNode;
-import org.htmlcleaner.SimpleHtmlSerializer;
-import org.htmlcleaner.TagNode;
+import org.htmlcleaner.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.rhinoforms.Constants;
-import com.rhinoforms.flow.FormFlowFactoryException;
-import com.rhinoforms.xml.DocumentHelper;
+import javax.xml.transform.TransformerException;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ValueInjector {
 
@@ -89,7 +78,7 @@ public class ValueInjector {
 		
 		logger.debug("Processing {} nodes. Found at top level: {}", new Object[] {tags.getForEachTag(), forEachNodes.size()});
 		for (TagNode forEachNode : forEachNodes) {
-			Map<String, Node> contextNodes = new HashMap<String, Node>();
+			Map<String, Node> contextNodes = new HashMap<>();
 			processForEachStatement(properties, forEachNode, dataDocument, docBase, contextNodes, 0);
 		}
 	}	
@@ -217,7 +206,7 @@ public class ValueInjector {
 	}
 
 	private List<TagNode> filterNestedForEachElements(TagNode baseNode, List<TagNode> forEachNodes) {
-		List<TagNode> tagNodesToRemove = new ArrayList<TagNode>();
+		List<TagNode> tagNodesToRemove = new ArrayList<>();
 		for (TagNode tagNode : forEachNodes) {
 			if (hasForEachParentBelowBase(tagNode, baseNode)) {
 				tagNodesToRemove.add(tagNode);
@@ -226,7 +215,7 @@ public class ValueInjector {
 		if (tagNodesToRemove.isEmpty()) {
 			return forEachNodes;
 		} else {
-			forEachNodes = new ArrayList<TagNode>(forEachNodes);
+			forEachNodes = new ArrayList<>(forEachNodes);
 			forEachNodes.removeAll(tagNodesToRemove);
 			return forEachNodes;
 		}

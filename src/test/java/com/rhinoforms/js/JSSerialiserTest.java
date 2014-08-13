@@ -1,15 +1,13 @@
 package com.rhinoforms.js;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
+import com.rhinoforms.Constants;
+import com.rhinoforms.flow.InputPojo;
 import junit.framework.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rhinoforms.Constants;
-import com.rhinoforms.flow.InputPojo;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class JSSerialiserTest {
 
@@ -22,7 +20,7 @@ public class JSSerialiserTest {
 	
 	@Test
 	public void testNameWithDot() throws Exception {
-		ArrayList<InputPojo> inputPojos = new ArrayList<InputPojo>();
+		ArrayList<InputPojo> inputPojos = new ArrayList<>();
 		inputPojos.add(new InputPojo("parent.one", "text", new HashMap<String, String>()));
 		String js = jsSerialiser.inputPOJOListToJS(inputPojos);
 		Assert.assertEquals("{\"parent_one\":{name:\"parent.one\",value:\"\",rfAttributes:{},included:true}}", js);
@@ -30,7 +28,7 @@ public class JSSerialiserTest {
 	
 	@Test
 	public void testNoName() throws Exception {
-		ArrayList<InputPojo> inputPojos = new ArrayList<InputPojo>();
+		ArrayList<InputPojo> inputPojos = new ArrayList<>();
 		inputPojos.add(new InputPojo("", "text", new HashMap<String, String>()));
 		String js = jsSerialiser.inputPOJOListToJS(inputPojos);
 		Assert.assertEquals("{}", js);
@@ -38,7 +36,7 @@ public class JSSerialiserTest {
 	
 	@Test
 	public void testNoAtt() throws Exception {
-		ArrayList<InputPojo> inputPojos = new ArrayList<InputPojo>();
+		ArrayList<InputPojo> inputPojos = new ArrayList<>();
 		inputPojos.add(new InputPojo("one", "text", new HashMap<String, String>()));
 		String js = jsSerialiser.inputPOJOListToJS(inputPojos);
 //		System.out.println(js.replaceAll("\"", "\\\\\""));
@@ -47,7 +45,7 @@ public class JSSerialiserTest {
 	
 	@Test
 	public void testValueWithSpecialCharacter() throws Exception {
-		ArrayList<InputPojo> inputPojos = new ArrayList<InputPojo>();
+		ArrayList<InputPojo> inputPojos = new ArrayList<>();
 		inputPojos.add(new InputPojo("one", "text", "\""));
 		String js = jsSerialiser.inputPOJOListToJS(inputPojos);
 		Assert.assertEquals("{\"one\":{name:\"one\",value:\"\\\"\",rfAttributes:{},included:true}}", js);
@@ -55,7 +53,7 @@ public class JSSerialiserTest {
 	
 	@Test
 	public void testValueWithNewlineCharacter() throws Exception {
-		ArrayList<InputPojo> inputPojos = new ArrayList<InputPojo>();
+		ArrayList<InputPojo> inputPojos = new ArrayList<>();
 		inputPojos.add(new InputPojo("one", "text", "one\ntwo"));
 		String js = jsSerialiser.inputPOJOListToJS(inputPojos);
 		Assert.assertEquals("{\"one\":{name:\"one\",value:\"one\\ntwo\",rfAttributes:{},included:true}}", js);
@@ -63,8 +61,8 @@ public class JSSerialiserTest {
 	
 	@Test
 	public void testValAtt() throws Exception {
-		ArrayList<InputPojo> inputPojos = new ArrayList<InputPojo>();
-		HashMap<String, String> rfAttributes = new HashMap<String, String>();
+		ArrayList<InputPojo> inputPojos = new ArrayList<>();
+		HashMap<String, String> rfAttributes = new HashMap<>();
 		rfAttributes.put(Constants.VALIDATION_ATTR, "required");
 		inputPojos.add(new InputPojo("one", "text", rfAttributes));
 		String js = jsSerialiser.inputPOJOListToJS(inputPojos);
@@ -74,8 +72,8 @@ public class JSSerialiserTest {
 	
 	@Test
 	public void testValFuncAtt() throws Exception {
-		ArrayList<InputPojo> inputPojos = new ArrayList<InputPojo>();
-		HashMap<String, String> rfAttributes = new HashMap<String, String>();
+		ArrayList<InputPojo> inputPojos = new ArrayList<>();
+		HashMap<String, String> rfAttributes = new HashMap<>();
 		rfAttributes.put(Constants.VALIDATION_FUNCTION_ATTR, "{ if(fields.veggie.value == false) { this.validate(\"required\"); } }");
 		inputPojos.add(new InputPojo("one", "text", rfAttributes));
 		String js = jsSerialiser.inputPOJOListToJS(inputPojos);
@@ -85,8 +83,8 @@ public class JSSerialiserTest {
 	
 	@Test
 	public void testSourceAtt() throws Exception {
-		ArrayList<InputPojo> inputPojos = new ArrayList<InputPojo>();
-		HashMap<String, String> rfAttributes = new HashMap<String, String>();
+		ArrayList<InputPojo> inputPojos = new ArrayList<>();
+		HashMap<String, String> rfAttributes = new HashMap<>();
 		rfAttributes.put(Constants.SELECT_SOURCE_ATTR, "http://somewhere/something?occupation=bricklayer");
 		inputPojos.add(new InputPojo("one", "text", rfAttributes));
 		String js = jsSerialiser.inputPOJOListToJS(inputPojos);
@@ -96,8 +94,8 @@ public class JSSerialiserTest {
 	
 	@Test
 	public void testAllAtt() throws Exception {
-		ArrayList<InputPojo> inputPojos = new ArrayList<InputPojo>();
-		HashMap<String, String> rfAttributes = new HashMap<String, String>();
+		ArrayList<InputPojo> inputPojos = new ArrayList<>();
+		HashMap<String, String> rfAttributes = new HashMap<>();
 		rfAttributes.put(Constants.VALIDATION_ATTR, "required");
 		rfAttributes.put(Constants.VALIDATION_FUNCTION_ATTR, "{ if(fields.veggie.value == false) { this.validate(\"required\"); } }");
 		rfAttributes.put(Constants.SELECT_SOURCE_ATTR, "http://somewhere/something?occupation=bricklayer");

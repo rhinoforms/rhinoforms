@@ -1,14 +1,14 @@
 package com.rhinoforms.formparser;
 
+import com.rhinoforms.resourceloader.ResourceLoader;
+import com.rhinoforms.resourceloader.ResourceLoaderException;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.rhinoforms.resourceloader.ResourceLoader;
-import com.rhinoforms.resourceloader.ResourceLoaderException;
 
 public class SelectOptionHelper {
 
@@ -19,7 +19,7 @@ public class SelectOptionHelper {
 	}
 
 	public List<SelectOptionPojo> loadOptions(String source) throws ResourceLoaderException {
-		List<SelectOptionPojo> options = new ArrayList<SelectOptionPojo>();
+		List<SelectOptionPojo> options = new ArrayList<>();
 		boolean csv = source.toLowerCase().endsWith(".csv");
 		try {
 			InputStream resourceAsStream = resourceLoader.getFormResourceAsStream(source);

@@ -9,7 +9,7 @@ public enum FlowActionType {
 
 	private static final Set<String> stringValues;
 	static {
-		stringValues = new HashSet<String>();
+		stringValues = new HashSet<>();
 		for (FlowActionType flowActionType : FlowActionType.values()) {
 			stringValues.add(flowActionType.toString());
 		}
