@@ -33,6 +33,7 @@ import org.w3c.dom.NodeList;
 
 import com.rhinoforms.Constants;
 import com.rhinoforms.flow.FormFlowFactoryException;
+import com.rhinoforms.util.XPathFactoryPool;
 import com.rhinoforms.xml.DocumentHelper;
 
 public class ValueInjector {
@@ -40,12 +41,11 @@ public class ValueInjector {
 	private static final Pattern CURLY_BRACKET_CONTENTS_PATTERN = Pattern.compile(".*?\\{\\{([^}]+)\\}\\}.*", Pattern.DOTALL);
 	private static final Pattern CURLY_BRACKET_PROPERTY_PATTERN = Pattern.compile(".*?\\{\\{\\$([^}]+)\\}\\}.*", Pattern.DOTALL);
 	private static final String NESTED_FOR_EACH_NODE_PLACEHOLDER_ATTRIBUTE = "data-rf_nestedForEachNodePlaceholder";
-	private static final XPathFactory xPathFactory = XPathFactory.newInstance();
+	private static final XPathFactoryPool xPathFactoryPool = new XPathFactoryPool();
 	private HtmlCleaner htmlCleaner;
 	private SimpleHtmlSerializer simpleHtmlSerializer;
 	private DocumentHelper documentHelper;
 	private HtmlTags tags;
-	
 	private final Logger logger = LoggerFactory.getLogger(ValueInjector.class);
 
 	public ValueInjector(HtmlCleaner htmlCleaner, SimpleHtmlSerializer simpleHtmlSerializer, HtmlTags tags) {
@@ -54,7 +54,7 @@ public class ValueInjector {
 		this.tags = tags;
 		documentHelper = new DocumentHelper();
 	}
-	
+
 	public void processHtmlTemplate(InputStream htmlTemplateInputStream, Document dataDocument, String docBase, Properties properties, OutputStream processedHtmlOutputStream) throws IOException, XPathExpressionException, ValueInjectorException {
 		TagNode html = htmlCleaner.clean(htmlTemplateInputStream);
 		if (docBase == null) {
@@ -62,7 +62,7 @@ public class ValueInjector {
 		}
 		processForEachStatements(properties, html, dataDocument, docBase);
 		processCurlyBrackets(dataDocument, html, properties, docBase);
-		
+
 		TagNode bodyElement = html.getElementsByName("body", false)[0];
 		serializeChildren(bodyElement, processedHtmlOutputStream);
 	}
@@ -86,18 +86,18 @@ public class ValueInjector {
 	public void processForEachStatements(Properties properties, TagNode formHtml, Document dataDocument, String docBase) throws XPathExpressionException, IOException, ValueInjectorException {
 		List<TagNode> forEachNodes = Arrays.asList(formHtml.getElementsByName(tags.getForEachTag(), true));
 		forEachNodes = filterNestedForEachElements(formHtml, forEachNodes);
-		
-		logger.debug("Processing {} nodes. Found at top level: {}", new Object[] {tags.getForEachTag(), forEachNodes.size()});
+
+		logger.debug("Processing {} nodes. Found at top level: {}", new Object[]{tags.getForEachTag(), forEachNodes.size()});
 		for (TagNode forEachNode : forEachNodes) {
 			Map<String, Node> contextNodes = new HashMap<String, Node>();
 			processForEachStatement(properties, forEachNode, dataDocument, docBase, contextNodes, 0);
 		}
-	}	
-	
+	}
+
 	public void processForEachStatement(Properties properties, TagNode forEachNode, Document dataDocument, String docBase, Map<String, Node> contextNodes, int level) throws XPathExpressionException, IOException, ValueInjectorException {
 		String selectPath = forEachNode.getAttributeByName("select");
 		String selectAsName = forEachNode.getAttributeByName("as");
-		
+
 		// Replace nested for loops with placeholders
 		List<TagNode> nestedForEachNodes = Arrays.asList(forEachNode.getElementsByName(tags.getForEachTag(), true));
 		nestedForEachNodes = filterNestedForEachElements(forEachNode, nestedForEachNodes);
@@ -108,7 +108,7 @@ public class ValueInjector {
 			nestedForEachNode.getParent().replaceChild(nestedForEachNode, nestedForEachNodePlaceholder);
 			nestedForEachNode.removeFromTree();
 		}
-		
+
 		String forEachNodeContents = nodeToStringBuilder(forEachNode).toString();
 		// Remove whitespace at beginning
 		forEachNodeContents = forEachNodeContents.replaceFirst("<rf\\.foreach [^>]*?>\\s*?\n", "<rf.foreach>");
@@ -120,31 +120,33 @@ public class ValueInjector {
 			} else {
 				selectXpath = selectPath;
 			}
+			XPathFactory xPathFactory = xPathFactoryPool.getInstance();
 			XPathExpression selectExpression = xPathFactory.newXPath().compile(selectXpath);
 			logger.debug("Select xpath: {}", selectXpath);
 			NodeList dataNodeList = (NodeList) selectExpression.evaluate(dataDocument, XPathConstants.NODESET);
+			xPathFactoryPool.returnInstance(xPathFactory);
 			logger.debug("Nodes found count: {}", dataNodeList.getLength());
 			for (int dataNodeindex = 0; dataNodeindex < dataNodeList.getLength(); dataNodeindex++) {
 				Node dataNode = dataNodeList.item(dataNodeindex);
 				logger.debug("DataNode: " + dataNode.getNodeName());
 				contextNodes.put(selectAsName, dataNode);
-				
+
 				TagNode iterationContainer = addContainerBeforeNode(forEachNode);
-				
+
 				logger.debug("forEachNodeContents: {}", forEachNodeContents);
-				
+
 				StringBuilder thisForEachNodeContents = new StringBuilder(forEachNodeContents);
 				replaceCurlyBrackets(properties, thisForEachNodeContents, dataDocument, contextNodes, dataNodeindex + 1);
-				
+
 				logger.debug("thisForEachNodeContents: {}", thisForEachNodeContents);
-				
+
 				TagNode processedForEachNode = stringBuilderToNode(thisForEachNodeContents);
 				@SuppressWarnings("unchecked")
 				List<HtmlNode> children = processedForEachNode.getChildren();
 				for (HtmlNode child : children) {
 					iterationContainer.addChild(child);
 				}
-				
+
 				// Put back nested for loops
 				List<TagNode> iterationNestedForEachNodePlaceholders = Arrays.asList(iterationContainer.getElementsHavingAttribute(NESTED_FOR_EACH_NODE_PLACEHOLDER_ATTRIBUTE, true));
 				for (TagNode placeholder : iterationNestedForEachNodePlaceholders) {
@@ -155,14 +157,14 @@ public class ValueInjector {
 					parent.addChild(originalNestedForEachNode);
 					parent.removeChild(originalNestedForEachNode);
 					parent.insertChildAfter(placeholder, originalNestedForEachNode);
-					
+
 					parent.removeChild(placeholder);
 				}
 
 				// Process nested for loops
 				List<TagNode> iterationNestedForEachNodes = Arrays.asList(iterationContainer.getElementsByName(tags.getForEachTag(), true));
 				iterationNestedForEachNodes = filterNestedForEachElements(iterationContainer, iterationNestedForEachNodes);
-				logger.debug("Processing nested {} nodes. Level: {}, Found: {}", new Object[] {tags.getForEachTag(), level, iterationNestedForEachNodes.size()});
+				logger.debug("Processing nested {} nodes. Level: {}, Found: {}", new Object[]{tags.getForEachTag(), level, iterationNestedForEachNodes.size()});
 				if (!iterationNestedForEachNodes.isEmpty()) {
 					for (TagNode nestedForEachNode : iterationNestedForEachNodes) {
 						String forEachIterationDocBase = selectXpath + "[" + (dataNodeindex + 1) + "]";
@@ -170,7 +172,7 @@ public class ValueInjector {
 					}
 				}
 				contextNodes.remove(selectAsName);
-				
+
 				// Unwrap container
 				TagNode parent = iterationContainer.getParent();
 				@SuppressWarnings("unchecked")
@@ -249,14 +251,16 @@ public class ValueInjector {
 	}
 
 	public void processCurlyBrackets(Document dataDocument, TagNode formHtml, Properties properties, String docBase) throws IOException,
-			ValueInjectorException {
+		ValueInjectorException {
 
 		XPathExpression selectExpression;
 		Node dataDocAtDocBase;
-		
+
 		try {
+			XPathFactory xPathFactory = xPathFactoryPool.getInstance();
 			selectExpression = xPathFactory.newXPath().compile(docBase);
 			dataDocAtDocBase = (Node) selectExpression.evaluate(dataDocument, XPathConstants.NODE);
+			xPathFactoryPool.returnInstance(xPathFactory);
 		} catch (XPathExpressionException e) {
 			throw new ValueInjectorException("Invalid docBase '" + docBase + "'", e);
 		}
@@ -273,44 +277,47 @@ public class ValueInjector {
 	}
 
 	public void replaceCurlyBrackets(Properties properties, StringBuilder builder, Node dataDocument)
-			throws ValueInjectorException {
+		throws ValueInjectorException {
 		replaceCurlyBrackets(properties, builder, dataDocument, new HashMap<String, Node>(), null);
 	}
-	
+
 	private void replaceCurlyBrackets(Properties properties, StringBuilder builder, Node dataDocument, Map<String, Node> contextNodes, Integer contextindex)
-			throws ValueInjectorException {
+		throws ValueInjectorException {
 		StringBuffer completedText = new StringBuffer();
-		
+		Map<String, String> lookups = new HashMap<String, String>();
 		Matcher matcher = CURLY_BRACKET_CONTENTS_PATTERN.matcher(builder);
 		while (matcher.matches()) {
 			// get brackets contents
 			String group = matcher.group(1);
-			String value = null;
-			if (group.startsWith("$")) {
-				if (group.length() > 1 && properties != null) {
-					value = properties.getProperty(group.substring(1));
-				}
-			} else {
-				String groupContextName = group.split("\\.")[0];
-				if (contextNodes.containsKey(groupContextName)) {
-					Node contextNode = contextNodes.get(groupContextName);
-					if (group.equals(groupContextName)) {
-						Node firstChild = contextNode.getFirstChild();
-						if (firstChild != null) {
-							value = firstChild.getTextContent();
-						}
-					} else {
-						if (group.equals(groupContextName + ".index")) {
-							value = "" + contextindex;
-						} else {
-							// lookup value from context node
-							value = lookupValue(contextNode, group.substring(groupContextName.length() + 1));
-						}
+			String value = lookups.get(group);
+			if (value == null) {
+				if (group.startsWith("$")) {
+					if (group.length() > 1 && properties != null) {
+						value = properties.getProperty(group.substring(1));
 					}
 				} else {
-					// lookup value from main dataDoc
-					value = lookupValue(dataDocument, group);
+					String groupContextName = group.split("\\.")[0];
+					if (contextNodes.containsKey(groupContextName)) {
+						Node contextNode = contextNodes.get(groupContextName);
+						if (group.equals(groupContextName)) {
+							Node firstChild = contextNode.getFirstChild();
+							if (firstChild != null) {
+								value = firstChild.getTextContent();
+							}
+						} else {
+							if (group.equals(groupContextName + ".index")) {
+								value = "" + contextindex;
+							} else {
+								// lookup value from context node
+								value = lookupValue(contextNode, group.substring(groupContextName.length() + 1));
+							}
+						}
+					} else {
+						// lookup value from main dataDoc
+						value = lookupValue(dataDocument, group);
+					}
 				}
+				lookups.put(group, value);
 			}
 
 			int groupStart = builder.indexOf("{{" + group + "}}");
@@ -339,9 +346,11 @@ public class ValueInjector {
 			XPathExpression expression = null;
 			try {
 				xpath = fieldName.replaceAll("\\.", "/");
-				expression = XPathFactory.newInstance().newXPath().compile(xpath);
+				XPathFactory xPathFactory = xPathFactoryPool.getInstance();
+				expression = xPathFactory.newXPath().compile(xpath);
+				xPathFactoryPool.returnInstance(xPathFactory);
 				return expression.evaluate(dataNode);
-				
+
 			} catch (XPathExpressionException e) {
 				StringBuilder stringBuilder = new StringBuilder();
 				if (expression == null) {
@@ -372,11 +381,11 @@ public class ValueInjector {
 	TagNode stringBuilderBodyToNode(StringBuilder nodeContents) throws IOException {
 		return (TagNode) htmlCleaner.clean(nodeContents.toString()).getChildren().get(1);
 	}
-	
+
 	TagNode stringBuilderToNode(StringBuilder nodeContents) throws IOException {
 		return (TagNode) stringBuilderBodyToNode(nodeContents).getChildren().get(0);
 	}
-	
+
 	public void processFlowDefinitionCurlyBrackets(StringBuilder flowStringBuilder, Properties flowProperties) throws FormFlowFactoryException {
 		if (flowProperties != null) {
 			Matcher matcher = CURLY_BRACKET_PROPERTY_PATTERN.matcher(flowStringBuilder);
@@ -394,5 +403,4 @@ public class ValueInjector {
 			}
 		}
 	}
-
 }
